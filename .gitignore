@@ -38,3 +38,8 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+/backend/target/
+/frontend/admin/.next/
+/frontend/user/.next/
+node_modules/
