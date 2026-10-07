@@ -1,4 +1,4 @@
--- Initial Database Schema for Youth Event Platform (PostgreSQL & H2 ANSI standard compliant)
+-- Initial Database Schema for Youth Event Platform
 
 CREATE TABLE IF NOT EXISTS roles (
     id BIGSERIAL PRIMARY KEY,
