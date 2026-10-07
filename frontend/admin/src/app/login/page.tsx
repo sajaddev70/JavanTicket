@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Phone, ArrowLeft, Loader2, AlertCircle, ShieldCheck, Ticket, Users, TrendingUp } from 'lucide-react';
+import { Phone, ArrowLeft, Loader2, AlertCircle, ShieldCheck, Ticket, TrendingUp } from 'lucide-react';
 import { api } from '@/services/api';
+import { toPersianDigits } from '@/utils/persianDigits';
 
 export default function AdminLoginPage() {
   const [mobile, setMobile] = useState('');
@@ -17,7 +18,7 @@ export default function AdminLoginPage() {
 
     const cleanedMobile = mobile.trim();
     if (!/^09\d{9}$/.test(cleanedMobile)) {
-      setError('شماره تلفن همراه وارد شده معتبر نیست. (نمونه: 09123456789)');
+      setError('شماره تلفن همراه وارد شده معتبر نیست. (نمونه: ۰۹۱۲۳۴۵۶۷۸۹)');
       return;
     }
 
@@ -31,7 +32,6 @@ export default function AdminLoginPage() {
       if (err?.message) {
         setError(err.message);
       } else {
-        // Fallback for development/testing if backend endpoint isn't live
         localStorage.setItem('pending_admin_mobile', cleanedMobile);
         router.push('/verify');
       }
@@ -41,14 +41,14 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden dir-rtl">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden dir-rtl">
       {/* Background Decorative Gradients */}
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
 
-        {/* Left Stats/Banner Area (Desktop) */}
+        {/* Right Area (In RTL layout: col 1..6 is right side) */}
         <div className="hidden lg:flex lg:col-span-6 flex-col justify-center space-y-6 text-right pr-4">
           <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full text-blue-400 text-sm font-medium w-fit">
             <ShieldCheck className="w-4 h-4" />
@@ -63,31 +63,31 @@ export default function AdminLoginPage() {
           </p>
 
           <div className="grid grid-cols-2 gap-4 pt-4 max-w-md">
-            <div className="bg-slate-800/80 border border-slate-700/60 p-4 rounded-2xl flex items-center gap-3">
+            <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center shrink-0">
                 <Ticket className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-xl font-bold text-white">+۵۰,۰۰۰</div>
+                <div className="text-xl font-bold text-white">{toPersianDigits('+50,000')}</div>
                 <div className="text-xs text-slate-400">بلیت صادر شده</div>
               </div>
             </div>
 
-            <div className="bg-slate-800/80 border border-slate-700/60 p-4 rounded-2xl flex items-center gap-3">
+            <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex items-center gap-3">
               <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center shrink-0">
                 <TrendingUp className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-xl font-bold text-white">۹۹.۹٪</div>
+                <div className="text-xl font-bold text-white">{toPersianDigits('99.9٪')}</div>
                 <div className="text-xs text-slate-400">پایداری سیستم</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Login Form Card */}
+        {/* Login Form Card (In RTL layout: col 7..12 is left side) */}
         <div className="lg:col-span-6 w-full max-w-md mx-auto">
-          <div className="bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-6 sm:p-10 shadow-2xl">
+          <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl">
 
             {/* Header / Logo Section */}
             <div className="text-center mb-8">
@@ -118,7 +118,7 @@ export default function AdminLoginPage() {
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
                     maxLength={11}
-                    className="w-full bg-slate-900/90 border border-slate-700 focus:border-blue-500 text-white rounded-2xl py-3.5 px-4 pr-11 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-600"
+                    className="w-full bg-slate-950/90 border border-slate-800 focus:border-blue-500 text-white rounded-2xl py-3.5 px-4 pr-11 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-600"
                     autoFocus
                   />
                   <Phone className="w-5 h-5 text-slate-500 absolute right-3.5 top-4" />
@@ -144,8 +144,8 @@ export default function AdminLoginPage() {
               </button>
             </form>
 
-            <div className="mt-8 pt-6 border-t border-slate-700/60 text-center text-xs text-slate-500">
-              شماره تست مدیر: <code className="text-blue-400 font-mono">09123456789</code> | کد OTP: <code className="text-blue-400 font-mono">1111</code>
+            <div className="mt-8 pt-6 border-t border-slate-800 text-center text-xs text-slate-500">
+              شماره تست مدیر: <code className="text-blue-400 font-mono">{toPersianDigits('09123456789')}</code> | کد OTP: <code className="text-blue-400 font-mono">{toPersianDigits('1111')}</code>
             </div>
           </div>
         </div>

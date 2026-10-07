@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ShieldCheck, Edit2, Loader2, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { useAdminAuthStore } from '@/stores/useAdminAuthStore';
+import { toPersianDigits } from '@/utils/persianDigits';
 
 export default function AdminVerifyPage() {
   const [mobile, setMobile] = useState('');
@@ -118,24 +119,24 @@ export default function AdminVerifyPage() {
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    return toPersianDigits(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden dir-rtl">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden dir-rtl">
       {/* Background Decorative Gradients */}
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-md bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-6 sm:p-10 shadow-2xl relative z-10">
+      <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative z-10">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30 shadow-lg shadow-blue-500/10">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">تأیید کد ورود</h1>
           <p className="text-slate-400 text-xs mb-3">کد ۴ رقمی ارسال‌شده به شماره زیر را وارد کنید</p>
-          <div className="inline-flex items-center justify-center gap-2 bg-slate-900/60 border border-slate-700/60 px-3 py-1.5 rounded-xl text-slate-300 text-sm dir-ltr">
-            <span className="font-mono text-blue-400 font-semibold">{mobile || '09123456789'}</span>
+          <div className="inline-flex items-center justify-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl text-slate-300 text-sm dir-ltr">
+            <span className="font-mono text-blue-400 font-semibold">{toPersianDigits(mobile || '09123456789')}</span>
             <button
               onClick={() => router.push('/login')}
               className="text-slate-400 hover:text-blue-400 p-1 transition-colors"
@@ -165,7 +166,7 @@ export default function AdminVerifyPage() {
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-14 h-16 text-center bg-slate-900/90 border border-slate-700 focus:border-blue-500 text-white rounded-2xl text-2xl font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all shadow-inner"
+                className="w-14 h-16 text-center bg-slate-950/90 border border-slate-800 focus:border-blue-500 text-white rounded-2xl text-2xl font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all shadow-inner"
                 autoFocus={index === 0}
               />
             ))}
@@ -184,7 +185,7 @@ export default function AdminVerifyPage() {
             )}
           </button>
 
-          <div className="flex items-center justify-between text-sm border-t border-slate-700/60 pt-5 mt-4">
+          <div className="flex items-center justify-between text-sm border-t border-slate-800 pt-5 mt-4">
             <button
               onClick={() => router.push('/login')}
               className="text-slate-400 hover:text-white transition-colors text-xs"

@@ -47,30 +47,56 @@ CREATE TABLE IF NOT EXISTS system_alerts (
 
 -- Seed Site Settings
 INSERT INTO site_settings (site_name, logo_url, contact_phone, contact_email, address, footer_text)
-VALUES ('مرکز همایش و نمایش جوان', '/javan-logo.svg', '021-88888888', 'info@youthevent.ir', 'تهران، بزرگراه همت غرب، برج میلاد، مرکز همایش‌ها', 'سامانه رسمی بلیت‌فروشی و مدیریت رویدادهای فرهنگی کشور - مرکز جوانان')
-ON CONFLICT DO NOTHING;
+SELECT 'مرکز همایش و نمایش جوان', '/javan-logo.svg', '021-88888888', 'info@youthevent.ir', 'تهران، بزرگراه همت غرب، برج میلاد، مرکز همایش‌ها', 'سامانه رسمی بلیت‌فروشی و مدیریت رویدادهای فرهنگی کشور - مرکز جوانان'
+WHERE NOT EXISTS (SELECT 1 FROM site_settings WHERE site_name = 'مرکز همایش و نمایش جوان');
 
 -- Seed Hero Banners
 INSERT INTO banners (title, subtitle, image_url, link_url, button_text, sort_order, active)
-VALUES
-('کنسرت بزرگ حمید هیراد', 'تهران - سالن همایش‌های بین‌المللی برج میلاد | ۱۰ و ۱۱ مهر ماه', '/hero-banner.jpg', '/events/hamid-hirad-concert', 'انتخاب سانس و خرید بلیت', 1, TRUE),
-('سیرک بزرگ بین‌المللی ایران', 'مجموعه ورزشی انقلاب - اجراهای شاد خانوادگی', '/images/events/circus.jpg', '/events/circus-tehran', 'رزرو آنلاین صندلی', 2, TRUE),
-('نمایش موزیکال و جنگ خنده کودک', 'تالار هنر تهران - ویژه کودکان و خانواده‌ها', '/images/events/kids.jpg', '/events/kids-musical-show', 'مشاهده جزئیات برنامه', 3, TRUE)
-ON CONFLICT DO NOTHING;
+SELECT 'کنسرت بزرگ حمید هیراد', 'تهران - سالن همایش‌های بین‌المللی برج میلاد | ۱۰ و ۱۱ مهر ماه', '/hero-banner.jpg', '/events/hamid-hirad-concert', 'انتخاب سانس و خرید بلیت', 1, TRUE
+WHERE NOT EXISTS (SELECT 1 FROM banners WHERE title = 'کنسرت بزرگ حمید هیراد');
+
+INSERT INTO banners (title, subtitle, image_url, link_url, button_text, sort_order, active)
+SELECT 'سیرک بزرگ بین‌المللی ایران', 'مجموعه ورزشی انقلاب - اجراهای شاد خانوادگی', '/images/events/circus.jpg', '/events/circus-tehran', 'رزرو آنلاین صندلی', 2, TRUE
+WHERE NOT EXISTS (SELECT 1 FROM banners WHERE title = 'سیرک بزرگ بین‌المللی ایران');
+
+INSERT INTO banners (title, subtitle, image_url, link_url, button_text, sort_order, active)
+SELECT 'نمایش موزیکال و جنگ خنده کودک', 'تالار هنر تهران - ویژه کودکان و خانواده‌ها', '/images/events/kids.jpg', '/events/kids-musical-show', 'مشاهده جزئیات برنامه', 3, TRUE
+WHERE NOT EXISTS (SELECT 1 FROM banners WHERE title = 'نمایش موزیکال و جنگ خنده کودک');
 
 -- Seed Regional Stats
-INSERT INTO regional_stats (province_name, city_name, sales_amount, sales_amount_fa, active, position_top, position_left) VALUES
-('تهران', 'تهران', 24500000, '۲۴.۵ میلیون', TRUE, '42%', '48%'),
-('اصفهان', 'اصفهان', 8200000, '۸.۲ میلیون', TRUE, '55%', '45%'),
-('خراسان رضوی', 'مشهد', 6100000, '۶.۱ میلیون', TRUE, '35%', '78%'),
-('فارس', 'شیراز', 4800000, '۴.۸ میلیون', TRUE, '70%', '42%'),
-('آذربایجان شرقی', 'تبریز', 3200000, '۳.۲ میلیون', TRUE, '25%', '20%'),
-('خوزستان', 'اهواز', 1700000, '۱.۷ میلیون', TRUE, '65%', '28%')
-ON CONFLICT (province_name) DO NOTHING;
+INSERT INTO regional_stats (province_name, city_name, sales_amount, sales_amount_fa, active, position_top, position_left)
+SELECT 'تهران', 'تهران', 24500000, '۲۴.۵ میلیون', TRUE, '42%', '48%'
+WHERE NOT EXISTS (SELECT 1 FROM regional_stats WHERE province_name = 'تهران');
+
+INSERT INTO regional_stats (province_name, city_name, sales_amount, sales_amount_fa, active, position_top, position_left)
+SELECT 'اصفهان', 'اصفهان', 8200000, '۸.۲ میلیون', TRUE, '55%', '45%'
+WHERE NOT EXISTS (SELECT 1 FROM regional_stats WHERE province_name = 'اصفهان');
+
+INSERT INTO regional_stats (province_name, city_name, sales_amount, sales_amount_fa, active, position_top, position_left)
+SELECT 'خراسان رضوی', 'مشهد', 6100000, '۶.۱ میلیون', TRUE, '35%', '78%'
+WHERE NOT EXISTS (SELECT 1 FROM regional_stats WHERE province_name = 'خراسان رضوی');
+
+INSERT INTO regional_stats (province_name, city_name, sales_amount, sales_amount_fa, active, position_top, position_left)
+SELECT 'فارس', 'شیراز', 4800000, '۴.۸ میلیون', TRUE, '70%', '42%'
+WHERE NOT EXISTS (SELECT 1 FROM regional_stats WHERE province_name = 'فارس');
+
+INSERT INTO regional_stats (province_name, city_name, sales_amount, sales_amount_fa, active, position_top, position_left)
+SELECT 'آذربایجان شرقی', 'تبریز', 3200000, '۳.۲ میلیون', TRUE, '25%', '20%'
+WHERE NOT EXISTS (SELECT 1 FROM regional_stats WHERE province_name = 'آذربایجان شرقی');
+
+INSERT INTO regional_stats (province_name, city_name, sales_amount, sales_amount_fa, active, position_top, position_left)
+SELECT 'خوزستان', 'اهواز', 1700000, '۱.۷ میلیون', TRUE, '65%', '28%'
+WHERE NOT EXISTS (SELECT 1 FROM regional_stats WHERE province_name = 'خوزستان');
 
 -- Seed System Alerts
-INSERT INTO system_alerts (title, message, alert_type, active) VALUES
-('هشدار ظرفیت سانس', 'ظرفیت سانس ساعت ۲۱:۳۰ کنسرت حمید هیراد بیش از ۹۲٪ تکمیل شده است. پیشنهاد اضافه نمودن سانس فوق‌العاده.', 'WARNING', TRUE),
-('رزرو گروهی مدارس', '۳ درخواست رزرو گروهی مدارس منطقه ۲ تهران در انتظار تأیید نهایی مالی است.', 'INFO', TRUE),
-('تسویه حساب مالی', 'فاکتور تسویه حساب دوره اول کنسرت پاپ صادر و تایید گردید.', 'SUCCESS', TRUE)
-ON CONFLICT DO NOTHING;
+INSERT INTO system_alerts (title, message, alert_type, active)
+SELECT 'هشدار ظرفیت سانس', 'ظرفیت سانس ساعت ۲۱:۳۰ کنسرت حمید هیراد بیش از ۹۲٪ تکمیل شده است. پیشنهاد اضافه نمودن سانس فوق‌العاده.', 'WARNING', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM system_alerts WHERE title = 'هشدار ظرفیت سانس');
+
+INSERT INTO system_alerts (title, message, alert_type, active)
+SELECT 'رزرو گروهی مدارس', '۳ درخواست رزرو گروهی مدارس منطقه ۲ تهران در انتظار تأیید نهایی مالی است.', 'INFO', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM system_alerts WHERE title = 'رزرو گروهی مدارس');
+
+INSERT INTO system_alerts (title, message, alert_type, active)
+SELECT 'تسویه حساب مالی', 'فاکتور تسویه حساب دوره اول کنسرت پاپ صادر و تایید گردید.', 'SUCCESS', TRUE
+WHERE NOT EXISTS (SELECT 1 FROM system_alerts WHERE title = 'تسویه حساب مالی');
