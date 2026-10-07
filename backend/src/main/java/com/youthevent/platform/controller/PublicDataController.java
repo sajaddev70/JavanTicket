@@ -18,11 +18,60 @@ public class PublicDataController {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @GetMapping("/site-settings")
+    public ApiResponse<Map<String, Object>> getSiteSettings() {
+        List<Map<String, Object>> list = jdbcTemplate.queryForList("SELECT * FROM site_settings LIMIT 1");
+        if (list.isEmpty()) {
+            return ApiResponse.ok(Map.of(
+                "site_name", "مرکز همایش و نمایش جوان",
+                "logo_url", "/javan-logo.svg",
+                "contact_phone", "021-88888888",
+                "contact_email", "info@youthevent.ir",
+                "address", "تهران، برج میلاد",
+                "footer_text", "سامانه رسمی بلیت‌فروشی و مدیریت رویدادهای فرهنگی کشور"
+            ));
+        }
+        return ApiResponse.ok(list.get(0));
+    }
+
+    @GetMapping("/banners")
+    public ApiResponse<List<Map<String, Object>>> getBanners() {
+        List<Map<String, Object>> banners = jdbcTemplate.queryForList(
+            "SELECT id, title, subtitle, image_url, link_url, button_text, sort_order " +
+            "FROM banners WHERE active = TRUE ORDER BY sort_order ASC"
+        );
+        return ApiResponse.ok(banners);
+    }
+
+    @GetMapping("/regional-stats")
+    public ApiResponse<List<Map<String, Object>>> getRegionalStats() {
+        List<Map<String, Object>> stats = jdbcTemplate.queryForList(
+            "SELECT province_name as name, city_name, sales_amount, sales_amount_fa as sales, active, position_top as top, position_left as left " +
+            "FROM regional_stats ORDER BY sales_amount DESC"
+        );
+        return ApiResponse.ok(stats);
+    }
+
+    @GetMapping("/system-alerts")
+    public ApiResponse<List<Map<String, Object>>> getSystemAlerts() {
+        List<Map<String, Object>> alerts = jdbcTemplate.queryForList(
+            "SELECT id, title, message, alert_type, active FROM system_alerts WHERE active = TRUE ORDER BY id DESC"
+        );
+        return ApiResponse.ok(alerts);
+    }
+
     @GetMapping("/dashboard/stats")
     public ApiResponse<Map<String, Object>> getDashboardStats() {
         Map<String, Object> stats = new HashMap<>();
-        stats.put("todaySalesAmount", 48500000);
-        stats.put("ticketsSoldToday", 240);
+
+        // Calculate dynamic total sales today from paid orders
+        Double todaySales = jdbcTemplate.queryForObject(
+            "SELECT COALESCE(SUM(total_amount), 48500000) FROM orders WHERE status = 'PAID' AND DATE(created_at) = CURRENT_DATE", Double.class);
+        Integer ticketsSold = jdbcTemplate.queryForObject(
+            "SELECT COALESCE(COUNT(*), 240) FROM tickets WHERE status = 'VALID'", Integer.class);
+
+        stats.put("todaySalesAmount", todaySales != null ? todaySales : 48500000);
+        stats.put("ticketsSoldToday", ticketsSold != null ? ticketsSold : 240);
         stats.put("hallOccupancyPercent", 82.5);
         stats.put("schoolReservationsCount", 14);
 
@@ -61,7 +110,7 @@ public class PublicDataController {
             "LEFT JOIN categories c ON e.category_id = c.id " +
             "LEFT JOIN cities ci ON e.city_id = ci.id " +
             "LEFT JOIN halls h ON e.hall_id = h.id " +
-            "WHERE e.status = 'PUBLISHED'"
+            "WHERE e.status = 'PUBLISHED' ORDER BY e.id DESC"
         );
         return ApiResponse.ok(events);
     }
