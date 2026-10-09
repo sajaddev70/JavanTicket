@@ -66,3 +66,8 @@ allOpen {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Only the executable boot jar goes to build/libs, so the Docker image has a single jar to run.
+tasks.named('jar') {
+    enabled = false
+}

@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const basePath = "/admin";
 
 const nextConfig: NextConfig = {
+  // Self-contained server (server.js) for the Docker image.
+  output: "standalone",
   basePath,
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
