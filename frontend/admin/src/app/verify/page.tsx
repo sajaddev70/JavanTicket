@@ -1,214 +1,206 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Edit2, Loader2, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
-import { api } from '@/services/api';
-import { useAdminAuthStore } from '@/stores/useAdminAuthStore';
-import { toPersianDigits } from '@/utils/persianDigits';
+import { Clock3, Loader2, LogIn, Pencil, Phone, RefreshCw } from 'lucide-react';
+import { api, apiPost } from '@/services/api';
+import { useAdminAuthStore, type AdminUser } from '@/stores/useAdminAuthStore';
+import { OtpInput } from '@/components/auth/OtpInput';
+import { AuthBackground } from '@/components/auth/AuthBackground';
+import { AuthFooter } from '@/components/auth/AuthFooter';
+import { FloatingThemeToggle } from '@/components/ui/FloatingThemeToggle';
+import { asset } from '@/lib/assets';
+import { maskMobile, toFaDigits } from '@/lib/format';
+import { cn } from '@/lib/cn';
+import { useSessionValue } from '@/hooks/useIsClient';
+
+const OTP_LENGTH = 4;
+const RESEND_SECONDS = 120;
+
+interface VerifyResponse {
+  accessToken: string;
+  refreshToken?: string;
+  user: AdminUser;
+}
+
+const emptyCode = () => Array<string>(OTP_LENGTH).fill('');
 
 export default function AdminVerifyPage() {
-  const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '']);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [timer, setTimer] = useState(120);
-  const inputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
-
   const router = useRouter();
-  const setAuth = useAdminAuthStore((state: any) => state.setAuth);
+  const setAuth = useAdminAuthStore((s) => s.setAuth);
+  const mobile = useSessionValue('pending_admin_mobile');
+  const [otp, setOtp] = useState<string[]>(emptyCode);
+  const [error, setError] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
 
   useEffect(() => {
-    const pendingMobile = localStorage.getItem('pending_admin_mobile');
-    if (!pendingMobile) {
-      router.replace('/login');
-      return;
-    }
-    setMobile(pendingMobile);
+    // undefined = not read yet (SSR); null = nothing pending, so start over from the login step.
+    if (mobile === null) router.replace('/login');
+  }, [mobile, router]);
 
-    const interval = setInterval(() => {
-      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const id = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [secondsLeft]);
 
-    return () => clearInterval(interval);
-  }, [router]);
-
-  const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-
-    // Auto next
-    if (value && index < 3) {
-      inputRefs[index + 1].current?.focus();
-    }
-
-    // Auto submit if complete
-    if (newOtp.every((digit) => digit !== '') && value) {
-      verifyCode(newOtp.join(''));
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs[index - 1].current?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').trim();
-    if (/^\d{4}$/.test(pastedData)) {
-      const digits = pastedData.split('');
-      setOtp(digits);
-      inputRefs[3].current?.focus();
-      verifyCode(pastedData);
-    }
-  };
-
-  const verifyCode = async (code: string) => {
-    setError('');
-    setLoading(true);
-
-    try {
-      const res: any = await api.post('/auth/admin/verify', {
-        mobile,
-        code,
-      });
-
-      if (res?.data) {
-        setAuth(res.data.user, res.data.accessToken);
-        localStorage.removeItem('pending_admin_mobile');
+  const verify = useCallback(
+    async (code: string) => {
+      if (!mobile || verifying || code.length !== OTP_LENGTH) return;
+      setError('');
+      setNotice('');
+      setVerifying(true);
+      try {
+        const data = await apiPost<VerifyResponse>('/auth/admin/verify', { mobile, code });
+        setAuth({ ...data.user, roles: [...(data.user.roles ?? [])], permissions: [...(data.user.permissions ?? [])] }, data.accessToken);
+        sessionStorage.removeItem('pending_admin_mobile');
         router.replace('/dashboard');
-      } else {
-        router.replace('/dashboard');
+      } catch (err) {
+        setError((err as { message?: string })?.message || 'کد تأیید واردشده صحیح نیست.');
+        setOtp(emptyCode());
+        setVerifying(false);
       }
-    } catch (err: any) {
-      if (code === '1111') {
-        setAuth({ id: 1, name: 'مدیر ارشد', mobile }, 'dummy-admin-token');
-        localStorage.removeItem('pending_admin_mobile');
-        router.replace('/dashboard');
-      } else {
-        setError(err?.message || 'کد تأیید واردشده صحیح نیست.');
-        setOtp(['', '', '', '']);
-        inputRefs[0].current?.focus();
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [mobile, verifying, router, setAuth],
+  );
 
-  const handleResend = async () => {
-    if (timer > 0) return;
+  const resend = async () => {
+    if (!mobile || secondsLeft > 0 || resending) return;
     setError('');
-    setTimer(120);
+    setNotice('');
+    setResending(true);
     try {
       await api.post('/auth/admin/login', { mobile });
-    } catch (err: any) {
-      // Ignored for dev
+      setSecondsLeft(RESEND_SECONDS);
+      setOtp(emptyCode());
+      setNotice('کد تأیید جدید ارسال شد.');
+    } catch (err) {
+      setError((err as { message?: string })?.message || 'ارسال مجدد کد با خطا مواجه شد.');
+    } finally {
+      setResending(false);
     }
   };
 
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return toPersianDigits(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
-  };
+  const minutes = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+  const seconds = String(secondsLeft % 60).padStart(2, '0');
+  const complete = otp.every((d) => d !== '');
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden dir-rtl">
-      {/* Background Decorative Gradients */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-page">
+      <AuthBackground />
+      <FloatingThemeToggle />
 
-      <div className="w-full max-w-md bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative z-10">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30 shadow-lg shadow-blue-500/10">
-            <ShieldCheck className="w-8 h-8" />
+      <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
+        <div className="w-full max-w-[616px] rounded-[22px] border border-line/60 bg-surface px-5 py-9 shadow-[0_20px_60px_rgb(30_70_140_/_0.10)] sm:px-11 sm:py-10">
+          <div className="flex justify-center">
+            <Image
+              src={asset('/assets/auth/otp-phone.png')}
+              alt=""
+              width={184}
+              height={185}
+              preload
+              className="size-36 sm:size-[184px]"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">تأیید کد ورود</h1>
-          <p className="text-slate-400 text-xs mb-3">کد ۴ رقمی ارسال‌شده به شماره زیر را وارد کنید</p>
-          <div className="inline-flex items-center justify-center gap-2 bg-slate-950/60 border border-slate-800 px-3 py-1.5 rounded-xl text-slate-300 text-sm dir-ltr">
-            <span className="font-mono text-blue-400 font-semibold">{toPersianDigits(mobile || '09123456789')}</span>
+
+          <h1 className="mt-4 text-center text-[26px] font-black text-ink sm:text-[32px]">تأیید شماره همراه</h1>
+          <p className="mt-3 text-center text-[15px] text-muted sm:text-[17px]">
+            کد تأیید {toFaDigits(String(OTP_LENGTH))} رقمی به شماره زیر ارسال شد.
+          </p>
+
+          <div className="mx-auto mt-6 flex h-16 max-w-[402px] items-center justify-center gap-4 rounded-xl bg-surface-2 text-[20px] font-bold text-ink">
+            <Phone className="size-6 text-ink/80" strokeWidth={1.8} />
+            <span dir="ltr" className="tabular">
+              {mobile ? maskMobile(mobile) : '—'}
+            </span>
+          </div>
+
+          <div className="mt-4 flex justify-center">
             <button
+              type="button"
               onClick={() => router.push('/login')}
-              className="text-slate-400 hover:text-blue-400 p-1 transition-colors"
-              title="ویرایش شماره"
+              className="flex min-h-11 items-center gap-2 px-2 text-[16px] font-semibold text-brand-600 hover:text-brand-700"
             >
-              <Edit2 className="w-3.5 h-3.5" />
+              <Pencil className="size-[18px]" />
+              ویرایش شماره
             </button>
           </div>
-        </div>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mb-6 flex items-start gap-3 text-red-400 text-sm">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <span>{error}</span>
+          <div className="mt-5">
+            <OtpInput
+              value={otp}
+              onChange={(v) => {
+                setOtp(v);
+                if (error) setError('');
+              }}
+              onComplete={verify}
+              disabled={verifying}
+              invalid={!!error}
+            />
           </div>
-        )}
 
-        <div className="space-y-6">
-          <div className="flex justify-center gap-3 dir-ltr" onPaste={handlePaste}>
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                ref={inputRefs[index]}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-14 h-16 text-center bg-slate-950/90 border border-slate-800 focus:border-blue-500 text-white rounded-2xl text-2xl font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all shadow-inner"
-                autoFocus={index === 0}
-              />
-            ))}
+          <div className="mt-4 min-h-6 text-center text-[14px]" aria-live="polite">
+            {error && <p className="font-medium text-danger">{error}</p>}
+            {!error && notice && <p className="font-medium text-success">{notice}</p>}
+          </div>
+
+          <div className="mt-2 flex items-center justify-center gap-3 text-[16px] text-muted">
+            {secondsLeft > 0 ? (
+              <>
+                <Clock3 className="size-6 text-brand-600" strokeWidth={2} />
+                <span className="tabular font-bold text-brand-600" dir="ltr">
+                  {toFaDigits(`${minutes}:${seconds}`)}
+                </span>
+                <span>تا ارسال مجدد کد</span>
+              </>
+            ) : (
+              <span>کد را دریافت نکردید؟</span>
+            )}
+          </div>
+
+          <div className="mt-6 flex items-center gap-4">
+            <span className="h-px flex-1 bg-line" />
+            <button
+              type="button"
+              onClick={resend}
+              disabled={secondsLeft > 0 || resending}
+              className={cn(
+                'flex min-h-11 items-center gap-2 text-[16px] font-bold transition',
+                secondsLeft > 0 ? 'cursor-not-allowed text-brand-600/45' : 'text-brand-600 hover:text-brand-700',
+              )}
+            >
+              <RefreshCw className={cn('size-5', resending && 'animate-spin')} />
+              ارسال مجدد کد
+            </button>
+            <span className="h-px flex-1 bg-line" />
           </div>
 
           <button
-            onClick={() => verifyCode(otp.join(''))}
-            disabled={loading || otp.some((d) => !d)}
-            className="w-full h-12 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/25 disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            onClick={() => verify(otp.join(''))}
+            disabled={!complete || verifying}
+            className="mt-7 flex h-16 w-full items-center justify-center gap-3 rounded-xl bg-brand-600 text-[19px] font-bold text-white shadow-cta transition hover:bg-brand-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+            {verifying ? (
               <>
-                <CheckCircle2 className="w-5 h-5" />
-                <span>تأیید و ورود به پنل</span>
+                <Loader2 className="size-5 animate-spin" />
+                در حال بررسی...
+              </>
+            ) : (
+              <>
+                تأیید و ورود
+                <LogIn className="size-6 -scale-x-100" />
               </>
             )}
           </button>
-
-          <div className="flex items-center justify-between text-sm border-t border-slate-800 pt-5 mt-4">
-            <button
-              onClick={() => router.push('/login')}
-              className="text-slate-400 hover:text-white transition-colors text-xs"
-            >
-              تغییر شماره همراه
-            </button>
-
-            {timer > 0 ? (
-              <span className="text-slate-400 font-mono text-xs">
-                ارسال مجدد ({formatTimer(timer)})
-              </span>
-            ) : (
-              <button
-                onClick={handleResend}
-                className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 text-xs"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>ارسال مجدد کد</span>
-              </button>
-            )}
-          </div>
         </div>
-      </div>
+      </main>
+
+      <AuthFooter />
     </div>
   );
 }

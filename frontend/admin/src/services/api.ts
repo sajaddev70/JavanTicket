@@ -1,6 +1,9 @@
-import axios from 'axios';
+import axios, { type InternalAxiosRequestConfig } from 'axios';
+import { useAdminAuthStore } from '@/stores/useAdminAuthStore';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+type TimedConfig = InternalAxiosRequestConfig & { meta?: { startTime: number } };
+
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -18,7 +21,7 @@ api.interceptors.request.use((config) => {
     }
   }
 
-  (config as any).meta = { startTime: Date.now() };
+  (config as TimedConfig).meta = { startTime: Date.now() };
 
   console.log(
     `========== API REQUEST ==========\n` +
@@ -32,7 +35,7 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => {
-    const startTime = (response.config as any).meta?.startTime || Date.now();
+    const startTime = (response.config as TimedConfig).meta?.startTime || Date.now();
     const duration = Date.now() - startTime;
 
     console.log(
@@ -64,6 +67,11 @@ api.interceptors.response.use(
       `=================================`
     );
 
+    // An expired or revoked admin session: drop it; AdminLayout then sends the user to the login page.
+    if (status === 401 && useAdminAuthStore.getState().token) {
+      useAdminAuthStore.getState().logout();
+    }
+
     let message = 'ارتباط با سرور برقرار نشد. لطفاً اتصال اینترنت و وضعیت سرویس را بررسی کنید.';
 
     if (error.response?.data?.message) {
@@ -88,3 +96,36 @@ api.interceptors.response.use(
     return Promise.reject(customError);
   }
 );
+
+export interface ApiEnvelope<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
+export interface ApiError {
+  success: false;
+  message: string;
+  status?: number;
+}
+
+/** GET helper that unwraps the backend's { success, data } envelope. */
+export async function apiGet<T>(url: string, params?: Record<string, unknown>): Promise<T> {
+  const envelope = (await api.get(url, { params })) as unknown as ApiEnvelope<T>;
+  return envelope.data;
+}
+
+export async function apiPost<T>(url: string, body?: unknown): Promise<T> {
+  const envelope = (await api.post(url, body)) as unknown as ApiEnvelope<T>;
+  return envelope.data;
+}
+
+export async function apiPut<T>(url: string, body?: unknown): Promise<T> {
+  const envelope = (await api.put(url, body)) as unknown as ApiEnvelope<T>;
+  return envelope.data;
+}
+
+export async function apiDelete<T>(url: string): Promise<T> {
+  const envelope = (await api.delete(url)) as unknown as ApiEnvelope<T>;
+  return envelope.data;
+}

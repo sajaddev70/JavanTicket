@@ -43,3 +43,5 @@ out/
 /frontend/admin/.next/
 /frontend/user/.next/
 node_modules/
+
+/uploads/

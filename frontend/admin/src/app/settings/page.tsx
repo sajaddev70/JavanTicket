@@ -1,147 +1,108 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Save } from 'lucide-react';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { Settings, Save, Loader2, CheckCircle2 } from 'lucide-react';
-import { api } from '@/services/api';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/States';
+import { InlineAlert, primaryButton } from '@/components/ui/Field';
+import { FieldInput, toFormValues, toRequestBody, type FieldDef, type FormValues } from '@/components/crud/fields';
+import { apiGet, apiPut } from '@/services/api';
+import { errorMessage } from '@/services/cms';
+import { cn } from '@/lib/cn';
+
+const FIELDS: FieldDef[] = [
+  { name: 'site_name', label: 'نام رسمی سامانه', type: 'text', required: true },
+  { name: 'short_name', label: 'نام کوتاه', type: 'text', hint: 'زیر آیکون برنامه نصب‌شده (PWA) نمایش داده می‌شود.' },
+  { name: 'tagline', label: 'شعار سایت', type: 'text', wide: true, hint: 'در فوتر سایت کنار لوگو نمایش داده می‌شود.' },
+  { name: 'meta_description', label: 'توضیح سایت برای موتورهای جستجو', type: 'textarea', wide: true },
+  { name: 'logo_url', label: 'لوگو برای پس‌زمینه روشن', type: 'image', wide: true },
+  { name: 'logo_dark_url', label: 'لوگو برای پس‌زمینه تیره', type: 'image', wide: true, hint: 'در تم تیره، فوتر سایت و منوی کناری پنل استفاده می‌شود.' },
+  { name: 'contact_phone', label: 'تلفن پشتیبانی', type: 'text', dir: 'ltr' },
+  { name: 'contact_email', label: 'ایمیل تماس', type: 'text', dir: 'ltr' },
+  { name: 'address', label: 'نشانی', type: 'text', wide: true },
+  { name: 'instagram_url', label: 'لینک اینستاگرام', type: 'text', dir: 'ltr' },
+  { name: 'telegram_url', label: 'لینک تلگرام', type: 'text', dir: 'ltr' },
+  { name: 'linkedin_url', label: 'لینک لینکدین', type: 'text', dir: 'ltr' },
+  { name: 'aparat_url', label: 'لینک آپارات', type: 'text', dir: 'ltr' },
+  { name: 'newsletter_title', label: 'عنوان خبرنامه فوتر', type: 'text' },
+  { name: 'newsletter_text', label: 'متن خبرنامه فوتر', type: 'text' },
+  { name: 'footer_text', label: 'متن فوتر', type: 'textarea', wide: true },
+];
 
 export default function AdminSettingsPage() {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [formData, setFormData] = useState({
-    site_name: 'مرکز همایش و نمایش جوان',
-    contact_phone: '021-88888888',
-    contact_email: 'info@youthevent.ir',
-    address: 'تهران، برج میلاد، مرکز همایش‌ها',
-    footer_text: 'سامانه رسمی بلیت‌فروشی و مدیریت رویدادهای فرهنگی کشور',
-    logo_url: '/javan-logo.svg',
-  });
-
-  useEffect(() => {
-    async function fetchSettings() {
-      try {
-        const res: any = await api.get('/admin/cms/site-settings');
-        if (res?.data && Object.keys(res.data).length > 0) {
-          setFormData((prev) => ({ ...prev, ...res.data }));
-        }
-      } catch (e) {
-        // Fallback
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchSettings();
-  }, []);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setSaved(false);
-    try {
-      await api.put('/admin/cms/site-settings', formData);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (e) {
-      alert('خطا در ذخیره تنظیمات');
-    } finally {
-      setSaving(false);
-    }
-  }
+  const settings = useQuery({ queryKey: ['admin', 'site-settings'], queryFn: () => apiGet<Record<string, unknown>>('/admin/site-settings') });
 
   return (
     <AdminLayout>
-      <div className="space-y-6 dir-rtl max-w-4xl">
-        <div className="border-b border-slate-800 pb-5">
-          <h1 className="text-2xl font-bold text-white">تنظیمات عمومی سامانه</h1>
-          <p className="text-xs text-slate-400 mt-1">مدیریت عنوان سایت، اطلاعات تماس و فوتر</p>
-        </div>
+      <div className="max-w-4xl space-y-5">
+        <PageHeader title="تنظیمات سامانه" crumbs={['تنظیمات سامانه']} />
+        <p className="-mt-2 text-sm text-muted">نام، لوگو، اطلاعات تماس و متن‌های پایه سایت کاربران و پنل مدیریت.</p>
 
-        {loading ? (
-          <div className="py-20 text-center text-slate-400 flex items-center justify-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-            <span>در حال دریافت تنظیمات...</span>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="bg-slate-800/90 border border-slate-700/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
-            {saved && (
-              <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-2xl flex items-center gap-2 text-xs font-semibold">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>تنظیمات با موفقیت در دیتابیس ذخیره شد.</span>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2">نام رسمی سامانه</label>
-                <input
-                  type="text"
-                  value={formData.site_name}
-                  onChange={(e) => setFormData({ ...formData, site_name: e.target.value })}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2">تلفن پشتیبانی</label>
-                <input
-                  type="text"
-                  value={formData.contact_phone}
-                  onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2">ایمیل تماس</label>
-                <input
-                  type="email"
-                  value={formData.contact_email}
-                  onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-2">آدرس فیزیکی</label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white"
-                />
-              </div>
+        <Card className="p-5 sm:p-7">
+          {settings.isError ? (
+            <ErrorState message="دریافت تنظیمات با خطا مواجه شد." onRetry={() => settings.refetch()} />
+          ) : settings.isLoading ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {Array.from({ length: 8 }, (_, i) => (
+                <Skeleton key={i} className="h-[74px] rounded-xl" />
+              ))}
             </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-2">متن فوتر</label>
-              <textarea
-                rows={3}
-                value={formData.footer_text}
-                onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white"
-              />
-            </div>
-
-            <div className="flex items-center justify-end pt-4 border-t border-slate-700">
-              <button
-                type="submit"
-                disabled={saving}
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-6 py-3 rounded-xl flex items-center gap-2 shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50"
-              >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    <span>ذخیره تغییرات</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        )}
+          ) : (
+            // Mounted once the data is in, so the form starts from the saved values.
+            <SettingsForm initial={toFormValues(FIELDS, settings.data)} />
+          )}
+        </Card>
       </div>
     </AdminLayout>
+  );
+}
+
+function SettingsForm({ initial }: { initial: FormValues }) {
+  const queryClient = useQueryClient();
+  const [values, setValues] = useState<FormValues>(initial);
+  const save = useMutation({
+    mutationFn: (body: Record<string, unknown>) => apiPut('/admin/site-settings', body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'site-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['site-settings'] });
+    },
+  });
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        save.mutate(toRequestBody(FIELDS, values));
+      }}
+      className="space-y-5"
+    >
+      {save.isSuccess && <InlineAlert tone="success">تنظیمات با موفقیت ذخیره شد.</InlineAlert>}
+      {save.isError && <InlineAlert tone="error">{errorMessage(save.error, 'ذخیره تنظیمات با خطا مواجه شد.')}</InlineAlert>}
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {FIELDS.map((f) => (
+          <FieldInput
+            key={f.name}
+            field={f}
+            values={values}
+            onChange={(name, v) => {
+              setValues((s) => ({ ...s, [name]: v }));
+              if (save.isSuccess || save.isError) save.reset();
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="flex justify-end border-t border-line pt-5">
+        <button type="submit" disabled={save.isPending} className={cn(primaryButton, 'w-full sm:w-auto')}>
+          <Save className="size-4" />
+          {save.isPending ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
+        </button>
+      </div>
+    </form>
   );
 }

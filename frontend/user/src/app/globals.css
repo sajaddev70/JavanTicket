@@ -1,13 +1,142 @@
 @import "tailwindcss";
 
+/* `dark:` utilities follow the data-theme attribute set by the theme script / toggle. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------- Design tokens: light ---------- */
+:root {
+  --page: #f5f7fc;
+  --surface: #ffffff;
+  --surface-2: #f0f4fb;
+  --field: #f1f5fb;
+  --line: #e7ecf3;
+  --line-strong: #dce3ee;
+  --ink: #0f1b33;
+  --muted: #66748a;
+  --skeleton: #e3e8f0;
+
+  --navy-900: #0b2442;
+  --navy-950: #06162f;
+
+  --brand-50: #eaf3ff;
+  --brand-500: #2f80f5;
+  --brand-600: #1463e6;
+  --brand-700: #0f53c4;
+
+  --ticket: #e8143f;
+  --ticket-700: #c90f35;
+  --success: #22c55e;
+  --success-fg: #16a34a;
+  --danger: #ef4454;
+  --danger-fg: #e11d48;
+
+  --shadow-card: 0 1px 2px rgb(16 42 84 / 0.04), 0 6px 20px rgb(16 42 84 / 0.06);
+  --shadow-float: 0 12px 40px rgb(16 42 84 / 0.12);
+}
+
+/* ---------- Design tokens: dark ---------- */
+[data-theme="dark"] {
+  --page: #0a1424;
+  --surface: #111d33;
+  --surface-2: #16243d;
+  --field: #172540;
+  --line: #22324f;
+  --line-strong: #2c3d5c;
+  --ink: #e7edf7;
+  --muted: #95a3ba;
+  --skeleton: #1f2e4a;
+
+  --navy-900: #0b1a33;
+  --navy-950: #050e1e;
+
+  --brand-50: #13284a;
+  --brand-500: #4b93ff;
+  --brand-600: #3a86f7;
+  --brand-700: #2f74e0;
+
+  --ticket: #f0294f;
+  --ticket-700: #d81c42;
+  --success: #2ccf68;
+  --success-fg: #4ade80;
+  --danger: #f45b69;
+  --danger-fg: #fb7185;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.25), 0 6px 20px rgb(0 0 0 / 0.25);
+  --shadow-float: 0 14px 44px rgb(0 0 0 / 0.45);
+}
+
+@theme inline {
+  --font-sans: var(--font-iransans), Tahoma, system-ui, sans-serif;
+
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-field: var(--field);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-skeleton: var(--skeleton);
+
+  --color-navy-900: var(--navy-900);
+  --color-navy-950: var(--navy-950);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+
+  --color-ticket: var(--ticket);
+  --color-ticket-700: var(--ticket-700);
+  --color-success: var(--success);
+  --color-success-fg: var(--success-fg);
+  --color-danger: var(--danger);
+  --color-danger-fg: var(--danger-fg);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+  --shadow-cta: 0 8px 20px rgb(20 99 230 / 0.28);
+}
+
 @layer base {
-  * {
-    font-family: 'IRANSans', 'IRANSansX', 'Vazirmatn', system-ui, -apple-system, sans-serif !important;
+  html {
+    -webkit-text-size-adjust: 100%;
   }
   body {
-    font-family: 'IRANSans', 'IRANSansX', 'Vazirmatn', system-ui, -apple-system, sans-serif !important;
-    background-color: #0f172a;
-    color: #f8fafc;
+    background-color: var(--page);
+    color: var(--ink);
+    font-family: var(--font-sans);
     direction: rtl;
+    transition: background-color 0.2s ease;
+  }
+  /* Form controls do not inherit the font by default; keep IRANSans (and its Persian digits) everywhere. */
+  input,
+  textarea,
+  select,
+  button,
+  option {
+    font-family: inherit;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(-100%);
   }
 }
