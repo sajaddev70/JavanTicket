@@ -4,7 +4,7 @@ export interface PublicSiteSettings {
   meta_description?: string | null;
 }
 
-const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
 
 /** Site settings for metadata and the web manifest (rendered on the server); null when the API is unreachable. */
 export async function getSiteSettings(): Promise<PublicSiteSettings | null> {

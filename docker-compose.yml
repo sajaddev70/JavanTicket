@@ -30,6 +30,7 @@ services:
       db:
         condition: service_healthy
     environment:
+      # prod profile switches off the demo/test seeders and DB auto-create (@Profile("!prod"))
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: db
       DB_PORT: 5432
@@ -42,6 +43,9 @@ services:
       KAVENEGAR_OTP_TEMPLATE: ${KAVENEGAR_OTP_TEMPLATE:-otp}
       SERVER_PORT: 8081
       PAYMENT_MODE: ${PAYMENT_MODE:-none}
+      DEMO_SEED_ENABLED: "false"
+      DB_CREATE_IF_MISSING: "false"
+      APP_LOG_LEVEL: INFO
     volumes:
       - uploads:/app/uploads
     ports:
