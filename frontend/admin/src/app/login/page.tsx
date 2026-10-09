@@ -1,156 +1,162 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Phone, ArrowLeft, Loader2, AlertCircle, ShieldCheck, Ticket, Users, TrendingUp } from 'lucide-react';
+import { ChevronDown, CircleHelp, ExternalLink, Loader2, Lock, Send, UserRound } from 'lucide-react';
 import { api } from '@/services/api';
+import { BrandLogo } from '@/components/ui/BrandLogo';
+import { AuthBackground } from '@/components/auth/AuthBackground';
+import { AuthFooter } from '@/components/auth/AuthFooter';
+import { FloatingThemeToggle } from '@/components/ui/FloatingThemeToggle';
+import { LoginIllustration } from '@/components/auth/LoginIllustration';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { useAdminAuthStore } from '@/stores/useAdminAuthStore';
+import { normalizeIranMobile } from '@/lib/format';
+import { cn } from '@/lib/cn';
+
+const USER_SITE_URL = process.env.NEXT_PUBLIC_USER_SITE_URL || '/';
 
 export default function AdminLoginPage() {
   const [mobile, setMobile] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { data: settings } = useSiteSettings();
+  const hydrated = useAdminAuthStore((s) => s.hydrated);
+  const token = useAdminAuthStore((s) => s.token);
+
+  useEffect(() => {
+    if (hydrated && token) router.replace('/dashboard');
+  }, [hydrated, token, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const cleanedMobile = mobile.trim();
-    if (!/^09\d{9}$/.test(cleanedMobile)) {
-      setError('شماره تلفن همراه وارد شده معتبر نیست. (نمونه: 09123456789)');
+    const normalized = normalizeIranMobile(mobile);
+    if (!normalized) {
+      setError('شماره تلفن همراه معتبر نیست. نمونه: ۰۹۱۲۳۴۵۶۷۸۹');
       return;
     }
 
     setLoading(true);
-
     try {
-      await api.post('/auth/admin/login', { mobile: cleanedMobile });
-      localStorage.setItem('pending_admin_mobile', cleanedMobile);
+      await api.post('/auth/admin/login', { mobile: normalized });
+      sessionStorage.setItem('pending_admin_mobile', normalized);
       router.push('/verify');
-    } catch (err: any) {
-      if (err?.message) {
-        setError(err.message);
-      } else {
-        // Fallback for development/testing if backend endpoint isn't live
-        localStorage.setItem('pending_admin_mobile', cleanedMobile);
-        router.push('/verify');
-      }
+    } catch (err) {
+      setError((err as { message?: string })?.message || 'ارسال کد تأیید با خطا مواجه شد.');
     } finally {
       setLoading(false);
     }
   };
 
+  const helpHref = settings?.contact_phone
+    ? `tel:${settings.contact_phone.replace(/[^\d+]/g, '')}`
+    : settings?.contact_email
+      ? `mailto:${settings.contact_email}`
+      : undefined;
+
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden dir-rtl">
-      {/* Background Decorative Gradients */}
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-page">
+      <AuthBackground />
+      <FloatingThemeToggle />
 
-      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-
-        {/* Left Stats/Banner Area (Desktop) */}
-        <div className="hidden lg:flex lg:col-span-6 flex-col justify-center space-y-6 text-right pr-4">
-          <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-full text-blue-400 text-sm font-medium w-fit">
-            <ShieldCheck className="w-4 h-4" />
-            <span>سامانه جامع مدیریت بلیت‌فروشی</span>
+      <main className="relative z-10 mx-auto grid w-full max-w-[1400px] flex-1 grid-cols-1 items-center gap-10 px-4 pt-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] lg:gap-16 lg:px-14 lg:pt-14">
+        <div className="mx-auto w-full max-w-[640px] rounded-[22px] border border-line/60 bg-surface px-6 py-9 shadow-[0_20px_60px_rgb(30_70_140_/_0.10)] sm:px-11 sm:py-12">
+          <div className="flex justify-center">
+            <BrandLogo width={200} className="h-auto w-[150px] sm:w-[200px]" />
           </div>
 
-          <h1 className="text-4xl font-extrabold text-white leading-tight">
-            مرکز همایش و نمایش جوان
-          </h1>
-          <p className="text-slate-400 text-base leading-relaxed max-w-md">
-            پنل یکپارچه مدیریت کنسرت‌ها، همایش‌ها و رویدادهای فرهنگی. مدیریت هوشمند فروش، سانس‌ها و گزارش‌های لحظه‌ای.
+          <h1 className="mt-6 text-center text-[28px] font-black text-ink sm:text-[38px]">ورود به پنل مدیریت</h1>
+          <p className="mx-auto mt-4 max-w-[520px] text-center text-[15px] leading-8 text-muted sm:text-[17px]">
+            برای دسترسی به قابلیت‌های مدیریت رویدادها، فروش، گزارش‌ها و سایر امکانات، وارد حساب مدیریتی خود شوید.
           </p>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 max-w-md">
-            <div className="bg-slate-800/80 border border-slate-700/60 p-4 rounded-2xl flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center shrink-0">
-                <Ticket className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xl font-bold text-white">+۵۰,۰۰۰</div>
-                <div className="text-xs text-slate-400">بلیت صادر شده</div>
-              </div>
+          <form onSubmit={handleSubmit} noValidate className="mt-8">
+            <label htmlFor="mobile" className="mb-3 flex items-center gap-2 text-[15px] font-medium text-ink">
+              <UserRound className="size-5 text-ink/80" strokeWidth={1.8} />
+              شماره تلفن همراه
+            </label>
+
+            <div
+              className={cn(
+                'flex h-[62px] items-stretch overflow-hidden rounded-xl border bg-surface transition focus-within:ring-4',
+                error
+                  ? 'border-danger/60 focus-within:ring-danger/10'
+                  : 'border-line-strong focus-within:border-brand-500/60 focus-within:ring-brand-500/10',
+              )}
+            >
+              <span className="flex shrink-0 items-center gap-2 border-l border-line px-5 text-[17px] font-bold text-ink" dir="ltr">
+                <ChevronDown className="size-4 text-ink/70" />
+                <span>+۹۸</span>
+              </span>
+              <input
+                id="mobile"
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel-national"
+                dir="ltr"
+                placeholder="۰۹۱۲ xxx xxxx"
+                value={mobile}
+                onChange={(e) => {
+                  setMobile(e.target.value);
+                  if (error) setError('');
+                }}
+                maxLength={16}
+                aria-invalid={!!error}
+                aria-describedby={error ? 'mobile-error' : undefined}
+                className="tabular min-w-0 flex-1 bg-transparent px-5 text-left text-[18px] tracking-wide text-ink outline-none placeholder:text-muted/70"
+                autoFocus
+              />
             </div>
-
-            <div className="bg-slate-800/80 border border-slate-700/60 p-4 rounded-2xl flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center shrink-0">
-                <TrendingUp className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="text-xl font-bold text-white">۹۹.۹٪</div>
-                <div className="text-xs text-slate-400">پایداری سیستم</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Login Form Card */}
-        <div className="lg:col-span-6 w-full max-w-md mx-auto">
-          <div className="bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-6 sm:p-10 shadow-2xl">
-
-            {/* Header / Logo Section */}
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30 shadow-lg shadow-blue-500/10">
-                <ShieldCheck className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-bold text-white mb-2">ورود به پنل مدیریت</h2>
-              <p className="text-slate-400 text-sm">لطفا شماره تلفن همراه خود را وارد کنید</p>
-            </div>
-
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 mb-6 flex items-start gap-3 text-red-400 text-sm">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                <span>{error}</span>
-              </div>
+              <p id="mobile-error" role="alert" className="mt-2 text-[13px] font-medium text-danger">
+                {error}
+              </p>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  شماره تلفن همراه
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    dir="ltr"
-                    placeholder="09123456789"
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
-                    maxLength={11}
-                    className="w-full bg-slate-900/90 border border-slate-700 focus:border-blue-500 text-white rounded-2xl py-3.5 px-4 pr-11 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-600"
-                    autoFocus
-                  />
-                  <Phone className="w-5 h-5 text-slate-500 absolute right-3.5 top-4" />
-                </div>
-                <p className="text-xs text-slate-500 mt-2">
-                  کد یک‌بار مصرف به این شماره ارسال خواهد شد.
-                </p>
-              </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-5 flex h-[62px] w-full items-center justify-center gap-3 rounded-xl bg-brand-600 text-[18px] font-bold text-white shadow-cta transition hover:bg-brand-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="size-5 animate-spin" />
+                  در حال ارسال کد...
+                </>
+              ) : (
+                <>
+                  <Send className="size-5 -scale-x-100" />
+                  دریافت کد تأیید
+                </>
+              )}
+            </button>
+          </form>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/25 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <span>دریافت کد تأیید</span>
-                    <ArrowLeft className="w-5 h-5" />
-                  </>
-                )}
-              </button>
-            </form>
+          <div className="mt-5 flex items-start gap-3 rounded-xl bg-surface-2 px-5 py-4 text-[14px] leading-7 text-ink/80 sm:text-[15px]">
+            <Lock className="mt-1 size-5 shrink-0 text-ink/70" strokeWidth={1.8} />
+            <p>فقط شماره‌های ثبت‌شده به عنوان مدیر امکان ورود به پنل مدیریت را دارند.</p>
+          </div>
 
-            <div className="mt-8 pt-6 border-t border-slate-700/60 text-center text-xs text-slate-500">
-              شماره تست مدیر: <code className="text-blue-400 font-mono">09123456789</code> | کد OTP: <code className="text-blue-400 font-mono">1111</code>
-            </div>
+          <div className="mt-8 flex items-center justify-center gap-6 border-t border-line pt-7 text-[15px] font-medium text-brand-600 sm:gap-12">
+            <a href={helpHref} className={cn('flex items-center gap-2 hover:text-brand-700', !helpHref && 'pointer-events-none opacity-60')}>
+              <CircleHelp className="size-5" />
+              نیاز به کمک دارید؟
+            </a>
+            <span className="h-6 w-px bg-line" />
+            <a href={USER_SITE_URL} className="flex items-center gap-2 hover:text-brand-700">
+              بازگشت به سایت
+              <ExternalLink className="size-5" />
+            </a>
           </div>
         </div>
 
-      </div>
+        <LoginIllustration />
+      </main>
+
+      <AuthFooter />
     </div>
   );
 }

@@ -1,0 +1,109 @@
+# Start order: db -> backend -> admin -> user. Each service waits until the previous one is healthy.
+# Images and packages come from the ParsPack mirrors (docker.abrha.net / mirror.abrha.net).
+# Before `docker compose up -d --build`: build the backend jar (./gradlew clean bootJar) and copy .env.example to .env.
+
+services:
+  db:
+    image: ${REGISTRY:-docker.abrha.net}/postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-youth_event}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
+      TZ: Asia/Tehran
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      args:
+        REGISTRY: ${REGISTRY:-docker.abrha.net}
+    image: javanticket-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # prod profile switches off the demo/test seeders and DB auto-create (@Profile("!prod"))
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-youth_event}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-1234}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      SMS_PROVIDER: ${SMS_PROVIDER:-kavenegar}
+      KAVENEGAR_API_KEY: ${KAVENEGAR_API_KEY:-}
+      KAVENEGAR_OTP_TEMPLATE: ${KAVENEGAR_OTP_TEMPLATE:-otp}
+      SERVER_PORT: 8081
+      PAYMENT_MODE: ${PAYMENT_MODE:-none}
+      DEMO_SEED_ENABLED: "false"
+      DB_CREATE_IF_MISSING: "false"
+      APP_LOG_LEVEL: INFO
+    volumes:
+      - uploads:/app/uploads
+    ports:
+      - "${BACKEND_PORT:-8081}:8081"
+    healthcheck:
+      # Tomcat opens the port only after the Spring context (and Flyway migrations) are ready.
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/8081"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+
+  admin:
+    build:
+      context: ./frontend/admin
+      args:
+        REGISTRY: ${REGISTRY:-docker.abrha.net}
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:?set PUBLIC_API_URL in .env}
+        NEXT_PUBLIC_USER_SITE_URL: ${PUBLIC_USER_SITE_URL:-}
+    image: javanticket-admin
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      # Server-side rendering talks to the backend over the Docker network.
+      API_INTERNAL_URL: http://backend:8081/api/v1
+    ports:
+      - "${ADMIN_PORT:-3002}:3002"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/admin/login').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  user:
+    build:
+      context: ./frontend/user
+      args:
+        REGISTRY: ${REGISTRY:-docker.abrha.net}
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:?set PUBLIC_API_URL in .env}
+    image: javanticket-user
+    restart: unless-stopped
+    depends_on:
+      admin:
+        condition: service_healthy
+    environment:
+      API_INTERNAL_URL: http://backend:8081/api/v1
+    ports:
+      - "${USER_PORT:-3003}:3003"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3003/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+volumes:
+  db-data:
+  uploads:

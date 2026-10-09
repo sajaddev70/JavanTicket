@@ -1,149 +1,180 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, Edit2, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
-import { api } from '@/services/api';
-import { useUserAuthStore } from '@/stores/useUserAuthStore';
+import { Clock3, Loader2, LogIn, Pencil, Phone, RefreshCw } from 'lucide-react';
+import { api, apiPost } from '@/services/api';
+import { useUserAuthStore, type UserProfile } from '@/stores/useUserAuthStore';
+import { AuthShell } from '@/components/auth/AuthShell';
+import { OtpInput } from '@/components/auth/OtpInput';
+import { maskMobile, toFaDigits } from '@/lib/format';
+import { cn } from '@/lib/cn';
+
+const OTP_LENGTH = 4;
+const RESEND_SECONDS = 120;
+const emptyCode = () => Array<string>(OTP_LENGTH).fill('');
+const noopSubscribe = () => () => {};
+
+interface VerifyResponse {
+  accessToken: string;
+  user: UserProfile;
+}
 
 export default function UserVerifyPage() {
-  const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState(['', '', '', '']);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [timer, setTimer] = useState(120);
-  const inputRefs = [
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-    useRef<HTMLInputElement>(null),
-  ];
-
   const router = useRouter();
-  const setAuth = useUserAuthStore((state: any) => state.setAuth);
+  const setAuth = useUserAuthStore((s) => s.setAuth);
+  // undefined while rendering on the server; null when no login is pending.
+  const mobile = useSyncExternalStore(noopSubscribe, () => sessionStorage.getItem('pending_user_mobile'), () => undefined);
+  const [otp, setOtp] = useState<string[]>(emptyCode);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
 
   useEffect(() => {
-    const pendingMobile = localStorage.getItem('pending_user_mobile');
-    if (!pendingMobile) {
-      router.replace('/login');
-      return;
-    }
-    setMobile(pendingMobile);
+    if (mobile === null) router.replace('/login');
+  }, [mobile, router]);
 
-    const interval = setInterval(() => {
-      setTimer((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
+  useEffect(() => {
+    if (secondsLeft <= 0) return;
+    const id = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [secondsLeft]);
 
-    return () => clearInterval(interval);
-  }, [router]);
-
-  const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-
-    if (value && index < 3) {
-      inputRefs[index + 1].current?.focus();
-    }
-
-    if (newOtp.every((digit) => digit !== '') && value) {
-      verifyCode(newOtp.join(''));
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs[index - 1].current?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').trim();
-    if (/^\d{4}$/.test(pastedData)) {
-      const digits = pastedData.split('');
-      setOtp(digits);
-      inputRefs[3].current?.focus();
-      verifyCode(pastedData);
-    }
-  };
-
-  const verifyCode = async (code: string) => {
-    setError('');
-    setLoading(true);
-
-    try {
-      const res: any = await api.post('/auth/user/verify', {
-        mobile,
-        code,
-      });
-
-      if (res?.data) {
-        setAuth(res.data.user, res.data.accessToken);
-        localStorage.removeItem('pending_user_mobile');
-        router.replace('/');
+  const verify = useCallback(
+    async (code: string) => {
+      if (!mobile || verifying || code.length !== OTP_LENGTH) return;
+      setError('');
+      setNotice('');
+      setVerifying(true);
+      try {
+        const data = await apiPost<VerifyResponse>('/auth/user/verify', { mobile, code });
+        setAuth(data.user, data.accessToken);
+        sessionStorage.removeItem('pending_user_mobile');
+        const next = sessionStorage.getItem('login_next');
+        sessionStorage.removeItem('login_next');
+        router.replace(next && next.startsWith('/') && !next.startsWith('//') ? next : '/');
+      } catch (err) {
+        setError((err as { message?: string })?.message || 'کد تأیید واردشده صحیح نیست.');
+        setOtp(emptyCode());
+        setVerifying(false);
       }
-    } catch (err: any) {
-      setError(err?.message || 'کد تأیید واردشده صحیح نیست.');
-      setOtp(['', '', '', '']);
-      inputRefs[0].current?.focus();
+    },
+    [mobile, verifying, router, setAuth],
+  );
+
+  const resend = async () => {
+    if (!mobile || secondsLeft > 0 || resending) return;
+    setError('');
+    setNotice('');
+    setResending(true);
+    try {
+      await api.post('/auth/user/login', { mobile });
+      setSecondsLeft(RESEND_SECONDS);
+      setOtp(emptyCode());
+      setNotice('کد تأیید جدید ارسال شد.');
+    } catch (err) {
+      setError((err as { message?: string })?.message || 'ارسال مجدد کد با خطا مواجه شد.');
     } finally {
-      setLoading(false);
+      setResending(false);
     }
   };
 
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
+  const minutes = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+  const seconds = String(secondsLeft % 60).padStart(2, '0');
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600/20 text-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2">تأیید کد ورود</h1>
-          <p className="text-slate-400 text-sm dir-ltr font-mono">{mobile}</p>
-        </div>
+    <AuthShell>
+      <h1 className="mt-6 text-center text-[26px] font-black text-ink sm:text-[30px]">تأیید شماره همراه</h1>
+      <p className="mt-3 text-center text-[15px] text-muted">
+        کد تأیید {toFaDigits(String(OTP_LENGTH))} رقمی به شماره زیر ارسال شد.
+      </p>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 text-red-400 text-sm">
-            {error}
-          </div>
-        )}
-
-        <div className="space-y-6">
-          <div className="flex justify-center gap-3 dir-ltr" onPaste={handlePaste}>
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                ref={inputRefs[index]}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-14 h-16 text-center bg-slate-950 border border-slate-800 focus:border-blue-500 text-white rounded-xl text-2xl font-mono focus:outline-none"
-                autoFocus={index === 0}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={() => verifyCode(otp.join(''))}
-            disabled={loading || otp.some((d) => !d)}
-            className="w-full min-h-[44px] bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-all"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span>تأیید و ادامه</span>}
-          </button>
-        </div>
+      <div className="mx-auto mt-5 flex h-14 max-w-[340px] items-center justify-center gap-3 rounded-xl bg-surface-2 text-[18px] font-bold text-ink">
+        <Phone className="size-5 text-ink/80" strokeWidth={1.8} />
+        <span dir="ltr" className="tabular">
+          {mobile ? maskMobile(mobile) : '—'}
+        </span>
       </div>
-    </div>
+      <div className="mt-3 flex justify-center">
+        <button
+          type="button"
+          onClick={() => router.push('/login')}
+          className="flex min-h-11 items-center gap-2 px-2 text-[15px] font-semibold text-brand-600 hover:text-brand-700"
+        >
+          <Pencil className="size-[18px]" />
+          ویرایش شماره
+        </button>
+      </div>
+
+      <div className="mt-4">
+        <OtpInput
+          value={otp}
+          onChange={(v) => {
+            setOtp(v);
+            if (error) setError('');
+          }}
+          onComplete={verify}
+          disabled={verifying}
+          invalid={!!error}
+        />
+      </div>
+
+      <div className="mt-4 min-h-6 text-center text-[14px]" aria-live="polite">
+        {error && <p className="font-medium text-danger-fg">{error}</p>}
+        {!error && notice && <p className="font-medium text-success-fg">{notice}</p>}
+      </div>
+
+      <div className="mt-1 flex items-center justify-center gap-3 text-[15px] text-muted">
+        {secondsLeft > 0 ? (
+          <>
+            <Clock3 className="size-5 text-brand-600" />
+            <span className="tabular font-bold text-brand-600" dir="ltr">
+              {toFaDigits(`${minutes}:${seconds}`)}
+            </span>
+            <span>تا ارسال مجدد کد</span>
+          </>
+        ) : (
+          <span>کد را دریافت نکردید؟</span>
+        )}
+      </div>
+
+      <div className="mt-5 flex items-center gap-4">
+        <span className="h-px flex-1 bg-line" />
+        <button
+          type="button"
+          onClick={resend}
+          disabled={secondsLeft > 0 || resending}
+          className={cn(
+            'flex min-h-11 items-center gap-2 text-[15px] font-bold transition',
+            secondsLeft > 0 ? 'cursor-not-allowed text-brand-600/45' : 'text-brand-600 hover:text-brand-700',
+          )}
+        >
+          <RefreshCw className={cn('size-5', resending && 'animate-spin')} />
+          ارسال مجدد کد
+        </button>
+        <span className="h-px flex-1 bg-line" />
+      </div>
+
+      <button
+        type="button"
+        onClick={() => verify(otp.join(''))}
+        disabled={otp.some((d) => !d) || verifying}
+        className="mt-6 flex h-[58px] w-full items-center justify-center gap-3 rounded-xl bg-brand-600 text-[17px] font-bold text-white shadow-cta transition hover:bg-brand-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {verifying ? (
+          <>
+            <Loader2 className="size-5 animate-spin" />
+            در حال بررسی...
+          </>
+        ) : (
+          <>
+            تأیید و ورود
+            <LogIn className="size-6 -scale-x-100" />
+          </>
+        )}
+      </button>
+    </AuthShell>
   );
 }
