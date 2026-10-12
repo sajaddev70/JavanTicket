@@ -112,3 +112,24 @@ export function faTimeRange(startIso?: string | null, endIso?: string | null): s
   if (!startIso) return "";
   return endIso ? `${faTime(startIso)} - ${faTime(endIso)}` : faTime(startIso);
 }
+
+/** Amount in Toman, e.g. "۱۲۰٬۰۰۰ تومان". */
+export function faToman(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "—";
+  return `${faNumber(Math.round(Number(value)))} تومان`;
+}
+
+/** Short amount for tiles and axes: "۱۲٫۵ میلیون", "۳٫۲ میلیارد". */
+export function faCompact(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  const abs = Math.abs(value);
+  if (abs >= 1e9) return `${percentFormat.format(value / 1e9)} میلیارد`;
+  if (abs >= 1e6) return `${percentFormat.format(value / 1e6)} میلیون`;
+  if (abs >= 1e3) return `${percentFormat.format(value / 1e3)} هزار`;
+  return numberFormat.format(value);
+}
+
+/** Local "YYYY-MM-DD" of a date, as the API's date parameters expect. */
+export function isoDay(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}

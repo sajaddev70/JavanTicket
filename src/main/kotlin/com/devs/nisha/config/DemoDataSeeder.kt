@@ -51,7 +51,13 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
         seedEventPages(events)
         val users = seedUsers()
         seedOrders(users, sessions)
-        seedSchools(cities)
+        val organizations = seedSchools(cities, sessions)
+        seedInvoices(organizations)
+        seedSettlements(events)
+        seedGateScans()
+        val staff = seedStaff()
+        seedCrm(users, organizations, staff)
+        seedActivityLog(staff)
         seedAlerts()
         seedSiteContent(categories)
         jdbc.update(
@@ -65,7 +71,8 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
         jdbc.update(
             "TRUNCATE seat_reservations, session_prices, seats, hall_sections, tickets, orders, sessions, event_stats, event_topics, " +
                 "event_speakers, event_gallery, event_faqs, banners, events, group_reservations, organizations, halls, cities, categories, " +
-                "system_alerts, discount_codes, page_blocks, site_features, home_sections, links, link_groups, pages, newsletter_subscribers " +
+                "system_alerts, discount_codes, page_blocks, site_features, home_sections, links, link_groups, pages, newsletter_subscribers, " +
+                "invoice_items, invoices, settlements, gate_scans, crm_interactions, activity_logs " +
                 "RESTART IDENTITY CASCADE",
             emptyMap<String, Any>(),
         )
@@ -281,14 +288,14 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
     private fun seedUsers(): List<Long> {
         val first = listOf("محمد", "زهرا", "علی", "فاطمه", "حسین", "مریم", "رضا", "سارا", "امیر", "نرگس", "مهدی", "الهام", "سعید", "نازنین", "حامد", "شیما", "پویا", "ترانه", "کاوه", "یاسمن")
         val last = listOf("احمدی", "محمدی", "رضایی", "حسینی", "کریمی", "موسوی", "جعفری", "صادقی", "رحیمی", "نوروزی", "کاظمی", "قاسمی", "اکبری", "شریفی", "طاهری")
-        return (1..80).map { i ->
+        return (1..1200).map { i ->
             val name = "${first[i % first.size]} ${last[(i * 7) % last.size]}"
             crud.insert(
                 "users",
                 linkedMapOf(
                     "mobile" to "0912%07d".format(1_000_000 + i * 7919 % 9_000_000), "full_name" to name,
-                    "email" to "user$i@example.com", "status" to "ACTIVE", "user_type" to "USER",
-                    "created_at" to Timestamp.valueOf(LocalDateTime.now().minusDays(random.nextLong(1, 300))),
+                    "email" to "user$i@example.com", "status" to if (i % 97 == 0) "DISABLED" else "ACTIVE", "user_type" to "USER",
+                    "created_at" to Timestamp.valueOf(LocalDateTime.now().minusDays(if (i > 1140) random.nextLong(1, 25) else random.nextLong(40, 700))),
                 ),
             )
         }
@@ -319,14 +326,15 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
                 val orderId = crud.insert(
                     "orders",
                     linkedMapOf(
-                        "order_number" to number, "user_id" to users[random.nextInt(users.size)], "session_id" to session.id,
+                        "order_number" to number, "user_id" to customer(users, offset), "session_id" to session.id,
                         "total_amount" to BigDecimal(unit * qty), "status" to "PAID", "payment_method" to "ONLINE",
+                        "tracking_code" to "%012d".format(random.nextLong(100_000_000_000L, 999_999_999_999L)),
                         "created_at" to Timestamp.valueOf(createdAt), "paid_at" to Timestamp.valueOf(createdAt),
                     ),
                 )
                 repeat(qty) { t ->
                     tickets += mapOf(
-                        "code" to "$number-${t + 1}", "order" to orderId, "user" to users[random.nextInt(users.size)],
+                        "code" to "$number-${t + 1}", "order" to orderId, "user" to null,
                         "session" to session.id, "price" to BigDecimal(unit), "at" to Timestamp.valueOf(createdAt),
                     )
                 }
@@ -345,43 +353,320 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
             )
         }
         jdbc.batchUpdate(
-            "INSERT INTO tickets (ticket_code, order_id, user_id, session_id, price, status, created_at) " +
-                "VALUES (:code, :order, :user, :session, :price, 'VALID', :at)",
+            "INSERT INTO tickets (ticket_code, order_id, user_id, session_id, price, status, seat_label, created_at) " +
+                "VALUES (:code, :order, (SELECT user_id FROM orders WHERE id = :order), :session, :price, 'VALID', 'ورود عمومی', :at)",
             tickets.toTypedArray(),
         )
-    }
-
-    private fun seedSchools(cities: Map<String, Long>) {
-        val names = listOf(
-            "دبستان شهید بهشتی", "دبیرستان علامه حلی", "دبستان دخترانه فرزانگان", "هنرستان فنی شهید چمران", "دبیرستان نمونه دولتی امام",
-            "دبستان پسرانه سعادت", "مدرسه هوشمند فردا", "دبیرستان دخترانه فرهنگ", "دبستان غیرانتفاعی مهر", "سازمان فرهنگی شهرداری",
-            "دانشگاه صنعتی اصفهان", "انجمن علمی دانش‌آموزی",
+        // Tickets of sessions that already started were mostly scanned at the gate.
+        jdbc.update(
+            "UPDATE tickets t SET status = 'USED', used_at = s.start_time - INTERVAL '40 minutes' + (t.id % 55) * INTERVAL '1 minute' " +
+                "FROM sessions s WHERE s.id = t.session_id AND s.start_time < LOCALTIMESTAMP AND t.id % 9 <> 0",
+            emptyMap<String, Any>(),
         )
-        val cityIds = cities.values.toList()
-        val orgs = names.mapIndexed { i, n ->
+        // Some refunds (upcoming sessions only) and a few unpaid checkouts.
+        jdbc.update(
+            "WITH r AS (SELECT o.id FROM orders o JOIN sessions s ON s.id = o.session_id WHERE o.status = 'PAID' AND s.start_time > LOCALTIMESTAMP " +
+                "  AND o.id % 61 = 0) " +
+                "UPDATE orders o SET status = 'REFUNDED', refunded_at = o.created_at + INTERVAL '2 days', " +
+                "  refund_reason = 'انصراف مشتری از حضور در رویداد' FROM r WHERE r.id = o.id",
+            emptyMap<String, Any>(),
+        )
+        jdbc.update("UPDATE orders SET refunded_at = LOCALTIMESTAMP - INTERVAL '1 hour' WHERE status = 'REFUNDED' AND refunded_at > LOCALTIMESTAMP", emptyMap<String, Any>())
+        jdbc.update("UPDATE tickets t SET status = 'CANCELLED' FROM orders o WHERE o.id = t.order_id AND o.status = 'REFUNDED'", emptyMap<String, Any>())
+        repeat(6) {
+            val session = sellable.filter { it.start.isAfter(LocalDateTime.now()) }.let { it[random.nextInt(it.size)] }
             crud.insert(
-                "organizations",
+                "orders",
                 linkedMapOf(
-                    "name" to n, "org_type" to if (n.startsWith("سازمان") || n.startsWith("انجمن") || n.startsWith("دانشگاه")) "ORGANIZATION" else "SCHOOL",
-                    "city_id" to cityIds[i % 5], "contact_name" to "مسئول ${i + 1}", "contact_mobile" to "0913%07d".format(2_000_000 + i * 131),
+                    "order_number" to "JT-${orderNo++}", "user_id" to customer(users, 0), "session_id" to session.id, "quantity" to 2,
+                    "total_amount" to BigDecimal(session.event.def.price * 2), "status" to "PENDING", "payment_method" to "ONLINE",
+                    "created_at" to Timestamp.valueOf(LocalDateTime.now().minusMinutes(random.nextLong(2, 50))),
                 ),
             )
         }
-        val schools = orgs.filterIndexed { i, _ -> i < 9 }
+    }
+
+    /**
+     * A few frequent buyers and a long tail of occasional ones (for the CRM segments). The newest 150 accounts never
+     * buy, and every 7th customer stopped buying a month ago ("at risk" when they bought before that).
+     */
+    private fun customer(users: List<Long>, daysAgo: Int): Long {
+        while (true) {
+            val r = random.nextDouble()
+            val index = (r * r * (users.size - 150)).toInt()
+            if (daysAgo <= 32 && index % 7 == 6) continue
+            return users[index]
+        }
+    }
+
+    private fun seedSchools(cities: Map<String, Long>, sessions: List<SessionRef>): List<Long> {
+        val names = listOf(
+            "دبستان شهید بهشتی", "دبیرستان علامه حلی", "دبستان دخترانه فرزانگان", "هنرستان فنی شهید چمران", "دبیرستان نمونه دولتی امام",
+            "دبستان پسرانه سعادت", "مدرسه هوشمند فردا", "دبیرستان دخترانه فرهنگ", "دبستان غیرانتفاعی مهر", "سازمان فرهنگی شهرداری",
+            "دانشگاه صنعتی اصفهان", "انجمن علمی دانش‌آموزی", "شرکت فناوران نوآور", "دانشگاه شیراز",
+        )
+        val contacts = listOf("آقای کریمی", "خانم رضایی", "آقای موسوی", "خانم احمدی", "آقای جعفری", "خانم صادقی", "آقای نوروزی")
+        val cityIds = cities.values.toList()
+        val orgs = names.mapIndexed { i, n ->
+            val type = when {
+                n.startsWith("دانشگاه") -> "UNIVERSITY"
+                n.startsWith("شرکت") -> "COMPANY"
+                n.startsWith("سازمان") || n.startsWith("انجمن") -> "ORGANIZATION"
+                else -> "SCHOOL"
+            }
+            crud.insert(
+                "organizations",
+                linkedMapOf(
+                    "name" to n, "org_type" to type, "city_id" to cityIds[i % 5], "contact_name" to contacts[i % contacts.size],
+                    "contact_mobile" to "0913%07d".format(2_000_000 + i * 131), "phone" to "0%d-%08d".format(21 + i % 5 * 10, 33_000_000 + i * 4_517),
+                    "email" to "info${i + 1}@school.example.ir", "address" to "خیابان ${listOf("آزادی", "انقلاب", "ولیعصر", "فردوسی", "امام")[i % 5]}، پلاک ${10 + i * 3}",
+                    "economic_code" to "4114%08d".format(10_000_000 + i * 7_211), "members_count" to 200 + i * 85,
+                    "status" to if (i == 12) "INACTIVE" else "ACTIVE",
+                    "created_at" to Timestamp.valueOf(LocalDateTime.now().minusDays(20L + i * 9)),
+                ),
+            )
+        }
+        val buyers = orgs.filterIndexed { i, _ -> i != 12 }
+        val upcoming = sessions.filter { it.start.isAfter(LocalDateTime.now()) && it.event.def.status == "PUBLISHED" }
         val monthStart = today.withDayOfMonth(1)
         listOf(monthStart.minusMonths(1) to 112, monthStart to 125).forEach { (month, count) ->
             val days = if (month == monthStart) today.dayOfMonth else month.lengthOfMonth()
-            repeat(count) {
+            repeat(count) { n ->
+                val seats = 20 + random.nextInt(60)
+                val status = when (random.nextInt(10)) {
+                    0, 1 -> "PENDING"
+                    2 -> "CANCELLED"
+                    else -> if (month == monthStart) "CONFIRMED" else "COMPLETED"
+                }
+                // Recent reservations point at an upcoming session; confirmed ones take its capacity.
+                val session = if (month == monthStart && n % 3 == 0 && upcoming.isNotEmpty()) upcoming[random.nextInt(upcoming.size)] else null
+                val sessionId = session?.let { s ->
+                    if (status != "CONFIRMED") s.id
+                    else s.id.takeIf {
+                        jdbc.update(
+                            "UPDATE sessions SET reserved_seats = reserved_seats + :n WHERE id = :id AND reserved_seats + :n <= capacity",
+                            mapOf("n" to seats, "id" to s.id),
+                        ) > 0
+                    }
+                }
+                val unit = BigDecimal(session?.event?.def?.price ?: (80_000 + random.nextInt(8) * 10_000))
+                val discount = BigDecimal(listOf(0, 10, 15, 20)[random.nextInt(4)])
+                val createdAt = month.plusDays(random.nextLong(days.toLong())).atTime(9 + random.nextInt(8), random.nextInt(60))
                 crud.insert(
                     "group_reservations",
                     linkedMapOf(
-                        "organization_id" to schools[random.nextInt(schools.size)], "seats" to 20 + random.nextInt(60),
-                        "status" to if (random.nextInt(5) == 0) "PENDING" else "CONFIRMED",
-                        "created_at" to Timestamp.valueOf(month.plusDays(random.nextLong(days.toLong())).atTime(10, 0)),
+                        "organization_id" to buyers[random.nextInt(buyers.size)], "session_id" to sessionId, "seats" to seats,
+                        "unit_price" to unit, "discount_percent" to discount,
+                        "total_amount" to unit.multiply(BigDecimal(seats)).multiply(BigDecimal(100) - discount).divide(BigDecimal(100)),
+                        "contact_name" to contacts[random.nextInt(contacts.size)], "status" to status,
+                        "confirmed_at" to if (status == "CONFIRMED" || status == "COMPLETED") Timestamp.valueOf(createdAt.plusDays(1)) else null,
+                        "created_at" to Timestamp.valueOf(createdAt),
                     ),
                 )
             }
         }
+        return orgs
+    }
+
+    /** Pro-forma invoices for part of the group reservations, in every state. */
+    private fun seedInvoices(organizations: List<Long>) {
+        val reservations = jdbc.queryForList(
+            "SELECT g.id, g.organization_id, g.seats, g.unit_price, g.discount_percent, g.status, g.created_at, e.title " +
+                "FROM group_reservations g LEFT JOIN sessions s ON s.id = g.session_id LEFT JOIN events e ON e.id = s.event_id " +
+                "WHERE g.status <> 'CANCELLED' AND g.id % 4 = 0 ORDER BY g.id",
+            emptyMap<String, Any>(),
+        )
+        reservations.forEachIndexed { i, g ->
+            val created = (g["created_at"] as Timestamp).toLocalDateTime().plusDays(1)
+            val status = when {
+                g["status"] == "PENDING" -> if (i % 2 == 0) "DRAFT" else "ISSUED"
+                g["status"] == "COMPLETED" -> "PAID"
+                else -> listOf("PAID", "PAID", "ISSUED", "ISSUED", "CANCELLED")[i % 5]
+            }
+            val seats = (g["seats"] as Number).toInt()
+            val unit = g["unit_price"] as BigDecimal
+            val subtotal = unit.multiply(BigDecimal(seats))
+            val discount = subtotal.multiply(g["discount_percent"] as BigDecimal).divide(BigDecimal(100))
+            val tax = (subtotal - discount).multiply(BigDecimal(10)).divide(BigDecimal(100))
+            val title = (g["title"] as String?) ?: "برنامه فرهنگی ویژه دانش‌آموزان"
+            val issue = created.toLocalDate()
+            val id = crud.insert(
+                "invoices",
+                linkedMapOf(
+                    "invoice_number" to "PF-TMP-$i", "organization_id" to g["organization_id"], "group_reservation_id" to g["id"],
+                    "title" to "پیش‌فاکتور رزرو گروهی «$title»", "issue_date" to issue,
+                    // A couple of issued invoices are already overdue.
+                    "due_date" to if (status == "ISSUED" && i % 3 == 0) today.minusDays(3) else issue.plusDays(14), "status" to status,
+                    "subtotal" to subtotal, "discount_amount" to discount, "tax_percent" to BigDecimal(10), "tax_amount" to tax,
+                    "total_amount" to subtotal - discount + tax,
+                    "paid_at" to if (status == "PAID") Timestamp.valueOf(minOf(created.plusDays(3), LocalDateTime.now().minusHours(2))) else null,
+                    "created_at" to Timestamp.valueOf(created),
+                ),
+            )
+            jdbc.update("UPDATE invoices SET invoice_number = :n WHERE id = :id", mapOf("n" to "PF-${10_000 + id}", "id" to id))
+            crud.insert("invoice_items", linkedMapOf("invoice_id" to id, "description" to "بلیت گروهی «$title»", "quantity" to seats, "unit_price" to unit, "sort_order" to 0))
+        }
+        // One invoice not tied to a reservation (e.g. a hall rental)
+        val id = crud.insert(
+            "invoices",
+            linkedMapOf(
+                "invoice_number" to "PF-TMP-X", "organization_id" to organizations[9], "title" to "اجاره سالن برای همایش سالانه",
+                "issue_date" to today.minusDays(2), "due_date" to today.plusDays(12), "status" to "ISSUED", "subtotal" to BigDecimal(185_000_000),
+                "discount_amount" to BigDecimal(5_000_000), "tax_percent" to BigDecimal(10), "tax_amount" to BigDecimal(18_000_000),
+                "total_amount" to BigDecimal(198_000_000), "notes" to "شامل تجهیزات صوت و تصویر و پذیرایی",
+            ),
+        )
+        jdbc.update("UPDATE invoices SET invoice_number = :n WHERE id = :id", mapOf("n" to "PF-${10_000 + id}", "id" to id))
+        listOf(Triple("اجاره سالن اصلی (۸ ساعت)", 1, 150_000_000), Triple("تجهیزات صوت و تصویر", 1, 25_000_000), Triple("پذیرایی میان‌وعده", 200, 50_000))
+            .forEachIndexed { i, (d, q, p) ->
+                crud.insert("invoice_items", linkedMapOf("invoice_id" to id, "description" to d, "quantity" to q, "unit_price" to BigDecimal(p), "sort_order" to i))
+            }
+    }
+
+    /** Settlements with the organizers of the best-selling events. */
+    private fun seedSettlements(events: List<Ev>) {
+        val sales = jdbc.queryForList(
+            "SELECT e.id, e.organizer_name, SUM(o.total_amount) AS gross FROM orders o JOIN sessions s ON s.id = o.session_id " +
+                "JOIN events e ON e.id = s.event_id WHERE o.status = 'PAID' AND o.created_at < DATE_TRUNC('week', CURRENT_DATE) " +
+                "GROUP BY e.id, e.organizer_name ORDER BY gross DESC LIMIT 16",
+            emptyMap<String, Any>(),
+        )
+        val statuses = listOf("PAID", "PAID", "PAID", "APPROVED", "PENDING", "PAID", "REJECTED", "PENDING")
+        sales.forEachIndexed { i, row ->
+            val gross = (row["gross"] as BigDecimal).multiply(BigDecimal("0.6")).setScale(0, java.math.RoundingMode.DOWN)
+            val percent = BigDecimal(if (i % 3 == 0) 12 else 10)
+            val commission = gross.multiply(percent).divide(BigDecimal(100), 0, java.math.RoundingMode.HALF_UP)
+            val status = statuses[i % statuses.size]
+            val created = LocalDateTime.now().minusDays(2L + i * 2)
+            val id = crud.insert(
+                "settlements",
+                linkedMapOf(
+                    "settlement_number" to "ST-TMP-$i", "payee_name" to (row["organizer_name"] ?: "برگزارکننده"), "event_id" to row["id"],
+                    "period_from" to today.minusDays(37), "period_to" to today.minusDays(7), "gross_amount" to gross,
+                    "commission_percent" to percent, "commission_amount" to commission, "net_amount" to gross - commission,
+                    "iban" to "IR%024d".format(120_000_000_000_000_000L + i * 7_777_777L), "status" to status,
+                    "reference_code" to if (status == "PAID") "%010d".format(5_000_000_000L + i * 13_579L) else null,
+                    "paid_at" to if (status == "PAID") Timestamp.valueOf(created.plusDays(1)) else null,
+                    "notes" to if (status == "REJECTED") "مغایرت در گزارش فروش؛ نیاز به بررسی مجدد" else null,
+                    "created_at" to Timestamp.valueOf(created),
+                ),
+            )
+            jdbc.update("UPDATE settlements SET settlement_number = :n WHERE id = :id", mapOf("n" to "ST-${10_000 + id}", "id" to id))
+        }
+    }
+
+    /** Gate log of the used tickets, plus some rejected scans. */
+    private fun seedGateScans() {
+        jdbc.update(
+            "INSERT INTO gate_scans (ticket_id, ticket_code, session_id, gate_name, result, scanned_at) " +
+                "SELECT t.id, t.ticket_code, t.session_id, 'گیت ' || (1 + t.id % 3), 'ACCEPTED', t.used_at FROM tickets t " +
+                "WHERE t.status = 'USED' AND t.used_at >= LOCALTIMESTAMP - INTERVAL '14 days'",
+            emptyMap<String, Any>(),
+        )
+        jdbc.update(
+            "INSERT INTO gate_scans (ticket_id, ticket_code, session_id, gate_name, result, scanned_at) " +
+                "SELECT t.id, t.ticket_code, t.session_id, 'گیت ' || (1 + t.id % 3), 'ALREADY_USED', t.used_at + INTERVAL '12 minutes' FROM tickets t " +
+                "WHERE t.status = 'USED' AND t.used_at >= LOCALTIMESTAMP - INTERVAL '14 days' AND t.id % 37 = 0",
+            emptyMap<String, Any>(),
+        )
+        jdbc.update(
+            "INSERT INTO gate_scans (ticket_code, session_id, gate_name, result, scanned_at) " +
+                "SELECT 'JT-' || (900000 + s.id * 7), s.id, 'گیت ۱', 'INVALID', s.start_time - INTERVAL '15 minutes' FROM sessions s " +
+                "WHERE s.start_time < LOCALTIMESTAMP AND s.start_time >= LOCALTIMESTAMP - INTERVAL '14 days' AND s.id % 3 = 0",
+            emptyMap<String, Any>(),
+        )
+    }
+
+    /** Panel staff with limited roles (the main admin is created by MainAdminSeeder). */
+    private fun seedStaff(): List<Long> {
+        val staff = listOf(
+            Triple("09121110001", "سارا محمدی", "EVENT_MANAGER"),
+            Triple("09121110002", "رضا کاظمی", "FINANCE_MANAGER"),
+            Triple("09121110003", "مریم حسینی", "SALES_MANAGER"),
+            Triple("09121110004", "علی نوروزی", "GATE_OPERATOR"),
+            Triple("09121110005", "الهام صادقی", "CONTENT_MANAGER"),
+        )
+        val ids = staff.mapIndexed { i, (mobile, name, role) ->
+            val id = jdbc.queryForList("SELECT id FROM users WHERE mobile = :m", mapOf("m" to mobile), Long::class.java).firstOrNull()
+                ?: crud.insert(
+                    "users",
+                    linkedMapOf(
+                        "mobile" to mobile, "full_name" to name, "email" to "staff${i + 1}@javan.example.ir", "status" to "ACTIVE", "user_type" to "ADMIN",
+                        "created_at" to Timestamp.valueOf(LocalDateTime.now().minusDays(90L - i * 10)),
+                        "last_login_at" to Timestamp.valueOf(LocalDateTime.now().minusHours(i * 7L + 1)),
+                    ),
+                )
+            jdbc.update(
+                "INSERT INTO user_roles (user_id, role_id) SELECT :u, id FROM roles WHERE name = :r ON CONFLICT DO NOTHING",
+                mapOf("u" to id, "r" to role),
+            )
+            id
+        }
+        val main = jdbc.queryForList("SELECT id FROM users WHERE mobile = '09101414285'", emptyMap<String, Any>(), Long::class.java)
+        return (main + ids).filterNotNull()
+    }
+
+    private fun seedCrm(users: List<Long>, organizations: List<Long>, staff: List<Long>) {
+        val topics = listOf(
+            Triple("CALL", "پیگیری خرید بلیت گروهی خانوادگی", "مشتری برای ۸ نفر درخواست تخفیف دارد."),
+            Triple("SUPPORT", "مشکل در دریافت بلیت الکترونیکی", "پیامک بلیت دریافت نشده؛ بلیت مجدداً ارسال شد."),
+            Triple("SMS", "اطلاع‌رسانی رویداد جدید", "ارسال پیامک معرفی جشنواره به مشتریان وفادار."),
+            Triple("EMAIL", "درخواست فاکتور رسمی", "فاکتور رسمی سفارش برای مشتری ایمیل شود."),
+            Triple("CALL", "نظرسنجی پس از رویداد", "رضایت کامل از کیفیت اجرا و نظم ورود."),
+            Triple("MEETING", "جلسه هماهنگی بازدید دانش‌آموزان", "هماهنگی حمل‌ونقل و زمان ورود گروه‌ها."),
+            Triple("CALL", "پیگیری پرداخت پیش‌فاکتور", "قرار شد تا پایان هفته پرداخت انجام شود."),
+        )
+        repeat(36) { i ->
+            val (channel, subject, notes) = topics[i % topics.size]
+            val forOrg = channel == "MEETING" || subject.contains("پیش‌فاکتور")
+            val status = listOf("OPEN", "FOLLOW_UP", "CLOSED", "CLOSED")[i % 4]
+            crud.insert(
+                "crm_interactions",
+                linkedMapOf(
+                    "user_id" to if (forOrg) null else users[(i * 7) % 60], "organization_id" to if (forOrg) organizations[i % organizations.size] else null,
+                    "channel" to channel, "subject" to subject, "notes" to notes, "status" to status,
+                    "follow_up_at" to if (status == "CLOSED") null else Timestamp.valueOf(LocalDateTime.now().plusDays((i % 7) - 2L).withHour(10).withMinute(0)),
+                    "created_by" to staff[i % staff.size], "created_at" to Timestamp.valueOf(LocalDateTime.now().minusDays(i / 2L).minusHours(i % 5L)),
+                ),
+            )
+        }
+    }
+
+    /** Two weeks of panel activity by the staff. */
+    private fun seedActivityLog(staff: List<Long>) {
+        val names = jdbc.queryForList("SELECT id, mobile, full_name FROM users WHERE id IN (:ids)", mapOf("ids" to staff)).associateBy { (it["id"] as Number).toLong() }
+        val actions = listOf(
+            listOf("UPDATE", "sessions", "ویرایش سانس (شناسه %d)"), listOf("CREATE", "events", "ثبت مورد جدید در بخش رویدادها"),
+            listOf("ACTION", "orders", "استرداد سفارش JT-1%05d"), listOf("UPDATE", "halls", "ویرایش در بخش سالن‌ها (شناسه %d)"),
+            listOf("ACTION", "invoices", "تغییر وضعیت پیش‌فاکتور PF-1%04d به صادر شده"), listOf("CREATE", "groupReservations", "ثبت مورد جدید در بخش رزروهای گروهی"),
+            listOf("DELETE", "discounts", "حذف از بخش تخفیف و کد معرف (شناسه %d)"), listOf("UPDATE", "settings", "ویرایش در بخش تنظیمات سامانه"),
+            listOf("ACTION", "settlements", "تغییر وضعیت تسویه ST-1%04d به تأیید شده"), listOf("UPDATE", "pageBlocks", "ویرایش در بخش سربرگ‌ها و بنرهای صفحات (شناسه %d)"),
+        )
+        val rows = mutableListOf<Map<String, Any?>>()
+        for (day in 13 downTo 0) {
+            staff.forEachIndexed { s, userId ->
+                val user = names[userId] ?: return@forEachIndexed
+                val login = LocalDateTime.now().minusDays(day.toLong()).withHour(8 + s).withMinute(5 + s * 7)
+                if (login.isAfter(LocalDateTime.now())) return@forEachIndexed
+                val base = mapOf("user" to userId, "mobile" to user["mobile"], "name" to user["full_name"], "ip" to "185.12.${60 + s}.${20 + day}")
+                rows += base + mapOf("action" to "LOGIN", "section" to null, "description" to "ورود به پنل مدیریت", "method" to "POST", "path" to "/api/v1/auth/admin/verify", "at" to Timestamp.valueOf(login))
+                repeat(1 + random.nextInt(4)) { k ->
+                    val (action, section, text) = actions[random.nextInt(actions.size)]
+                    val at = login.plusMinutes(10L + k * 23 + random.nextInt(20))
+                    if (at.isAfter(LocalDateTime.now())) return@repeat
+                    rows += base + mapOf(
+                        "action" to action, "section" to section, "description" to text.format(random.nextInt(1, 400)),
+                        "method" to when (action) { "DELETE" -> "DELETE"; "UPDATE" -> "PUT"; else -> "POST" }, "path" to "/api/v1/admin/$section",
+                        "at" to Timestamp.valueOf(at),
+                    )
+                }
+            }
+        }
+        jdbc.batchUpdate(
+            "INSERT INTO activity_logs (user_id, actor_mobile, actor_name, action, section, description, method, path, status_code, ip_address, user_agent, created_at) " +
+                "VALUES (:user, :mobile, :name, :action, :section, :description, :method, :path, 200, :ip, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0', :at)",
+            rows.toTypedArray(),
+        )
     }
 
     private fun seedAlerts() {
@@ -552,7 +837,7 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
     private data class SessionRef(val id: Long, val event: Ev, val start: LocalDateTime, val capacity: Int)
 
     private companion object {
-        const val SEED_VERSION = "2026-10-design-v2"
+        const val SEED_VERSION = "2026-10-admin-v4"
 
         private fun t(h: Int, m: Int = 0): LocalTime = LocalTime.of(h, m)
 

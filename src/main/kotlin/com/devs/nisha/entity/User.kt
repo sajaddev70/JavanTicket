@@ -48,6 +48,9 @@ class User(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null
 
+    @Column(name = "last_login_at")
+    var lastLoginAt: LocalDateTime? = null
+
     @Column(name = "created_at", updatable = false)
     var createdAt: LocalDateTime? = null
 

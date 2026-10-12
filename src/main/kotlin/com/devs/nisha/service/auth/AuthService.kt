@@ -6,8 +6,11 @@ import com.devs.nisha.entity.User
 import com.devs.nisha.exception.BusinessException
 import com.devs.nisha.repository.OtpRepository
 import com.devs.nisha.repository.UserRepository
+import com.devs.nisha.security.AdminAccess
 import com.devs.nisha.security.JwtProvider
+import com.devs.nisha.service.activity.ActivityLogService
 import com.devs.nisha.service.sms.SmsService
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -19,6 +22,8 @@ class AuthService(
     private val otpRepository: OtpRepository,
     private val smsService: SmsService,
     private val jwtProvider: JwtProvider,
+    private val adminAccess: AdminAccess,
+    private val activity: ActivityLogService,
     @Value("\${sms.dev-code:1111}") private val devOtpCode: String,
 ) {
 
@@ -31,11 +36,14 @@ class AuthService(
         saveAndSendOtp(mobile, ADMIN)
     }
 
-    fun verifyAdminOtp(mobile: String, code: String): AuthResponse {
+    fun verifyAdminOtp(mobile: String, code: String, request: HttpServletRequest? = null): AuthResponse {
         val admin = userRepository.findByMobileAndUserType(mobile, ADMIN)
             ?: throw BusinessException("این شماره تلفن دسترسی به پنل مدیریت ندارد.", HttpStatus.FORBIDDEN)
         ensureActive(admin)
         validateCode(mobile, code, ADMIN)
+        admin.lastLoginAt = LocalDateTime.now()
+        userRepository.save(admin)
+        activity.record(adminAccess.load(mobile), "LOGIN", null, "ورود به پنل مدیریت", request, 200)
         return buildAuthResponse(admin, jwtProvider.generateToken(mobile, ADMIN))
     }
 

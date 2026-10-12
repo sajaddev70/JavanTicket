@@ -11,7 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 /**
  * Reads the `Authorization: Bearer <jwt>` header and authenticates the request as ROLE_ADMIN or ROLE_USER.
- * Admin tokens are re-checked against the database so a disabled or demoted admin loses access immediately.
+ * Tokens are re-checked against the database so a disabled user or a disabled / demoted admin loses access immediately.
  */
 class JwtAuthenticationFilter(
     private val jwtProvider: JwtProvider,
@@ -27,7 +27,7 @@ class JwtAuthenticationFilter(
             val userType = claims["userType"] as? String
             val allowed = when (userType) {
                 "ADMIN" -> userRepository.findByMobileAndUserType(mobile, "ADMIN")?.status == "ACTIVE"
-                "USER" -> true
+                "USER" -> userRepository.findByMobile(mobile)?.status == "ACTIVE"
                 else -> false
             }
             if (allowed) {

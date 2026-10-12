@@ -44,7 +44,13 @@ export function StatTile({
           </>
         ) : (
           <>
-            <p className={cn("tabular mt-3 whitespace-nowrap font-black leading-none text-ink", (value?.length ?? 0) > 11 ? "text-[clamp(20px,1.6vw,26px)]" : "text-[clamp(24px,2.2vw,34px)]")}>
+            <p
+              title={value}
+              className={cn(
+                "tabular mt-3 truncate font-black leading-none text-ink",
+                (value?.length ?? 0) > 13 ? "text-[clamp(17px,1.25vw,22px)]" : (value?.length ?? 0) > 9 ? "text-[clamp(19px,1.45vw,26px)]" : "text-[clamp(24px,2.2vw,34px)]",
+              )}
+            >
               {value ?? "—"}
             </p>
             <p className="mt-2 text-[13px] text-muted">{unit}</p>

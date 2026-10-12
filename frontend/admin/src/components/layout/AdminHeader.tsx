@@ -45,7 +45,12 @@ export function AdminHeader({ onOpenMenu }: { onOpenMenu: () => void }) {
   function handleSearch(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const q = new FormData(e.currentTarget).get("q")?.toString().trim();
-    if (q) router.push(`/events?q=${encodeURIComponent(q)}`);
+    if (!q) return;
+    const value = encodeURIComponent(q);
+    // Order numbers go to orders, phone numbers to users; anything else searches events.
+    if (/^JT-/i.test(q)) router.push(`/orders?q=${value}`);
+    else if (/^[0-9۰-۹+\s]{4,}$/.test(q)) router.push(`/users?type=&q=${value}`);
+    else router.push(`/events?q=${value}`);
   }
 
   function handleLogout() {

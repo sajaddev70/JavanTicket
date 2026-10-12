@@ -31,7 +31,16 @@ export interface AdminProfile {
   fullName?: string | null;
   email?: string | null;
   roles: { name: string; title: string }[];
+  superAdmin: boolean;
   permissions: string[];
+}
+
+/** One page of a server-paginated list. */
+export interface Page<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
 }
 
 export const adminApi = {

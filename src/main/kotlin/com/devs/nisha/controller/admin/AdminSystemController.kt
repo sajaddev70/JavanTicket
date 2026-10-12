@@ -3,6 +3,8 @@ package com.devs.nisha.controller.admin
 import com.devs.nisha.dto.ApiResponse
 import com.devs.nisha.exception.BusinessException
 import com.devs.nisha.repository.UserRepository
+import com.devs.nisha.security.AdminAccess
+import jakarta.servlet.http.HttpServletRequest
 import com.devs.nisha.support.JdbcCrud
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -25,13 +27,15 @@ import java.util.UUID
 class AdminSystemController(
     private val crud: JdbcCrud,
     private val userRepository: UserRepository,
+    private val access: AdminAccess,
     @Value("\${app.upload-dir:uploads}") uploadDir: String,
 ) {
     private val uploadRoot: Path = Path.of(uploadDir).toAbsolutePath().normalize()
 
     @GetMapping("/me")
-    fun me(authentication: Authentication): ApiResponse<Map<String, Any?>> {
+    fun me(authentication: Authentication, request: HttpServletRequest): ApiResponse<Map<String, Any?>> {
         val user = userRepository.findByMobileAndUserType(authentication.name, "ADMIN") ?: throw JdbcCrud.notFound()
+        val admin = access.current(request)
         return ApiResponse.ok(
             linkedMapOf(
                 "id" to user.id,
@@ -40,21 +44,28 @@ class AdminSystemController(
                 "email" to user.email,
                 "avatarUrl" to user.avatarUrl,
                 "roles" to user.roles.map { mapOf("name" to it.name, "title" to it.titleFa) },
-                "permissions" to user.roles.flatMap { it.permissions }.map { it.code }.toSet(),
+                "superAdmin" to admin.superAdmin,
+                "permissions" to if (admin.superAdmin) allPermissionCodes() else admin.permissions,
             ),
         )
     }
 
-    /** Sidebar groups and the "menu structure" page, both read from admin_menu_sections / admin_menu_items. */
+    private fun allPermissionCodes(): Set<String> = crud.list("SELECT code FROM permissions").map { it["code"] as String }.toSet()
+
+    /**
+     * Sidebar groups and the "menu structure" page, both read from admin_menu_sections / admin_menu_items.
+     * Only the screens the admin's roles allow are listed.
+     */
     @GetMapping("/menu")
-    fun menu(): ApiResponse<Map<String, Any?>> {
+    fun menu(request: HttpServletRequest): ApiResponse<Map<String, Any?>> {
+        val admin = access.current(request)
         val items = crud.list(
-            "SELECT id, item_key AS \"key\", title, description, path, icon, section_id, section_order, sidebar_group, sidebar_order, implemented " +
+            "SELECT id, item_key AS \"key\", title, description, path, icon, section_id, section_order, sidebar_group, sidebar_order, implemented, permission_code " +
                 "FROM admin_menu_items WHERE active = TRUE ORDER BY sidebar_group, sidebar_order, id",
-        )
+        ).filter { item -> (item["permission_code"] as String?)?.let(admin::can) ?: true }
         val sections = crud.list("SELECT * FROM admin_menu_sections ORDER BY sort_order, id").map { section ->
             section + ("items" to items.filter { it["section_id"] == section["id"] }.sortedBy { (it["section_order"] as Number?)?.toInt() ?: 0 })
-        }
+        }.filter { (it["items"] as List<*>).isNotEmpty() }
         val sidebar = items.groupBy { it["sidebar_group"] }.values.toList()
         return ApiResponse.ok(mapOf("sidebar" to sidebar, "sections" to sections))
     }

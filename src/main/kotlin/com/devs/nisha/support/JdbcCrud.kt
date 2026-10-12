@@ -35,16 +35,41 @@ class JdbcCrud(val jdbc: NamedParameterJdbcTemplate) {
     fun exists(sql: String, params: Map<String, Any?>): Boolean =
         jdbc.queryForObject("SELECT EXISTS($sql)", params, Boolean::class.java) == true
 
+    /** First column of the first row as a number (0 when empty), e.g. a COUNT or SUM. */
+    fun number(sql: String, params: Map<String, Any?> = emptyMap()): Double =
+        (jdbc.queryForObject(sql, params.toSqlParams(), Number::class.java) ?: 0).toDouble()
+
+    fun one(sql: String, params: Map<String, Any?> = emptyMap()): Map<String, Any?>? = list(sql, params.toSqlParams()).firstOrNull()
+
+    /**
+     * One page of `[select] [from] [filters] ORDER BY [orderBy]`, as { items, total, page, size }.
+     * [from] includes the joins; the count runs over the same FROM and filters.
+     */
+    fun page(select: String, from: String, filters: SqlFilters, orderBy: String, page: Int, size: Int): Map<String, Any?> {
+        val p = page.coerceAtLeast(1)
+        val s = size.coerceIn(1, 200)
+        val params = filters.params.toSqlParams()
+        val total = jdbc.queryForObject("SELECT COUNT(*) $from${filters.sql}", params, Long::class.java) ?: 0
+        val items = list("$select $from${filters.sql} ORDER BY $orderBy LIMIT :pageLimit OFFSET :pageOffset", params + mapOf("pageLimit" to s, "pageOffset" to (p - 1) * s))
+        return linkedMapOf("items" to items, "total" to total, "page" to p, "size" to s)
+    }
+
     private fun Map<String, Any?>.toSqlParams(): Map<String, Any?> =
         mapValues { (_, v) -> if (v is Instant) Timestamp.from(v) else v }
 
     companion object {
         fun notFound() = BusinessException("مورد درخواستی پیدا نشد.", HttpStatus.NOT_FOUND)
 
-        /** JDBC timestamps are rendered as ISO-8601 instants, which every client parses the same way. */
+        /** JDBC timestamps are rendered as ISO-8601 instants and dates as "YYYY-MM-DD", which every client parses the same way. */
         fun List<Map<String, Any?>>.withIsoDates(): List<Map<String, Any?>> = map { it.withIsoDates() }
 
         fun Map<String, Any?>.withIsoDates(): Map<String, Any?> =
-            mapValues { (_, v) -> (v as? Timestamp)?.toInstant()?.toString() ?: v }
+            mapValues { (_, v) ->
+                when (v) {
+                    is Timestamp -> v.toInstant().toString()
+                    is java.sql.Date -> v.toLocalDate().toString()
+                    else -> v
+                }
+            }
     }
 }

@@ -5,6 +5,7 @@ import com.devs.nisha.dto.auth.AuthResponse
 import com.devs.nisha.dto.auth.LoginRequest
 import com.devs.nisha.dto.auth.VerifyOtpRequest
 import com.devs.nisha.service.auth.AuthService
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -24,8 +25,8 @@ class AuthController(private val authService: AuthService) {
     }
 
     @PostMapping("/admin/verify")
-    fun verifyAdminOtp(@Valid @RequestBody request: VerifyOtpRequest): ResponseEntity<ApiResponse<AuthResponse>> =
-        ResponseEntity.ok(ApiResponse.ok("ورود با موفقیت انجام شد.", authService.verifyAdminOtp(request.mobile!!, request.code!!)))
+    fun verifyAdminOtp(@Valid @RequestBody request: VerifyOtpRequest, http: HttpServletRequest): ResponseEntity<ApiResponse<AuthResponse>> =
+        ResponseEntity.ok(ApiResponse.ok("ورود با موفقیت انجام شد.", authService.verifyAdminOtp(request.mobile!!, request.code!!, http)))
 
     @PostMapping("/user/login")
     fun userLogin(@Valid @RequestBody request: LoginRequest): ResponseEntity<ApiResponse<Unit>> {

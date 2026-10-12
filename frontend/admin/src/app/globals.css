@@ -34,10 +34,18 @@
 
   --shadow-card: 0 1px 2px rgb(16 42 84 / 0.04), 0 4px 16px rgb(16 42 84 / 0.05);
   --shadow-float: 0 12px 40px rgb(16 42 84 / 0.1);
+
+  /* Chart series (categorical slots, fixed order; validated for CVD separation) */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
 }
 
 /* ---------- Design tokens: dark ---------- */
 [data-theme="dark"] {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
   --page: #0a1424;
   --surface: #111d33;
   --surface-2: #16243d;
@@ -136,6 +144,27 @@
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: rgb(255 255 255 / 0.15) transparent;
+  }
+}
+
+/* Printing a document (e.g. a pro-forma invoice) prints only the element marked .print-area. */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .no-print {
+    display: none !important;
   }
 }
 
