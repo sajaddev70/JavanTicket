@@ -196,13 +196,4 @@ INSERT INTO sessions (event_id, hall_id, start_time, end_time, capacity, reserve
 (3, 1, CURRENT_TIMESTAMP + INTERVAL '3 days', CURRENT_TIMESTAMP + INTERVAL '3 days 3 hours', 1600, 1200, 200000, 'ACTIVE')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO orders (order_number, user_id, session_id, total_amount, status, payment_method) VALUES
-('ORD-100201', 2, 1, 300000, 'PAID', 'ONLINE'),
-('ORD-100202', 2, 3, 100000, 'PAID', 'ONLINE')
-ON CONFLICT (order_number) DO NOTHING;
-
-INSERT INTO tickets (ticket_code, order_id, user_id, session_id, seat_label, price, status) VALUES
-('TCK-88901', 1, 2, 1, 'ردیف ۵ - صندلی ۱۲', 150000, 'VALID'),
-('TCK-88902', 1, 2, 1, 'ردیف ۵ - صندلی ۱۳', 150000, 'VALID'),
-('TCK-88903', 2, 2, 3, 'ردیف ۲ - صندلی ۴', 100000, 'VALID')
-ON CONFLICT (ticket_code) DO NOTHING;
+-- Sample orders and tickets are loaded by DemoDataSeeder (they need user accounts, which V1 no longer creates).
