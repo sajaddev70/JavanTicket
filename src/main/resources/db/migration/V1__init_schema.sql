@@ -156,13 +156,7 @@ INSERT INTO permissions (code, title_fa) VALUES
 ('USER_MANAGE', 'مدیریت کاربران')
 ON CONFLICT (code) DO NOTHING;
 
--- Default Admin Account (mobile: 09123456789)
-INSERT INTO users (mobile, full_name, email, status, user_type) VALUES
-('09123456789', 'مدیر ارشد سامانه', 'admin@youthevent.ir', 'ACTIVE', 'ADMIN'),
-('09120000000', 'کاربر نمونه آزمایشی', 'user@youthevent.ir', 'ACTIVE', 'USER')
-ON CONFLICT (mobile) DO NOTHING;
-
-INSERT INTO user_roles (user_id, role_id) VALUES (1, 1) ON CONFLICT DO NOTHING;
+-- The main admin account (09101414285) is created on startup by MainAdminSeeder.
 
 INSERT INTO cities (name, province, active) VALUES
 ('تهران', 'تهران', TRUE),

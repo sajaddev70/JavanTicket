@@ -1,0 +1,11 @@
+45.156.186.169
+root
+9011
+MDrps6vcs7
+
+ssh -p 9011 root@45.156.186.169
+
+45.156.186.169
+Administrator
+15226
+MDrps6vcs7
