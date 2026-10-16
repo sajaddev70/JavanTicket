@@ -1,0 +1,46 @@
+package com.devs.nisha.controller
+
+import com.devs.nisha.dto.ApiResponse
+import com.devs.nisha.dto.auth.AuthResponse
+import com.devs.nisha.dto.auth.LoginRequest
+import com.devs.nisha.dto.auth.RefreshTokenRequest
+import com.devs.nisha.dto.auth.VerifyOtpRequest
+import com.devs.nisha.service.auth.AuthService
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
+// Request fields are validated (@NotBlank) before these handlers run, so `!!` cannot fail here.
+@RestController
+@RequestMapping("/api/v1/auth")
+class AuthController(private val authService: AuthService) {
+
+    @PostMapping("/admin/login")
+    fun adminLogin(@Valid @RequestBody request: LoginRequest): ResponseEntity<ApiResponse<Unit>> {
+        authService.requestAdminOtp(request.mobile!!)
+        return ResponseEntity.ok(ApiResponse.ok("کد تأیید برای مدیر ارسال شد.", null))
+    }
+
+    @PostMapping("/admin/verify")
+    fun verifyAdminOtp(@Valid @RequestBody request: VerifyOtpRequest, http: HttpServletRequest): ResponseEntity<ApiResponse<AuthResponse>> =
+        ResponseEntity.ok(ApiResponse.ok("ورود با موفقیت انجام شد.", authService.verifyAdminOtp(request.mobile!!, request.code!!, http)))
+
+    @PostMapping("/user/login")
+    fun userLogin(@Valid @RequestBody request: LoginRequest): ResponseEntity<ApiResponse<Unit>> {
+        authService.requestUserOtp(request.mobile!!)
+        return ResponseEntity.ok(ApiResponse.ok("کد تأیید ارسال شد.", null))
+    }
+
+    @PostMapping("/user/verify")
+    fun verifyUserOtp(@Valid @RequestBody request: VerifyOtpRequest): ResponseEntity<ApiResponse<AuthResponse>> =
+        ResponseEntity.ok(ApiResponse.ok("ورود با موفقیت انجام شد.", authService.verifyUserOtp(request.mobile!!, request.code!!)))
+
+    /** Exchanges a refresh token for new tokens, so the site keeps the user signed in without a new OTP. */
+    @PostMapping("/user/refresh")
+    fun refreshUser(@Valid @RequestBody request: RefreshTokenRequest): ResponseEntity<ApiResponse<AuthResponse>> =
+        ResponseEntity.ok(ApiResponse.ok(authService.refreshUser(request.refreshToken!!)))
+}

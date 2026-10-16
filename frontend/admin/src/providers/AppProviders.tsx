@@ -14,7 +14,7 @@ export default function AppProviders({ children }: { children: React.ReactNode }
     },
   }));
 
-  const initialize = useAdminAuthStore((state: any) => state.initialize);
+  const initialize = useAdminAuthStore((state) => state.initialize);
 
   useEffect(() => {
     initialize();
