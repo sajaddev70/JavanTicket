@@ -88,7 +88,7 @@ export function OtpInput({ value, onChange, onComplete, disabled, invalid }: Otp
           autoFocus={i === 0}
           aria-label={`رقم ${toFaDigits(String(i + 1))} کد تأیید`}
           className={cn(
-            'size-[64px] rounded-xl border-2 bg-surface text-center text-[30px] font-black text-ink outline-none transition sm:size-[84px] sm:text-[38px]',
+            'size-[64px] rounded-2xl border-2 bg-surface text-center text-[30px] font-black text-ink outline-none transition sm:size-[90px] sm:text-[38px]',
             'focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 disabled:opacity-60',
             invalid ? 'border-danger/50' : digit ? 'border-brand-500/40' : 'border-line-strong',
           )}

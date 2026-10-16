@@ -31,6 +31,7 @@ const FIELDS: FieldDef[] = [
   { name: 'newsletter_title', label: 'عنوان خبرنامه فوتر', type: 'text' },
   { name: 'newsletter_text', label: 'متن خبرنامه فوتر', type: 'text' },
   { name: 'footer_text', label: 'متن فوتر', type: 'textarea', wide: true },
+  { name: 'service_fee_percent', label: 'هزینه خدمات سامانه (درصد)', type: 'number', hint: 'درصدی از مبلغ بلیت‌ها (پس از تخفیف) که به هر سفارش اضافه می‌شود؛ ۰ یعنی بدون کارمزد.' },
 ];
 
 export default function AdminSettingsPage() {

@@ -1,30 +1,59 @@
-const numberFormat = new Intl.NumberFormat("fa-IR");
+/** Persian formatting: digits, Jalali dates (Intl's persian calendar, Tehran time), prices in Toman. */
 
-export function faNumber(value: number | null | undefined): string {
-  if (value === null || value === undefined || Number.isNaN(value)) return "—";
-  return numberFormat.format(value);
+const TZ = "Asia/Tehran";
+const numberFormat = new Intl.NumberFormat("fa-IR");
+const fmt = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("fa-IR", { timeZone: TZ, ...options });
+
+const dateFormat = fmt({ day: "numeric", month: "long", year: "numeric" });
+const dayMonthFormat = fmt({ day: "numeric", month: "long" });
+const weekdayFormat = fmt({ weekday: "long" });
+const timeFormat = fmt({ hour: "2-digit", minute: "2-digit", hour12: false });
+const ymFormat = new Intl.DateTimeFormat("en-US-u-ca-persian", { timeZone: TZ, year: "numeric", month: "numeric" });
+const ymdFormat = new Intl.DateTimeFormat("en-US-u-ca-persian", { timeZone: TZ, year: "numeric", month: "numeric", day: "numeric" });
+
+export function faNumber(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === "" || Number.isNaN(Number(value))) return "—";
+  return numberFormat.format(Number(value));
 }
 
-export function faDate(iso: string): string {
-  return new Intl.DateTimeFormat("fa-IR", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso));
+/** "۲۱۰٬۰۰۰ تومان" */
+export function faPrice(value: number | string | null | undefined): string {
+  return `${faNumber(value)} تومان`;
+}
+
+/** "۲۸ اردیبهشت ۱۴۰۴" */
+export const faDate = (iso: string) => dateFormat.format(new Date(iso));
+/** "۲۸ اردیبهشت" */
+export const faDayMonth = (iso: string) => dayMonthFormat.format(new Date(iso));
+/** "جمعه" */
+export const faWeekday = (iso: string) => weekdayFormat.format(new Date(iso));
+/** "۲۰:۰۰" */
+export const faTime = (iso: string) => timeFormat.format(new Date(iso));
+/** "جمعه ۲۸ اردیبهشت ۱۴۰۴" */
+export const faFullDate = (iso: string) => `${faWeekday(iso)} ${faDate(iso)}`;
+/** "جمعه ۲۸ اردیبهشت ۱۴۰۴ - ۲۰:۰۰" */
+export const faDateTime = (iso: string) => `${faFullDate(iso)} - ${faTime(iso)}`;
+
+export function sameDay(a: string, b: string): boolean {
+  return ymdFormat.format(new Date(a)) === ymdFormat.format(new Date(b));
 }
 
 /** Same-month ranges collapse to "۲۴ تا ۲۷ اردیبهشت ۱۴۰۴". */
 export function faDateRange(startIso: string, endIso?: string | null): string {
-  if (!endIso) return faDate(startIso);
-  const start = new Date(startIso);
-  const end = new Date(endIso);
-  const ym = new Intl.DateTimeFormat("en-US-u-ca-persian", { year: "numeric", month: "numeric" });
-  if (ym.format(start) === ym.format(end)) {
-    if (start.toDateString() === end.toDateString()) return faDate(startIso);
-    const day = new Intl.DateTimeFormat("fa-IR", { day: "numeric" }).format(start);
-    return `${day} تا ${faDate(endIso)}`;
+  if (!endIso || sameDay(startIso, endIso)) return faDate(startIso);
+  if (ymFormat.format(new Date(startIso)) === ymFormat.format(new Date(endIso))) {
+    return `${fmt({ day: "numeric" }).format(new Date(startIso))} تا ${faDate(endIso)}`;
   }
   return `${faDate(startIso)} تا ${faDate(endIso)}`;
 }
 
+/** "۱۹:۰۰ تا ۲۱:۰۰" */
+export function faTimeRange(startIso: string, endIso?: string | null): string {
+  return endIso ? `${faTime(startIso)} تا ${faTime(endIso)}` : faTime(startIso);
+}
+
 export function faYear(date: Date): string {
-  return new Intl.DateTimeFormat("fa-IR", { year: "numeric" }).format(date);
+  return fmt({ year: "numeric" }).format(date);
 }
 
 export function toFaDigits(input: string): string {
@@ -32,15 +61,18 @@ export function toFaDigits(input: string): string {
 }
 
 export function toEnDigits(input: string): string {
-  return input
-    .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
-    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+  return input.replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
 }
 
 /** "09121234567" -> "۰۹۱۲ *** ۴۵۶۷" */
 export function maskMobile(mobile: string): string {
   if (mobile.length < 8) return toFaDigits(mobile);
   return toFaDigits(`${mobile.slice(0, 4)} *** ${mobile.slice(-4)}`);
+}
+
+/** "09121234567" -> "۰۹۱۲ ۱۲۳ ۴۵۶۷" */
+export function formatMobile(mobile: string): string {
+  return toFaDigits(mobile.length === 11 ? `${mobile.slice(0, 4)} ${mobile.slice(4, 7)} ${mobile.slice(7)}` : mobile);
 }
 
 /** Accepts Persian/Arabic digits, +98 / 0098 / 98 prefixes and spaces; returns 09XXXXXXXXX or null. */
@@ -52,27 +84,7 @@ export function normalizeIranMobile(input: string): string | null {
   return /^09\d{9}$/.test(digits) ? digits : null;
 }
 
-export function faDateTime(iso: string): string {
-  return new Intl.DateTimeFormat("fa-IR", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
-}
-
-export function faTime(iso: string): string {
-  return new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(iso));
-}
-
-export function faDayMonth(iso: string): string {
-  return new Intl.DateTimeFormat("fa-IR", { day: "numeric", month: "long" }).format(new Date(iso));
-}
-
-export function faWeekday(iso: string): string {
-  return new Intl.DateTimeFormat("fa-IR", { weekday: "long" }).format(new Date(iso));
-}
-
-/** "۱۹:۰۰ - ۲۱:۰۰" (render inside dir="ltr") */
-export function faTimeRange(startIso: string, endIso?: string | null): string {
-  return endIso ? `${faTime(startIso)} - ${faTime(endIso)}` : faTime(startIso);
-}
-
-export function faPrice(value: number | null | undefined): string {
-  return `${faNumber(value === null || value === undefined ? null : Number(value))} تومان`;
+/** "WYAXXWRLFTABA375" -> "WYAX-XWRL-FTAB-A375" (QR payload as printed under the code). */
+export function groupCode(code: string, size = 4): string {
+  return code.match(new RegExp(`.{1,${size}}`, "g"))?.join("-") ?? code;
 }

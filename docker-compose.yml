@@ -41,8 +41,11 @@ services:
       SMS_PROVIDER: ${SMS_PROVIDER:-kavenegar}
       KAVENEGAR_API_KEY: ${KAVENEGAR_API_KEY:-}
       KAVENEGAR_OTP_TEMPLATE: ${KAVENEGAR_OTP_TEMPLATE:-otp}
+      KAVENEGAR_SENDER: ${KAVENEGAR_SENDER:-}
       SERVER_PORT: 8081
       PAYMENT_MODE: ${PAYMENT_MODE:-none}
+      # Payment gateways send the buyer back to this site after paying.
+      USER_SITE_URL: ${PUBLIC_USER_SITE_URL:-http://localhost:3003}
       DEMO_SEED_ENABLED: "false"
       DB_CREATE_IF_MISSING: "false"
       APP_LOG_LEVEL: INFO

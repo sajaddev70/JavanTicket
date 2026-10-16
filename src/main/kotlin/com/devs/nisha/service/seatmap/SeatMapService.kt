@@ -2,6 +2,7 @@ package com.devs.nisha.service.seatmap
 
 import com.devs.nisha.exception.BusinessException
 import com.devs.nisha.support.JdbcCrud
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -13,7 +14,10 @@ import java.math.RoundingMode
  * (pos_x, pos_y) in seat units and bent into an arc by `curve`. Per-session seat state lives in seat_reservations.
  */
 @Service
-class SeatMapService(private val crud: JdbcCrud) {
+class SeatMapService(
+    private val crud: JdbcCrud,
+    @Value("\${checkout.hold-minutes:10}") private val holdMinutes: Int,
+) {
 
     /**
      * Rebuilds every seat of a hall from its sections. The arc is computed across the whole hall, so editing one
@@ -58,13 +62,19 @@ class SeatMapService(private val crud: JdbcCrud) {
     fun ensureHallEditable(hallId: Long) =
         ensureNoReservations("SELECT 1 FROM seat_reservations r JOIN seats st ON st.id = r.seat_id WHERE st.hall_id = :id", hallId)
 
-    /** Drops checkout holds whose time ran out, so their seats are free again. */
+    /**
+     * Drops seat holds whose time ran out, so their seats are free again, and cancels unpaid orders that no longer
+     * hold anything (general admission orders after the same hold time). Orders with a payment in progress at the
+     * bank are kept for another hold period so the callback can still complete them.
+     */
     fun releaseExpiredHolds() {
         crud.jdbc.update("DELETE FROM seat_reservations WHERE status = 'HELD' AND held_until < LOCALTIMESTAMP", emptyMap<String, Any>())
         crud.jdbc.update(
-            "UPDATE orders SET status = 'CANCELLED' WHERE status = 'PENDING' AND created_at < LOCALTIMESTAMP - INTERVAL '30 minutes' " +
-                "AND NOT EXISTS (SELECT 1 FROM seat_reservations r WHERE r.order_id = orders.id)",
-            emptyMap<String, Any>(),
+            "UPDATE orders SET status = 'CANCELLED' WHERE status = 'PENDING' AND created_at < LOCALTIMESTAMP - make_interval(mins => :minutes) " +
+                "AND NOT EXISTS (SELECT 1 FROM seat_reservations r WHERE r.order_id = orders.id) " +
+                "AND NOT EXISTS (SELECT 1 FROM payments p WHERE p.order_id = orders.id AND p.status = 'INITIATED' " +
+                "AND p.created_at > LOCALTIMESTAMP - make_interval(mins => :minutes))",
+            mapOf("minutes" to holdMinutes),
         )
     }
 
@@ -78,16 +88,18 @@ class SeatMapService(private val crud: JdbcCrud) {
 
     /**
      * Seats of a hall with their state for [sessionId] (AVAILABLE when no session is given).
-     * Statuses: AVAILABLE, SOLD, HELD, BLOCKED, GROUP, DISABLED.
+     * Statuses: AVAILABLE, SOLD, HELD, BLOCKED, GROUP, DISABLED. With a [holdToken], `mine` tells which held seats
+     * belong to that buyer.
      */
-    fun seats(hallId: Long, sessionId: Long?): List<Map<String, Any?>> {
+    fun seats(hallId: Long, sessionId: Long?, holdToken: String? = null): List<Map<String, Any?>> {
         if (sessionId != null) releaseExpiredHolds()
         return crud.list(
             "SELECT s.id, s.section_id, s.row_index, s.row_label, s.seat_number, s.x, s.y, s.tier_code, " +
-                "CASE WHEN s.disabled THEN 'DISABLED' ELSE COALESCE(r.status, 'AVAILABLE') END AS status " +
+                "CASE WHEN s.disabled THEN 'DISABLED' ELSE COALESCE(r.status, 'AVAILABLE') END AS status, " +
+                "COALESCE(r.hold_token = CAST(:holdToken AS VARCHAR), FALSE) AS mine " +
                 "FROM seats s LEFT JOIN seat_reservations r ON r.seat_id = s.id AND r.session_id = CAST(:sessionId AS BIGINT) " +
                 "WHERE s.hall_id = :hallId ORDER BY s.row_index, s.section_id, s.seat_number",
-            mapOf("hallId" to hallId, "sessionId" to sessionId),
+            mapOf("hallId" to hallId, "sessionId" to sessionId, "holdToken" to holdToken),
         )
     }
 

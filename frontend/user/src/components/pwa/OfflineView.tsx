@@ -1,13 +1,17 @@
-'use client';
+"use client";
 
+import Image from "next/image";
 import { RefreshCw, WifiOff } from "lucide-react";
-import { FloatingThemeToggle } from "@/components/ui/FloatingThemeToggle";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
-/** Served by the service worker when a page is requested without a network connection. */
+/** Served by the service worker when a page is requested without a network connection (so no API data here). */
 export function OfflineView() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface-2 px-4 text-center">
-      <FloatingThemeToggle />
+      <div className="fixed left-4 top-4">
+        <ThemeToggle className="border border-line bg-surface shadow-card" />
+      </div>
+      <Image src="/assets/brand/javan-logo-mark.svg" alt="" width={88} height={58} className="mb-2 h-auto w-[88px] dark:brightness-0 dark:invert" />
       <span className="flex size-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
         <WifiOff className="size-8" />
       </span>

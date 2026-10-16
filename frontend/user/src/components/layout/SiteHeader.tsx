@@ -1,142 +1,157 @@
-'use client';
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown, MapPin, Menu, Search, UserRound, X } from "lucide-react";
-import { useCities, useNavigation } from "@/hooks/usePublicData";
-import { useCityStore } from "@/stores/useCityStore";
-import { useUserAuthStore } from "@/stores/useUserAuthStore";
-import { cn } from "@/lib/cn";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LogIn, LogOut, Menu, UserPlus, UserRound } from "lucide-react";
+import { useNavigation } from "@/hooks/useContent";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { SmartLink } from "@/components/ui/SmartLink";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ButtonLink } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { cn } from "@/lib/cn";
+import { CitySelect } from "./CitySelect";
+import { SearchBox } from "./SearchBox";
+import { ACCOUNT_LINKS, UserMenu } from "./UserMenu";
 
-function CitySelect({ className }: { className?: string }) {
-  const { data: cities } = useCities();
-  const { cityId, setCityId } = useCityStore();
-  return (
-    <label className={cn("relative flex h-12 items-center", className)}>
-      <span className="sr-only">انتخاب شهر</span>
-      <MapPin className="pointer-events-none absolute right-4 size-[19px] text-ink" />
-      <select
-        value={cityId ?? ""}
-        onChange={(e) => setCityId(e.target.value ? Number(e.target.value) : null)}
-        className="h-full w-full appearance-none rounded-xl border border-line bg-surface pr-11 pl-10 text-[15px] font-bold text-ink outline-none focus:border-brand-500/50 focus:ring-4 focus:ring-brand-500/10"
-      >
-        <option value="">همه شهرها</option>
-        {cities?.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute left-4 size-4 text-ink/70" />
-    </label>
-  );
+function isActive(pathname: string, url: string) {
+  const path = url.split("?")[0];
+  return path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
 }
 
 export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const user = useUserAuthStore((s) => s.user);
-  const [open, setOpen] = useState(false);
-  const nav = useNavigation().data?.header ?? [];
-
-  function search(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const q = new FormData(e.currentTarget).get("q")?.toString().trim();
-    if (q) {
-      setOpen(false);
-      router.push(`/events?q=${encodeURIComponent(q)}`);
-    }
-  }
-
-  const searchBox = (
-    <form onSubmit={search} role="search" className="relative w-full">
-      <Search className="pointer-events-none absolute right-4 top-1/2 size-5 -translate-y-1/2 text-ink/70" />
-      <input
-        name="q"
-        type="search"
-        placeholder="جستجو در رویدادها، شهرها و سالن‌ها ..."
-        className="h-12 w-full rounded-xl border border-transparent bg-field pr-12 pl-4 text-[14px] text-ink outline-none placeholder:text-muted focus:border-brand-500/40 focus:bg-surface focus:ring-4 focus:ring-brand-500/10"
-      />
-    </form>
-  );
-
-  const account = (
-    <Link
-      href={user ? "/profile" : "/login"}
-      className="flex h-12 shrink-0 items-center gap-2.5 rounded-xl bg-brand-600 px-5 text-[15px] font-bold text-white shadow-[0_8px_18px_rgb(20_99_230_/_0.25)] hover:bg-brand-700"
-    >
-      <UserRound className="size-5" />
-      <span className="truncate">{user ? user.fullName || "حساب کاربری" : "ورود / ثبت‌نام"}</span>
-    </Link>
-  );
+  const nav = useNavigation();
+  const hydrated = useAuthStore((s) => s.hydrated);
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const next = pathname === "/login" || pathname === "/verify" ? "" : `?next=${encodeURIComponent(pathname)}`;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex h-[72px] max-w-[1440px] items-center gap-4 px-4 lg:h-[84px] lg:px-10">
+    <header className="sticky top-0 z-40 border-b border-line/80 bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/85">
+      <div className="container-page flex h-16 items-center gap-3 lg:h-[72px] lg:gap-5">
         <Link href="/" aria-label="صفحه اصلی" className="shrink-0">
-          <BrandLogo width={74} className="h-[52px] w-auto lg:h-[64px]" />
+          <BrandLogo width={96} className="h-11 w-auto lg:h-[54px]" />
         </Link>
 
-        <nav aria-label="منوی اصلی" className="hidden items-center gap-6 xl:flex">
-          {nav.map((item) => {
-            const active = item.url === "/" ? pathname === "/" : pathname.startsWith(item.url);
-            return (
-              <SmartLink
-                key={item.id}
-                link={item}
-                className={cn(
-                  "relative py-2 text-[14.5px] font-semibold transition-colors",
-                  active ? "text-brand-600 after:absolute after:inset-x-0 after:-bottom-[22px] after:h-[3px] after:rounded-full after:bg-brand-600" : "text-ink hover:text-brand-600",
-                )}
-              />
-            );
-          })}
+        <nav aria-label="منوی اصلی" className="hidden h-full items-center gap-6 xl:flex">
+          {nav.isLoading
+            ? Array.from({ length: 5 }, (_, i) => <Skeleton key={i} className="h-4 w-14" />)
+            : nav.data?.header.map((item) => {
+                const active = isActive(pathname, item.url);
+                return (
+                  <SmartLink
+                    key={item.id}
+                    link={item}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "relative flex h-full items-center text-[14px] font-semibold transition-colors",
+                      active ? "text-brand-600 after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-brand-600" : "text-ink hover:text-brand-600",
+                    )}
+                  />
+                );
+              })}
         </nav>
 
-        <div className="hidden flex-1 lg:block lg:max-w-[460px] xl:mr-auto">{searchBox}</div>
-        <CitySelect className="hidden w-[168px] shrink-0 lg:flex" />
+        <SearchBox className="hidden flex-1 lg:block lg:max-w-[440px] xl:mr-auto" />
+        <CitySelect className="hidden w-[150px] lg:block" />
         <ThemeToggle className="hidden lg:flex" />
-        <div className="hidden lg:block">{account}</div>
 
-        <div className="mr-auto flex items-center gap-2 lg:hidden">
+        <div className="hidden items-center gap-2.5 lg:flex">
+          {!hydrated ? (
+            <Skeleton className="h-11 w-[220px] rounded-xl" />
+          ) : user ? (
+            <UserMenu />
+          ) : (
+            <>
+              <ButtonLink href={`/login${next}`} variant="outline" size="sm" className="min-h-11 px-5">
+                <UserRound className="size-[18px]" />
+                ورود
+              </ButtonLink>
+              <ButtonLink href={`/login${next}`} size="sm" className="min-h-11 px-5 shadow-none">
+                <UserPlus className="size-[18px]" />
+                ثبت‌نام
+              </ButtonLink>
+            </>
+          )}
+        </div>
+
+        <div className="mr-auto flex items-center gap-1.5 lg:hidden">
           <ThemeToggle />
-          <Link href={user ? "/profile" : "/login"} aria-label="حساب کاربری" className="flex size-11 items-center justify-center rounded-xl bg-brand-600 text-white">
+          <Link
+            href={user ? "/profile" : `/login${next}`}
+            aria-label={user ? "حساب کاربری" : "ورود / ثبت‌نام"}
+            className="flex size-11 items-center justify-center rounded-xl bg-brand-600 text-white"
+          >
             <UserRound className="size-5" />
           </Link>
           <button
             type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-label={open ? "بستن منو" : "باز کردن منو"}
+            onClick={() => setMenuOpen(true)}
+            aria-label="باز کردن منو"
+            aria-expanded={menuOpen}
             className="flex size-11 items-center justify-center rounded-xl border border-line text-ink"
           >
-            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+            <Menu className="size-5" />
           </button>
         </div>
       </div>
 
-      {/* Search + city stay reachable on small screens */}
-      <div className="flex gap-2 px-4 pb-3 lg:hidden">
-        <div className="flex-1">{searchBox}</div>
-        <CitySelect className="w-[132px] shrink-0" />
+      {/* Search and city stay one tap away on phones and tablets */}
+      <div className="container-page flex gap-2 pb-3 lg:hidden">
+        <SearchBox className="min-w-0 flex-1" />
+        <CitySelect className="w-[142px] sm:w-[160px]" />
       </div>
 
-      {open && nav.length > 0 && (
-        <nav aria-label="منوی موبایل" className="border-t border-line bg-surface px-4 py-2 lg:hidden">
-          {nav.map((item) => (
+      <Dialog open={menuOpen} onClose={() => setMenuOpen(false)} title="منو" variant="drawer">
+        <nav aria-label="منوی موبایل" className="flex flex-col">
+          {nav.data?.header.map((item) => (
             <SmartLink
               key={item.id}
               link={item}
-              onClick={() => setOpen(false)}
-              className="flex min-h-12 items-center border-b border-line/60 text-[15px] font-semibold text-ink last:border-0"
+              onClick={() => setMenuOpen(false)}
+              className={cn(
+                "flex min-h-12 items-center border-b border-line/70 text-[15px] font-semibold",
+                isActive(pathname, item.url) ? "text-brand-600" : "text-ink",
+              )}
             />
           ))}
         </nav>
-      )}
+        <div className="mt-5 space-y-1">
+          {user ? (
+            <>
+              {ACCOUNT_LINKS.map(({ href, label, icon: Icon }) => (
+                <Link key={href} href={href} onClick={() => setMenuOpen(false)} className="flex min-h-12 items-center gap-3 rounded-xl px-2 text-[14.5px] font-semibold text-ink hover:bg-field">
+                  <Icon className="size-5 text-ink-2" />
+                  {label}
+                </Link>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  signOut();
+                  router.push("/");
+                }}
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl px-2 text-[14.5px] font-semibold text-danger-fg hover:bg-danger-bg"
+              >
+                <LogOut className="size-5" />
+                خروج از حساب
+              </button>
+            </>
+          ) : (
+            <ButtonLink href={`/login${next}`} block onClick={() => setMenuOpen(false)}>
+              <LogIn className="size-5" />
+              ورود / ثبت‌نام
+            </ButtonLink>
+          )}
+        </div>
+      </Dialog>
     </header>
   );
 }

@@ -1,5 +1,7 @@
 package com.devs.nisha.controller.admin
 
+import jakarta.validation.constraints.DecimalMax
+
 import com.devs.nisha.dto.ApiResponse
 import com.devs.nisha.exception.BusinessException
 import com.devs.nisha.support.JdbcCrud
@@ -276,6 +278,9 @@ data class SiteSettingsRequest(
     @field:Size(max = 150) val newsletterTitle: String? = null,
     @field:Size(max = 255) val newsletterText: String? = null,
     val footerText: String? = null,
+    @field:DecimalMin(value = "0", message = "کارمزد خدمات نمی‌تواند منفی باشد.")
+    @field:DecimalMax(value = "30", message = "کارمزد خدمات حداکثر ۳۰ درصد است.")
+    val serviceFeePercent: BigDecimal? = null,
 ) {
     fun columns() = linkedMapOf(
         "site_name" to siteName!!.trim(), "short_name" to shortName.blankToNull(), "tagline" to tagline.blankToNull(),
@@ -283,6 +288,7 @@ data class SiteSettingsRequest(
         "contact_phone" to contactPhone.blankToNull(), "contact_email" to contactEmail.blankToNull(), "address" to address.blankToNull(),
         "instagram_url" to instagramUrl.blankToNull(), "telegram_url" to telegramUrl.blankToNull(), "linkedin_url" to linkedinUrl.blankToNull(), "aparat_url" to aparatUrl.blankToNull(),
         "newsletter_title" to newsletterTitle.blankToNull(), "newsletter_text" to newsletterText.blankToNull(), "footer_text" to footerText.blankToNull(),
+        "service_fee_percent" to (serviceFeePercent ?: BigDecimal.ZERO),
     )
 }
 

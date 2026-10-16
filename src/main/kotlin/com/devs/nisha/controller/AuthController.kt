@@ -3,6 +3,7 @@ package com.devs.nisha.controller
 import com.devs.nisha.dto.ApiResponse
 import com.devs.nisha.dto.auth.AuthResponse
 import com.devs.nisha.dto.auth.LoginRequest
+import com.devs.nisha.dto.auth.RefreshTokenRequest
 import com.devs.nisha.dto.auth.VerifyOtpRequest
 import com.devs.nisha.service.auth.AuthService
 import jakarta.servlet.http.HttpServletRequest
@@ -37,4 +38,9 @@ class AuthController(private val authService: AuthService) {
     @PostMapping("/user/verify")
     fun verifyUserOtp(@Valid @RequestBody request: VerifyOtpRequest): ResponseEntity<ApiResponse<AuthResponse>> =
         ResponseEntity.ok(ApiResponse.ok("ورود با موفقیت انجام شد.", authService.verifyUserOtp(request.mobile!!, request.code!!)))
+
+    /** Exchanges a refresh token for new tokens, so the site keeps the user signed in without a new OTP. */
+    @PostMapping("/user/refresh")
+    fun refreshUser(@Valid @RequestBody request: RefreshTokenRequest): ResponseEntity<ApiResponse<AuthResponse>> =
+        ResponseEntity.ok(ApiResponse.ok(authService.refreshUser(request.refreshToken!!)))
 }

@@ -44,7 +44,7 @@ class AuthService(
         admin.lastLoginAt = LocalDateTime.now()
         userRepository.save(admin)
         activity.record(adminAccess.load(mobile), "LOGIN", null, "ورود به پنل مدیریت", request, 200)
-        return buildAuthResponse(admin, jwtProvider.generateToken(mobile, ADMIN))
+        return buildAuthResponse(admin, ADMIN)
     }
 
     fun requestUserOtp(mobile: String) {
@@ -62,7 +62,16 @@ class AuthService(
         val user = userRepository.findByMobile(mobile) ?: throw BusinessException("کاربر یافت نشد.")
         ensureActive(user)
         validateCode(mobile, code, USER)
-        return buildAuthResponse(user, jwtProvider.generateToken(mobile, USER))
+        return buildAuthResponse(user, USER)
+    }
+
+    /** New access + refresh tokens for a site user, from a still valid refresh token. */
+    fun refreshUser(refreshToken: String): AuthResponse {
+        val claims = jwtProvider.parseRefresh(refreshToken)
+        if (claims == null || claims["userType"] != USER) throw BusinessException(SESSION_EXPIRED, HttpStatus.UNAUTHORIZED)
+        val user = userRepository.findByMobile(claims.subject) ?: throw BusinessException(SESSION_EXPIRED, HttpStatus.UNAUTHORIZED)
+        if (user.status != "ACTIVE") throw BusinessException("حساب کاربری شما غیرفعال شده است.", HttpStatus.UNAUTHORIZED)
+        return buildAuthResponse(user, USER)
     }
 
     private fun ensureActive(user: User) {
@@ -71,15 +80,16 @@ class AuthService(
         }
     }
 
+    /** Random 4-digit code when SMS is really sent; the fixed dev code (1111) while SMS runs in development mode. */
     private fun saveAndSendOtp(mobile: String, domain: String) {
-        val code = devOtpCode // 1111 for dev mode
+        val code = if (smsService.sendsRealSms) "%04d".format(random.nextInt(10_000)) else devOtpCode
         otpRepository.save(Otp(mobile = mobile, code = code, domain = domain, expiresAt = LocalDateTime.now().plusMinutes(2)))
         smsService.sendOtp(mobile, code)
     }
 
     private fun validateCode(mobile: String, code: String, domain: String) {
-        // Dev override
-        if (devOtpCode == code) return
+        // The dev code works only while no real SMS is sent (no Kavenegar API key).
+        if (!smsService.sendsRealSms && devOtpCode == code) return
 
         val otp = otpRepository.findTopByMobileAndDomainAndUsedFalseOrderByCreatedAtDesc(mobile, domain)
             ?: throw BusinessException("کد تأیید منقضی شده است. لطفاً کد جدید دریافت کنید.")
@@ -93,9 +103,9 @@ class AuthService(
         otpRepository.save(otp)
     }
 
-    private fun buildAuthResponse(user: User, token: String) = AuthResponse(
-        accessToken = token,
-        refreshToken = "refresh-$token",
+    private fun buildAuthResponse(user: User, userType: String) = AuthResponse(
+        accessToken = jwtProvider.generateToken(user.mobile, userType),
+        refreshToken = jwtProvider.generateRefreshToken(user.mobile, userType),
         user = AuthResponse.UserDto(
             id = user.id,
             mobile = user.mobile,
@@ -110,5 +120,7 @@ class AuthService(
     private companion object {
         const val ADMIN = "ADMIN"
         const val USER = "USER"
+        const val SESSION_EXPIRED = "نشست شما منقضی شده است. لطفاً مجدداً وارد شوید."
+        val random = java.security.SecureRandom()
     }
 }

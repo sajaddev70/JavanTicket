@@ -20,7 +20,7 @@ class JwtAuthenticationFilter(
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val token = request.getHeader("Authorization")?.takeIf { it.startsWith(BEARER) }?.substring(BEARER.length)?.trim()
-        val claims = token?.let(jwtProvider::parse)
+        val claims = token?.let(jwtProvider::parseAccess)
 
         if (claims != null && SecurityContextHolder.getContext().authentication == null) {
             val mobile = claims.subject

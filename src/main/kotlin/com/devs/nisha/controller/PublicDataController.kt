@@ -2,7 +2,13 @@ package com.devs.nisha.controller
 
 import com.devs.nisha.dto.ApiResponse
 import com.devs.nisha.exception.BusinessException
+import com.devs.nisha.service.event.EventQueries.EVENT_COLUMNS
+import com.devs.nisha.service.event.EventQueries.EVENT_FROM
+import com.devs.nisha.service.event.EventQueries.EVENT_SELECT
+import com.devs.nisha.service.event.EventQueries.LAST_SESSION_JOIN
+import com.devs.nisha.service.event.EventQueries.NEXT_SESSION_JOIN
 import com.devs.nisha.service.order.OrderService
+import com.devs.nisha.service.seatmap.SeatHoldService
 import com.devs.nisha.service.seatmap.SeatMapService
 import com.devs.nisha.support.JdbcCrud
 import jakarta.validation.Valid
@@ -16,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -28,13 +35,14 @@ class PublicDataController(
     private val crud: JdbcCrud,
     private val seatMaps: SeatMapService,
     private val orders: OrderService,
+    private val holds: SeatHoldService,
 ) {
 
     @GetMapping("/site-settings")
     fun getSiteSettings(): ApiResponse<Map<String, Any?>> = ApiResponse.ok(
         crud.list(
             "SELECT site_name, short_name, tagline, meta_description, logo_url, logo_dark_url, contact_phone, contact_email, " +
-                "address, instagram_url, telegram_url, linkedin_url, aparat_url, newsletter_title, newsletter_text, footer_text " +
+                "address, instagram_url, telegram_url, linkedin_url, aparat_url, newsletter_title, newsletter_text, footer_text, service_fee_percent " +
                 "FROM site_settings ORDER BY id LIMIT 1",
         ).firstOrNull() ?: emptyMap(),
     )
@@ -100,9 +108,16 @@ class PublicDataController(
         ),
     )
 
+    /** Active cities with their photo and how many published, not yet finished events they have. */
     @GetMapping("/cities")
-    fun getCities(): ApiResponse<List<Map<String, Any?>>> =
-        ApiResponse.ok(crud.list("SELECT id, name, province FROM cities WHERE active = TRUE ORDER BY id"))
+    fun getCities(): ApiResponse<List<Map<String, Any?>>> = ApiResponse.ok(
+        crud.list(
+            "SELECT ci.id, ci.name, ci.province, ci.image_url, " +
+                "(SELECT COUNT(*) FROM events e WHERE e.city_id = ci.id AND e.status = 'PUBLISHED' " +
+                "AND COALESCE(e.end_date, (SELECT MAX(s.end_time) FROM sessions s WHERE s.event_id = e.id), LOCALTIMESTAMP) >= CURRENT_DATE) AS events_count " +
+                "FROM cities ci WHERE ci.active = TRUE ORDER BY ci.id",
+        ),
+    )
 
     @GetMapping("/categories")
     fun getCategories(): ApiResponse<List<Map<String, Any?>>> = ApiResponse.ok(
@@ -158,8 +173,8 @@ class PublicDataController(
     }
 
     /**
-     * Events page: filters plus paging. when: today, week, month; sort: newest, soonest, price.
-     * Returns { items, total }.
+     * Events page: filters plus paging. when: today, week, month; sort: newest, soonest, price;
+     * minPrice / maxPrice: starting ticket price in Toman. Returns { items, total, page, size }.
      */
     @GetMapping("/events/search")
     fun searchEvents(
@@ -169,6 +184,8 @@ class PublicDataController(
         @RequestParam(required = false) `when`: String?,
         @RequestParam(defaultValue = "newest") sort: String,
         @RequestParam(required = false) section: String?,
+        @RequestParam(required = false) minPrice: BigDecimal?,
+        @RequestParam(required = false) maxPrice: BigDecimal?,
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "12") size: Int,
     ): ApiResponse<Map<String, Any?>> {
@@ -176,6 +193,8 @@ class PublicDataController(
         val params = mutableMapOf<String, Any?>()
         if (cityId != null) { where.append(" AND e.city_id = :cityId"); params["cityId"] = cityId }
         if (!category.isNullOrBlank()) { where.append(" AND c.slug = :category"); params["category"] = category }
+        if (minPrice != null) { where.append(" AND COALESCE(e.min_price, 0) >= :minPrice"); params["minPrice"] = minPrice }
+        if (maxPrice != null) { where.append(" AND COALESCE(e.min_price, 0) <= :maxPrice"); params["maxPrice"] = maxPrice }
         when (section) {
             "featured" -> where.append(" AND e.featured = TRUE")
             "popular" -> where.append(" AND e.popular = TRUE")
@@ -216,14 +235,17 @@ class PublicDataController(
         val sessions = crud.list(
             "SELECT s.id, s.title, s.start_time, s.end_time, s.price, s.capacity, s.reserved_seats, s.status, h.name AS hall_name, ci.name AS city_name, " +
                 "COALESCE((SELECT MIN(sp.price) FROM session_prices sp WHERE sp.session_id = s.id), s.price) AS from_price, " +
+                "GREATEST(s.capacity - s.reserved_seats, 0) AS available_seats, " +
                 "EXISTS (SELECT 1 FROM seats st WHERE st.hall_id = s.hall_id) AS has_seat_map " +
                 "FROM sessions s JOIN halls h ON h.id = s.hall_id JOIN cities ci ON ci.id = h.city_id " +
                 "WHERE s.event_id = :id AND s.status IN ('ACTIVE', 'SCHEDULED') AND s.end_time >= LOCALTIMESTAMP ORDER BY s.start_time",
             id,
         )
         val span = crud.list("SELECT MIN(start_time) AS first_start, MAX(end_time) AS last_end FROM sessions WHERE event_id = :id AND status <> 'CANCELLED'", id).first()
+        val sold = crud.number("SELECT COUNT(*) FROM tickets t JOIN sessions s ON s.id = t.session_id WHERE s.event_id = :id AND t.status <> 'CANCELLED'", id)
         return ApiResponse.ok(
             event + span + mapOf(
+                "sold_count" to sold.toLong(),
                 "sessions" to sessions,
                 "stats" to crud.list("SELECT value, label, icon_url, color FROM event_stats WHERE event_id = :id ORDER BY sort_order, id", id),
                 "topics" to crud.list("SELECT title, icon_url, color FROM event_topics WHERE event_id = :id ORDER BY sort_order, id", id),
@@ -236,16 +258,32 @@ class PublicDataController(
         )
     }
 
-    /** Seat selection screen: session, prices per tier and the state of every seat (AVAILABLE or taken). */
+    /**
+     * Seat selection screen: session, prices per tier, sections and the state of every seat. Statuses: AVAILABLE,
+     * SELECTED (held by the X-Hold-Token of this browser), LOCKED (held by another buyer), SOLD, B2B_RESERVED (group
+     * or organization reservation, guests), DISABLED. `hold` is this browser's selection and its remaining time.
+     */
     @GetMapping("/sessions/{id}/seat-map")
-    fun getSeatMap(@PathVariable id: Long): ApiResponse<Map<String, Any?>> {
+    fun getSeatMap(@PathVariable id: Long, @RequestHeader(SeatHoldController.HOLD_HEADER, required = false) holdToken: String?): ApiResponse<Map<String, Any?>> {
         val session = seatMaps.sessionInfo(id)
         val hallId = (session["hall_id"] as Number).toLong()
-        val seats = seatMaps.seats(hallId, id).map { seat ->
-            val status = seat["status"]
-            seat + ("status" to if (status == "AVAILABLE") "AVAILABLE" else if (status == "DISABLED") "DISABLED" else "TAKEN")
+        val token = holdToken?.let { runCatching { SeatHoldService.validToken(it) }.getOrNull() }
+        val seats = seatMaps.seats(hallId, id, token).map { seat ->
+            val status = when (seat["status"]) {
+                "AVAILABLE", "DISABLED", "SOLD" -> seat["status"]
+                "HELD" -> if (seat["mine"] == true) "SELECTED" else "LOCKED"
+                else -> "B2B_RESERVED"
+            }
+            seat - "mine" + ("status" to status)
         }
-        return ApiResponse.ok(mapOf("session" to session, "sections" to seatMaps.sections(hallId), "seats" to seats))
+        return ApiResponse.ok(
+            mapOf(
+                "session" to session,
+                "sections" to seatMaps.sections(hallId),
+                "seats" to seats,
+                "hold" to token?.let { holds.holds(id, it) },
+            ),
+        )
     }
 
     @PostMapping("/discounts/validate")
@@ -269,29 +307,6 @@ class PublicDataController(
         return ApiResponse.ok("عضویت شما در خبرنامه ثبت شد.", null)
     }
 
-    private companion object {
-        const val NEXT_SESSION_JOIN =
-            "LEFT JOIN LATERAL (SELECT MIN(s.start_time) AS next_session_at FROM sessions s " +
-                "WHERE s.event_id = e.id AND s.status = 'ACTIVE' AND s.start_time >= LOCALTIMESTAMP) ns ON TRUE "
-
-        const val EVENT_COLUMNS =
-            "SELECT e.id, e.title, e.slug, e.subtitle, e.description, e.notice, e.banner_url, e.organizer_name, e.website_url, e.min_price, " +
-                "e.featured, e.popular, e.status, e.start_date, e.end_date, c.name AS category_name, c.slug AS category_slug, " +
-                "c.color AS category_color, c.icon_url AS category_icon_url, c.cover_url AS category_cover_url, ci.id AS city_id, " +
-                "ci.name AS city_name, h.name AS hall_name, h.venue_name, h.address AS hall_address, ns.next_session_at"
-
-        const val EVENT_FROM =
-            " FROM events e " +
-                "LEFT JOIN categories c ON e.category_id = c.id " +
-                "LEFT JOIN cities ci ON e.city_id = ci.id " +
-                "LEFT JOIN halls h ON e.hall_id = h.id " +
-                NEXT_SESSION_JOIN
-
-        const val LAST_SESSION_JOIN =
-            "LEFT JOIN LATERAL (SELECT MAX(s.end_time) AS last_end FROM sessions s WHERE s.event_id = e.id AND s.status <> 'CANCELLED') ls ON TRUE "
-
-        const val EVENT_SELECT = EVENT_COLUMNS + EVENT_FROM
-    }
 }
 
 data class DiscountCheckRequest(

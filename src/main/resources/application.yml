@@ -1,0 +1,98 @@
+spring:
+  application:
+    name: youth-event-platform
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:youth_event}}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:1234}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: false
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  # Built-in content images under /media/ (src/main/resources/static/media)
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 7d
+          cache-public: true
+
+  jackson:
+    time-zone: Asia/Tehran
+
+  cache:
+    type: simple
+
+server:
+  port: ${SERVER_PORT:8081}
+  forward-headers-strategy: framework
+
+app:
+  database:
+    # Dev only (skipped with the prod profile; set DB_CREATE_IF_MISSING=false in production): create the database above if it does not exist yet
+    create-if-missing: ${DB_CREATE_IF_MISSING:true}
+  # Images uploaded from the admin panel; served under /uploads/
+  upload-dir: ${UPLOAD_DIR:uploads}
+  # Address of the user site as the browser sees it; payment gateways send the buyer back here.
+  user-site-url: ${USER_SITE_URL:http://localhost:3003}
+
+sms:
+  # "kavenegar" sends real SMS when an API key is set; without a key (or with "dev") the fixed dev code is used and only logged.
+  provider: ${SMS_PROVIDER:kavenegar}
+  dev-code: ${SMS_DEV_CODE:1111}
+  kavenegar:
+    api-key: ${KAVENEGAR_API_KEY:}
+    otp-template: ${KAVENEGAR_OTP_TEMPLATE:otp}
+    # Sender line for plain messages (tickets); empty uses the account default line.
+    sender: ${KAVENEGAR_SENDER:}
+
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration-ms: 86400000
+  refresh-expiration-ms: 604800000
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    com.devs.nisha: ${APP_LOG_LEVEL:DEBUG}
+
+# Sample data matching the UI designs, loaded once per seed version (never runs with the prod profile).
+# Set DEMO_SEED_ENABLED=false in production and to keep your own local data untouched.
+demo:
+  seed:
+    enabled: ${DEMO_SEED_ENABLED:true}
+
+checkout:
+  # How long seats picked on the seat map stay locked for the buyer (also the checkout countdown).
+  hold-minutes: ${CHECKOUT_HOLD_MINUTES:10}
+  # Most seats / tickets in one order.
+  max-seats: 10
+
+payment:
+  # "dev" enables a simulated bank gateway for development (never in production); "none" until a real gateway is integrated.
+  mode: ${PAYMENT_MODE:dev}

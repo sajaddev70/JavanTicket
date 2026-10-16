@@ -22,7 +22,7 @@ import tools.jackson.databind.PropertyNamingStrategies
 import tools.jackson.databind.annotation.JsonNaming
 import java.time.LocalDate
 
-/** Gate control: validates ticket codes (QR / barcode / typed) at the hall entrance and records every scan. */
+/** Gate control: validates tickets at the hall entrance — the QR payload (qr_code) or the printed ticket code — and records every scan. */
 @RestController
 @RequestMapping("/api/v1/admin/gate")
 class AdminGateController(private val crud: JdbcCrud, private val access: AdminAccess) {
@@ -87,8 +87,8 @@ class AdminGateController(private val crud: JdbcCrud, private val access: AdminA
                 "s.status AS session_status, e.title AS event_title, h.name AS hall_name, u.full_name AS customer_name, u.mobile AS customer_mobile, " +
                 "o.order_number FROM tickets t JOIN sessions s ON s.id = t.session_id JOIN events e ON e.id = s.event_id " +
                 "JOIN halls h ON h.id = s.hall_id JOIN users u ON u.id = t.user_id JOIN orders o ON o.id = t.order_id " +
-                "WHERE UPPER(t.ticket_code) = :code FOR UPDATE OF t",
-            mapOf("code" to code),
+                "WHERE UPPER(t.ticket_code) = :code OR t.qr_code = :qr FOR UPDATE OF t",
+            mapOf("code" to code, "qr" to code.replace("-", "")),
         )
         val result = when {
             ticket == null -> "INVALID"
@@ -116,8 +116,8 @@ class AdminGateController(private val crud: JdbcCrud, private val access: AdminA
     fun reset(@Valid @RequestBody req: GateScanRequest, request: HttpServletRequest): ApiResponse<Unit> {
         val code = req.code!!.trim().uppercase()
         val updated = crud.jdbc.update(
-            "UPDATE tickets SET status = 'VALID', used_at = NULL WHERE UPPER(ticket_code) = :code AND status = 'USED'",
-            mapOf("code" to code),
+            "UPDATE tickets SET status = 'VALID', used_at = NULL WHERE (UPPER(ticket_code) = :code OR qr_code = :qr) AND status = 'USED'",
+            mapOf("code" to code, "qr" to code.replace("-", "")),
         )
         if (updated == 0) throw BusinessException("بلیتی با این کد که وارد شده باشد پیدا نشد.", HttpStatus.NOT_FOUND)
         request.setAttribute(ActivityLogService.DESCRIPTION, "لغو ثبت ورود بلیت $code")

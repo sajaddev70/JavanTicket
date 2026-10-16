@@ -22,6 +22,11 @@ data class VerifyOtpRequest(
     val code: String?,
 )
 
+data class RefreshTokenRequest(
+    @NotBlank(message = "نشست شما منقضی شده است. لطفاً مجدداً وارد شوید.")
+    val refreshToken: String?,
+)
+
 data class AuthResponse(
     val accessToken: String,
     val refreshToken: String,

@@ -2,11 +2,11 @@ import { mediaUrl } from "@/lib/media";
 import { cn } from "@/lib/cn";
 
 /**
- * Line icon from the backend's icon set (/media/icons/...), painted with `currentColor` through a CSS mask
- * so it follows the text color and the light/dark theme.
+ * Line icon (SVG) painted with `currentColor` through a CSS mask, so it follows the text color and the theme.
+ * Paths from the backend (/media/...) are resolved against the API; /assets/... are the site's own files.
  */
 export function SvgIcon({ src, className, style }: { src?: string | null; className?: string; style?: React.CSSProperties }) {
-  const url = mediaUrl(src);
+  const url = src?.startsWith("/assets/") ? src : mediaUrl(src);
   if (!url) return null;
   return (
     <span
@@ -15,9 +15,4 @@ export function SvgIcon({ src, className, style }: { src?: string | null; classN
       style={{ mask: `url("${url}") center / contain no-repeat`, WebkitMask: `url("${url}") center / contain no-repeat`, ...style }}
     />
   );
-}
-
-/** Shortcut for icons of the shared set, e.g. <Icon name="common/plus" />. */
-export function Icon({ name, className, style }: { name: string; className?: string; style?: React.CSSProperties }) {
-  return <SvgIcon src={`/media/icons/${name}.svg`} className={className} style={style} />;
 }
