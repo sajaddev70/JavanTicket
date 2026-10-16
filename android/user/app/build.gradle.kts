@@ -42,8 +42,8 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"${setting("javan.apiBaseUrl", "http://localhost:8081/api/v1")}\"")
-            buildConfigField("String", "SITE_URL", "\"${setting("javan.siteUrl", "http://localhost:3003")}\"")
+            buildConfigField("String", "API_BASE_URL", "\"${setting("javan.apiBaseUrl", "http://45.156.186.169:8081/api/v1")}\"")
+            buildConfigField("String", "SITE_URL", "\"${setting("javan.siteUrl", "http://45.156.186.169:3003")}\"")
         }
         release {
             isMinifyEnabled = true

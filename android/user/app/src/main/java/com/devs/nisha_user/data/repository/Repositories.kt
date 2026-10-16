@@ -177,6 +177,8 @@ class FavoritesRepositoryImpl @Inject constructor(private val api: UserApi, priv
 class SettingsRepositoryImpl @Inject constructor(private val prefs: PreferencesStore) : SettingsRepository {
     override val themeMode: StateFlow<ThemeMode> = prefs.themeMode
     override val cityId: StateFlow<Long?> = prefs.cityId
+    override val notificationPromptDismissed: StateFlow<Boolean> = prefs.notificationPromptDismissed
     override fun setTheme(mode: ThemeMode) = prefs.setTheme(mode)
     override fun setCity(id: Long?) = prefs.setCity(id)
+    override fun setNotificationPromptDismissed(dismissed: Boolean) = prefs.setNotificationPromptDismissed(dismissed)
 }
