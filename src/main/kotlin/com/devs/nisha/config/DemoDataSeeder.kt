@@ -745,6 +745,11 @@ class DemoDataSeeder(
             listOf("HOME_CTA", "همیشه و همه‌جا با شما", "خرید بلیت، فقط چند کلیک فاصله دارد", "به جمع هزاران نفر از علاقه‌مندان رویدادهای فرهنگی، هنری و علمی بپیوندید.", "همین حالا ثبت نام کنید", "/login", "/media/heroes/cta.jpg"),
             listOf("EVENTS_HERO", null, "رویدادهای دیدنی، تجربیات ماندگار", "خرید بلیت نمایشگاه‌ها، همایش‌ها، کنفرانس‌ها و رویدادهای فرهنگی و آموزشی در سراسر ایران", null, null, "/media/heroes/events-hero.jpg"),
             listOf("SEAT_HERO", null, "انتخاب صندلی", "صندلی‌های دلخواه خود را از روی نقشه سالن انتخاب کنید.", null, null, "/media/heroes/seat-hero.jpg"),
+            // Blocks of the checkout / login / ticket screens (first added by V9); the TRUNCATE above removes them too.
+            listOf("AUTH_HERO", null, "به دنیای رویدادهای خاطره‌انگیز خوش آمدید", "با یک حساب کاربری، به جدیدترین کنسرت‌ها، نمایش‌ها و جشنواره‌ها دسترسی داشته باشید و به‌راحتی بلیت خود را تهیه کنید.", null, null, "/media/heroes/home-hero.jpg"),
+            listOf("CHECKOUT_NOTICE", null, "نکات مهم خرید", "بلیت‌ها پس از تکمیل پرداخت، به صورت الکترونیکی صادر می‌شوند.\nامکان استرداد بلیت مطابق با قوانین هر رویداد وجود دارد.\nلطفاً اطلاعات خود را با دقت وارد کنید.\nدر صورت بروز هرگونه مشکل با پشتیبانی تماس بگیرید.", null, null, null),
+            listOf("PAYMENT_NOTICE", null, "پرداخت امن و مطمئن", "کلیه اطلاعات پرداخت شما به صورت رمزنگاری‌شده از طریق درگاه‌های رسمی بانکی و تحت نظارت شاپرک انجام می‌شود و اطلاعات کارت شما ذخیره نمی‌شود.", null, null, null),
+            listOf("TICKET_GUIDE", null, "راهنمای ورود به سالن", "همراه داشتن بلیت: این بلیت الکترونیک را به صورت چاپی یا روی موبایل خود همراه داشته باشید.\nاسکن QR Code: در ورودی سالن، کد QR بلیت خود را به اسکنر نشان دهید.\nحضور به‌موقع: لطفاً حداقل ۳۰ دقیقه قبل از شروع برنامه در محل حضور داشته باشید.\nرعایت قوانین: از ورود وسایل غیرمجاز به سالن خودداری فرمایید.", null, null, null),
         ).forEach { b ->
             crud.insert(
                 "page_blocks",
@@ -993,7 +998,7 @@ class DemoDataSeeder(
     private data class SessionRef(val id: Long, val event: Ev, val start: LocalDateTime, val capacity: Int)
 
     private companion object {
-        const val SEED_VERSION = "2026-10-demo-v5"
+        const val SEED_VERSION = "2026-10-demo-v6"
 
         /** Customer account of the demo (orders, tickets and favorites on the user site). */
         const val DEMO_CUSTOMER_MOBILE = "09121234567"
