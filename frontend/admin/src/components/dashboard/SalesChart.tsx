@@ -92,7 +92,9 @@ export function SalesChart() {
               <XAxis
                 dataKey="date"
                 tickFormatter={(d: string) => faDayMonth(parseIsoDate(d))}
-                interval={Math.max(0, Math.ceil((data?.length ?? 0) / 7) - 1)}
+                // Fewer dates on phones instead of overlapping labels.
+                interval="preserveStartEnd"
+                minTickGap={18}
                 tick={TICK}
                 tickLine={false}
                 axisLine={{ stroke: GRID_COLOR }}

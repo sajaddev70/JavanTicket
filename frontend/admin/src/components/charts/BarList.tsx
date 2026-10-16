@@ -31,10 +31,11 @@ export function BarList({ items, format = faNumber, loading, emptyMessage = 'Ø¯Ø
     <ul className="space-y-3">
       {items.map((i) => (
         <li key={i.key} title={`${i.label}: ${format(i.value)}`}>
-          <div className="mb-1 flex items-baseline justify-between gap-3 text-[13px]">
-            <span className="flex min-w-0 items-center gap-2 font-bold text-ink">
+          {/* Wraps to two lines on narrow cards instead of cutting the label down to a few letters. */}
+          <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[13px]">
+            <span className="flex min-w-0 max-w-full items-center gap-2 font-bold text-ink">
               {i.dot && <span className="size-2.5 shrink-0 rounded-full" style={{ background: i.dot }} />}
-              <span className="truncate">{i.label}</span>
+              <span className="break-words">{i.label}</span>
               {i.hint && <span className="shrink-0 text-[12px] font-normal text-muted">{i.hint}</span>}
             </span>
             <span className="tabular shrink-0 text-ink">

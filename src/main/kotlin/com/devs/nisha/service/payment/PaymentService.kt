@@ -106,7 +106,8 @@ class PaymentService(
         ) ?: throw BusinessException("پرداخت موردنظر پیدا نشد.", HttpStatus.NOT_FOUND)
         val gateway = gateways.firstOrNull { it.code == payment["gateway"] }
         return payment + mapOf(
-            "gateway_title" to (gateway?.title ?: payment["gateway"]),
+            // The dev gateway is not registered in prod, but demo payments still name it.
+            "gateway_title" to (gateway?.title ?: if (payment["gateway"] == DevPaymentGateway.CODE) DevPaymentGateway.TITLE else payment["gateway"]),
             "order" to orders.order(userId, payment["order_number"] as String),
         )
     }

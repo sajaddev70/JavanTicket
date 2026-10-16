@@ -36,7 +36,7 @@ function StatusPill({ status }: { status: SessionSaleStatus }) {
 function DetailsLink({ session }: { session: TodaySession }) {
   return (
     <Link
-      href={`/sessions/${session.id}`}
+      href={`/sessions?session=${session.id}`}
       className="inline-flex h-8 items-center rounded-lg border border-line bg-surface px-3 text-[12px] font-semibold text-ink hover:border-brand-500/40 hover:text-brand-600"
     >
       جزئیات

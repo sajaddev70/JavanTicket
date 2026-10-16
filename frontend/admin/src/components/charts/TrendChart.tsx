@@ -60,7 +60,9 @@ export function TrendChart({
               <XAxis
                 dataKey="date"
                 tickFormatter={(d: string) => faDayMonth(parseIsoDate(d))}
-                interval={Math.max(0, Math.ceil((data?.length ?? 0) / 8) - 1)}
+                // Recharts drops labels that would touch, so narrow (phone) charts show fewer dates instead of overlapping ones.
+                interval="preserveStartEnd"
+                minTickGap={18}
                 tick={TICK}
                 tickLine={false}
                 axisLine={{ stroke: GRID }}

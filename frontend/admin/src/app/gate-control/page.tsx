@@ -359,7 +359,8 @@ export default function AdminGateControlPage() {
                     <li key={r.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-[13.5px]">
                       <StatusPill tone={st.tone}>{st.label}</StatusPill>
                       <span dir="ltr" className="font-mono font-bold text-ink">{r.ticket_code}</span>
-                      <span className="min-w-0 flex-1 truncate text-muted">
+                      {/* Own line on phones; the details would otherwise be squeezed to a few letters. */}
+                      <span className="order-last w-full truncate text-muted sm:order-none sm:w-auto sm:min-w-0 sm:flex-1">
                         {[r.event_title, r.seat_label, r.customer_name].filter(Boolean).join(' · ') || '—'}
                       </span>
                       <span className="text-[12px] text-muted">

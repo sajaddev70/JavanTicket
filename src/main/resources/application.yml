@@ -81,11 +81,15 @@ logging:
     root: INFO
     com.devs.nisha: ${APP_LOG_LEVEL:DEBUG}
 
-# Sample data matching the UI designs, loaded once per seed version (never runs with the prod profile).
-# Set DEMO_SEED_ENABLED=false in production and to keep your own local data untouched.
+# Demo data matching the UI designs (DemoDataSeeder), loaded once per seed version in every profile.
+# It only fills a database without its own events, orders or customers, so real data is never wiped.
 demo:
   seed:
     enabled: ${DEMO_SEED_ENABLED:true}
+    # A database filled by an older seed version is wiped and loaded again with the new one.
+    reseed-on-upgrade: ${DEMO_SEED_RESEED:true}
+    # One-off: load the demo even over existing data (everything except admins, roles and the admin menu is replaced).
+    force: ${DEMO_SEED_FORCE:false}
 
 checkout:
   # How long seats picked on the seat map stay locked for the buyer (also the checkout countdown).

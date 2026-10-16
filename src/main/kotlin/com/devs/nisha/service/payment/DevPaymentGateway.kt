@@ -16,7 +16,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 @ConditionalOnProperty(name = ["payment.mode"], havingValue = "dev")
 class DevPaymentGateway : PaymentGateway {
     override val code = CODE
-    override val title = "درگاه پرداخت آزمایشی"
+    override val title = TITLE
     override val description = "شبیه‌ساز درگاه بانکی برای محیط توسعه"
     override val logoUrl: String? = null
 
@@ -32,5 +32,6 @@ class DevPaymentGateway : PaymentGateway {
 
     companion object {
         const val CODE = "dev"
+        const val TITLE = "درگاه پرداخت آزمایشی"
     }
 }

@@ -43,7 +43,8 @@ export function HeroSlider() {
         title: b.title,
         subtitle: b.subtitle,
         image: b.image_url ?? b.category_cover_url,
-        href: b.link_url ?? (b.event_slug ? `/events/${b.event_slug}` : null),
+        // A banner tied to an event always follows the event's current slug, so renaming the event never leaves a dead link.
+        href: b.event_slug ? `/events/${encodeURIComponent(b.event_slug)}` : b.link_url,
         button: b.button_text,
       });
     }

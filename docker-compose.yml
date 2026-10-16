@@ -30,7 +30,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      # prod profile switches off the demo/test seeders and DB auto-create (@Profile("!prod"))
+      # prod profile switches off DB auto-create (@Profile("!prod")); the demo seeder still fills an empty database
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: db
       DB_PORT: 5432
@@ -46,7 +46,10 @@ services:
       PAYMENT_MODE: ${PAYMENT_MODE:-none}
       # Payment gateways send the buyer back to this site after paying.
       USER_SITE_URL: ${PUBLIC_USER_SITE_URL:-http://localhost:3003}
-      DEMO_SEED_ENABLED: "false"
+      # Demo data on a fresh database (never over real data); see README "داده نمایشی"
+      DEMO_SEED_ENABLED: ${DEMO_SEED_ENABLED:-true}
+      DEMO_SEED_RESEED: ${DEMO_SEED_RESEED:-true}
+      DEMO_SEED_FORCE: ${DEMO_SEED_FORCE:-false}
       DB_CREATE_IF_MISSING: "false"
       APP_LOG_LEVEL: INFO
     volumes:

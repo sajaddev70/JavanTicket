@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Armchair, CalendarDays, Pencil, Plus, Tag, Trash2 } from 'lucide-react';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -86,15 +86,28 @@ function inRange(s: Session, range: string) {
 }
 
 export default function AdminSessionsPage() {
+  return (
+    <AdminLayout>
+      <Suspense>
+        <SessionsScreen />
+      </Suspense>
+    </AdminLayout>
+  );
+}
+
+function SessionsScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const params = useSearchParams();
+  // ?session=<id> (the dashboard's "details" link) opens that session's form once the list has loaded.
+  const linkedId = Number(params.get('session')) || null;
   const sessions = useQuery({ queryKey: ['admin', 'sessions'], queryFn: () => apiGet<Session[]>('/admin/sessions') });
   const summary = useQuery({ queryKey: ['admin', 'sessions', 'summary'], queryFn: () => apiGet<SessionsSummary>('/admin/sessions/summary') });
   const cities = useOptions(['admin', 'cities'], '/admin/cities', (r) => String(r.name));
   const halls = useOptions(['admin', 'halls'], '/admin/halls', (r) => `${r.name} (${r.city_name})`);
   const events = useOptions(['admin', 'events'], '/admin/events', (r) => String(r.title));
 
-  const [range, setRange] = useState('upcoming');
+  const [range, setRange] = useState(linkedId ? '' : 'upcoming');
   const [city, setCity] = useState('');
   const [hall, setHall] = useState('');
   const [event, setEvent] = useState('');
@@ -102,6 +115,12 @@ export default function AdminSessionsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [editing, setEditing] = useState<Session | 'new' | null>(null);
+  const [linkedHandled, setLinkedHandled] = useState(false);
+  if (linkedId && !linkedHandled && sessions.data) {
+    setLinkedHandled(true);
+    const linked = sessions.data.find((x) => x.id === linkedId);
+    if (linked) setEditing(linked);
+  }
   const [pricesOf, setPricesOf] = useState<Session | null>(null);
   const [toDelete, setToDelete] = useState<Session | null>(null);
   const [deleteError, setDeleteError] = useState('');
@@ -142,7 +161,7 @@ export default function AdminSessionsPage() {
   const s = summary.data;
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-5">
         <PageHeader title="سانس‌ها" crumbs={['سانس‌ها']} />
 
@@ -310,7 +329,7 @@ export default function AdminSessionsPage() {
           setDeleteError('');
         }}
       />
-    </AdminLayout>
+    </>
   );
 }
 

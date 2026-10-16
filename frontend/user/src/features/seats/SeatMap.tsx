@@ -379,7 +379,8 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div style={{ width: contentW || "100%", transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`, transformOrigin: "0 0" }} className="will-change-transform">
+        {/* No will-change: it would rasterize the SVG once at scale 1 and stretch that bitmap, so zoomed seats looked blurry. */}
+        <div style={{ width: contentW || "100%", transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`, transformOrigin: "0 0" }}>
           {drawing(false)}
         </div>
 

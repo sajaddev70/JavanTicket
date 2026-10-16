@@ -101,7 +101,7 @@ function SeatMapsScreen() {
       <PageHeader title="نقشه صندلی‌ها" crumbs={['نقشه صندلی‌ها']} />
 
       <Card className="px-3 sm:px-5">
-        <div role="tablist" className="no-scrollbar flex gap-2 overflow-x-auto sm:gap-8">
+        <div role="tablist" className="no-scrollbar grid grid-cols-2 sm:flex sm:gap-8 sm:overflow-x-auto">
           {TABS.map((t) => (
             <button
               key={t.key}
@@ -110,7 +110,8 @@ function SeatMapsScreen() {
               aria-selected={tab === t.key}
               onClick={() => setTab(t.key)}
               className={cn(
-                'shrink-0 border-b-[3px] px-3 py-5 text-[15px] font-bold transition',
+                // Two rows of tabs on phones so every tab stays visible; one scrollable row from sm up.
+                'shrink-0 border-b-[3px] px-2 py-3.5 text-[14px] font-bold transition sm:px-3 sm:py-5 sm:text-[15px]',
                 tab === t.key ? 'border-brand-600 text-brand-600' : 'border-transparent text-ink/80 hover:text-ink',
               )}
             >
@@ -253,7 +254,7 @@ function MapTab({ hallId, sessionId, onEditLayout }: { hallId: number; sessionId
               </li>
             ))}
           </ul>
-          <div className="flex items-center gap-2 sm:mr-auto">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:mr-auto sm:w-auto">
             <div className="flex h-10 items-center rounded-xl border border-line">
               <button type="button" onClick={() => setZoom((z) => Math.min(2, z + 0.1))} className="flex size-10 items-center justify-center" aria-label="بزرگ‌نمایی">
                 <Plus className="size-4" />
@@ -268,12 +269,13 @@ function MapTab({ hallId, sessionId, onEditLayout }: { hallId: number; sessionId
             <button
               type="button"
               onClick={() => boxRef.current?.requestFullscreen?.()}
-              className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line px-3 text-[13px] font-bold text-ink"
+              aria-label="نمای تمام صفحه"
+              className="inline-flex h-10 items-center gap-1.5 whitespace-nowrap rounded-xl border border-line px-3 text-[13px] font-bold text-ink"
             >
               <Expand className="size-4" />
-              نمای تمام صفحه
+              <span className="hidden sm:inline">نمای تمام صفحه</span>
             </button>
-            <button type="button" onClick={onEditLayout} className={cn(primaryButton, 'h-10 px-4')}>
+            <button type="button" onClick={onEditLayout} className={cn(primaryButton, 'h-10 flex-1 whitespace-nowrap px-4 sm:flex-none')}>
               <Pencil className="size-4" />
               ویرایش نقشه صندلی
             </button>

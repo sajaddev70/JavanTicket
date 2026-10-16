@@ -3,9 +3,10 @@ package com.devs.nisha.config
 import com.devs.nisha.service.seatmap.SeatMapService
 import com.devs.nisha.support.JdbcCrud
 import org.slf4j.LoggerFactory
+import com.devs.nisha.support.SecureCodes
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.context.annotation.Profile
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -19,17 +20,26 @@ import java.time.temporal.TemporalAdjusters
 import kotlin.random.Random
 
 /**
- * Local development data that mirrors the UI designs (file/screen and file/screen/new): cities, halls with seat maps,
- * ~50 events with sessions around today, a month of orders and tickets, schools, alerts, site content and more.
+ * Demo data that mirrors the UI designs (file/screen and file/screen/new), so a fresh installation is never empty:
+ * cities, halls with seat maps, ~50 events with sessions around today, a month of orders, tickets and payments,
+ * schools, invoices, settlements, CRM, alerts, site content, and a demo customer account with its own tickets.
  *
- * Runs once per [SEED_VERSION] (tracked in app_meta). A new version wipes the content tables and loads everything
- * again; admin accounts, roles and the admin menu are kept. Disable with DEMO_SEED_ENABLED=false; never runs in prod.
+ * Runs once per [SEED_VERSION] (tracked in app_meta), in every profile (the Docker setup included):
+ * - a database the seeder has never touched is filled only while it holds no data of its own (no customer, order or
+ *   event besides the V1 samples), so a production database with real content is never wiped;
+ * - a database filled by an older seed version is wiped and loaded again unless `demo.seed.reseed-on-upgrade` is off.
+ * `demo.seed.force` (DEMO_SEED_FORCE=true) loads it over whatever is there; set it for one start, then back to false.
+ * Admin accounts, roles and the admin menu are always kept. Turn it off completely with DEMO_SEED_ENABLED=false.
  */
 @Component
-@Profile("!prod")
 @Order(10)
 @ConditionalOnProperty(name = ["demo.seed.enabled"], havingValue = "true")
-class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapService) : CommandLineRunner {
+class DemoDataSeeder(
+    private val crud: JdbcCrud,
+    private val seatMaps: SeatMapService,
+    @param:Value("\${demo.seed.reseed-on-upgrade:true}") private val reseedOnUpgrade: Boolean,
+    @param:Value("\${demo.seed.force:false}") private val force: Boolean,
+) : CommandLineRunner {
 
     private val log = LoggerFactory.getLogger(javaClass)
     private val random = Random(1405)
@@ -39,7 +49,16 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
     @Transactional
     override fun run(vararg args: String) {
         val loaded = jdbc.queryForList("SELECT meta_value FROM app_meta WHERE meta_key = 'demo_seed'", emptyMap<String, Any>(), String::class.java)
-        if (loaded.firstOrNull() == SEED_VERSION) return
+        val version = loaded.firstOrNull()
+        if (version == SEED_VERSION && !force) return
+        if (!force && version == null && hasOwnData()) {
+            log.info("[DemoDataSeeder] Database already has its own events, orders or customers; demo data is not loaded.")
+            return
+        }
+        if (!force && version != null && !reseedOnUpgrade) {
+            log.info("[DemoDataSeeder] Demo data {} is loaded; reseeding to {} is turned off.", version, SEED_VERSION)
+            return
+        }
 
         log.info("[DemoDataSeeder] Loading design sample data (version {})...", SEED_VERSION)
         reset()
@@ -51,6 +70,8 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
         seedEventPages(events)
         val users = seedUsers()
         seedOrders(users, sessions)
+        seedDemoCustomer(cities, events, sessions)
+        seedPayments()
         val organizations = seedSchools(cities, sessions)
         seedInvoices(organizations)
         seedSettlements(events)
@@ -67,15 +88,28 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
         log.info("[DemoDataSeeder] Sample data loaded: {} events, {} sessions.", events.size, sessions.size)
     }
 
+    /** True when the database holds content that did not come from this seeder or the V1 migration samples. */
+    private fun hasOwnData(): Boolean {
+        val count = crud.number(
+            "SELECT (SELECT COUNT(*) FROM orders) + (SELECT COUNT(*) FROM users WHERE user_type = 'USER') + " +
+                "(SELECT COUNT(*) FROM events WHERE slug NOT IN (:samples))",
+            mapOf("samples" to V1_SAMPLE_EVENTS),
+        )
+        return count.toLong() > 0
+    }
+
     private fun reset() {
         jdbc.update(
             "TRUNCATE seat_reservations, session_prices, seats, hall_sections, tickets, orders, sessions, event_stats, event_topics, " +
-                "event_speakers, event_gallery, event_faqs, banners, events, group_reservations, organizations, halls, cities, categories, " +
+                "event_speakers, event_gallery, event_faqs, banners, events, group_reservations, organizations, halls, categories, " +
                 "system_alerts, discount_codes, page_blocks, site_features, home_sections, links, link_groups, pages, newsletter_subscribers, " +
-                "invoice_items, invoices, settlements, gate_scans, crm_interactions, activity_logs " +
+                "invoice_items, invoices, settlements, gate_scans, crm_interactions, activity_logs, payments, user_favorites " +
                 "RESTART IDENTITY CASCADE",
             emptyMap<String, Any>(),
         )
+        // Not in the TRUNCATE: users.city_id references cities, so CASCADE would empty users (and every admin) too.
+        jdbc.update("DELETE FROM cities", emptyMap<String, Any>())
+        jdbc.update("ALTER SEQUENCE cities_id_seq RESTART", emptyMap<String, Any>())
         jdbc.update("DELETE FROM users WHERE user_type = 'USER'", emptyMap<String, Any>())
     }
 
@@ -334,7 +368,7 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
                 )
                 repeat(qty) { t ->
                     tickets += mapOf(
-                        "code" to "$number-${t + 1}", "order" to orderId, "user" to null,
+                        "code" to "$number-${t + 1}", "qr" to SecureCodes.ticketQr(), "order" to orderId, "user" to null,
                         "session" to session.id, "price" to BigDecimal(unit), "at" to Timestamp.valueOf(createdAt),
                     )
                 }
@@ -353,8 +387,8 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
             )
         }
         jdbc.batchUpdate(
-            "INSERT INTO tickets (ticket_code, order_id, user_id, session_id, price, status, seat_label, created_at) " +
-                "VALUES (:code, :order, (SELECT user_id FROM orders WHERE id = :order), :session, :price, 'VALID', 'ورود عمومی', :at)",
+            "INSERT INTO tickets (ticket_code, qr_code, order_id, user_id, session_id, price, status, seat_label, created_at) " +
+                "VALUES (:code, :qr, :order, (SELECT user_id FROM orders WHERE id = :order), :session, :price, 'VALID', 'ورود عمومی', :at)",
             tickets.toTypedArray(),
         )
         // Tickets of sessions that already started were mostly scanned at the gate.
@@ -786,10 +820,132 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
                 )
             }
 
-        // Old hero slider rows stay available in the database for the banners screen.
-        crud.insert(
-            "banners",
-            linkedMapOf("title" to "کنسرت بزرگ حمید هیراد", "subtitle" to "سالن میلاد نمایشگاه بین‌المللی", "image_url" to "/media/events/home5-1.jpg", "link_url" to "/events/hamid-hirad", "button_text" to "خرید بلیت", "sort_order" to 1),
+        // Homepage slider (after the HOME_HERO block). Each banner is tied to its event, so the link follows the event's slug.
+        listOf(
+            listOf("hamid-hirad-concert", "کنسرت بزرگ حمید هیراد", "تهران - سالن اصلی نمایشگاه بین‌المللی | اجرای زنده با ارکستر کامل", "/media/events/home5-1.jpg", "انتخاب سانس و خرید بلیت"),
+            listOf("iran-tech-expo", "نمایشگاه بین‌المللی فناوری و نوآوری ایران", "بزرگ‌ترین رویداد فناوری کشور با حضور بیش از ۲۵۰ شرکت و استارتاپ", "/media/events/tech-expo-hero.png", "مشاهده و ثبت‌نام"),
+            listOf("business-innovation", "همایش ملی نوآوری در کسب‌وکار", "از ایده تا بازار؛ انتخاب صندلی از روی نقشه سالن", "/media/events/poster-a1.jpg", "انتخاب صندلی"),
+            listOf("hamlet", "نمایش هملت", "گروه تئاتر شهر - سالن فرعی مرکز همایش و نمایش جوان", "/media/events/home7-2.jpg", "خرید بلیت"),
+        ).forEachIndexed { i, b ->
+            val eventId = jdbc.queryForList("SELECT id FROM events WHERE slug = :s", mapOf("s" to b[0]), Long::class.java).firstOrNull()
+            crud.insert(
+                "banners",
+                linkedMapOf(
+                    "title" to b[1], "subtitle" to b[2], "image_url" to b[3], "link_url" to "/events/${b[0]}", "event_id" to eventId,
+                    "button_text" to b[4], "sort_order" to i + 1, "active" to true,
+                ),
+            )
+        }
+    }
+
+    // ---------------------------------------------------------------- demo customer
+
+    /**
+     * A customer account to try the user site with (sign in with [DEMO_CUSTOMER_MOBILE]; without an SMS key the code
+     * is sms.dev-code): upcoming seat and general-admission tickets, used tickets, an abandoned checkout, a refunded
+     * order and favorites.
+     */
+    private fun seedDemoCustomer(cities: Map<String, Long>, events: List<Ev>, sessions: List<SessionRef>) {
+        val userId = crud.insert(
+            "users",
+            linkedMapOf(
+                "mobile" to DEMO_CUSTOMER_MOBILE, "full_name" to "سارا رضایی", "first_name" to "سارا", "last_name" to "رضایی",
+                "email" to "sara.rezaei@example.com", "city_id" to cities["تهران"], "status" to "ACTIVE", "user_type" to "USER",
+                "created_at" to Timestamp.valueOf(LocalDateTime.now().minusDays(120)),
+            ),
+        )
+        fun session(slug: String, index: Int = 0) = sessions.filter { it.event.def.slug == slug }[index]
+        var n = 1
+        fun order(s: SessionRef, status: String, createdAt: LocalDateTime, seats: List<Map<String, Any?>> = emptyList(), quantity: Int = seats.size): Long {
+            val unit = BigDecimal(s.event.def.price)
+            val total = if (seats.isEmpty()) unit.multiply(BigDecimal(quantity)) else seats.sumOf { it["price"] as BigDecimal }
+            val number = "JT-D%04d".format(n++)
+            val orderId = crud.insert(
+                "orders",
+                linkedMapOf(
+                    "order_number" to number, "user_id" to userId, "session_id" to s.id, "quantity" to if (seats.isEmpty()) quantity else null,
+                    "total_amount" to total, "status" to status, "payment_method" to "ONLINE",
+                    "tracking_code" to if (status == "PENDING" || status == "CANCELLED") null else "%012d".format(random.nextLong(100_000_000_000L, 999_999_999_999L)),
+                    "buyer_first_name" to "سارا", "buyer_last_name" to "رضایی", "buyer_mobile" to DEMO_CUSTOMER_MOBILE,
+                    "buyer_email" to "sara.rezaei@example.com", "created_at" to Timestamp.valueOf(createdAt),
+                    "paid_at" to if (status == "PENDING" || status == "CANCELLED") null else Timestamp.valueOf(createdAt.plusMinutes(3)),
+                    "refunded_at" to if (status == "REFUNDED") Timestamp.valueOf(createdAt.plusDays(1)) else null,
+                    "refund_reason" to if (status == "REFUNDED") "انصراف مشتری از حضور در رویداد" else null,
+                ),
+            )
+            if (status == "PENDING" || status == "CANCELLED") return orderId
+            val ticketStatus = when {
+                status == "REFUNDED" -> "CANCELLED"
+                s.start.isBefore(LocalDateTime.now()) -> "USED"
+                else -> "VALID"
+            }
+            repeat(quantity) { i ->
+                val seat = seats.getOrNull(i)
+                seat?.let {
+                    jdbc.update(
+                        "INSERT INTO seat_reservations (session_id, seat_id, status, order_id) VALUES (:s, :seat, 'SOLD', :o) " +
+                            "ON CONFLICT (session_id, seat_id) DO UPDATE SET status = 'SOLD', order_id = :o",
+                        mapOf("s" to s.id, "seat" to it["id"], "o" to orderId),
+                    )
+                }
+                crud.insert(
+                    "tickets",
+                    linkedMapOf(
+                        "ticket_code" to "$number-${i + 1}", "qr_code" to SecureCodes.ticketQr(), "order_id" to orderId, "user_id" to userId,
+                        "session_id" to s.id, "seat_id" to seat?.get("id"),
+                        "seat_label" to if (seat != null) "ردیف ${seat["row_label"]} - صندلی ${seat["seat_number"]}" else "ورود عمومی",
+                        "price" to (seat?.get("price") ?: unit), "status" to ticketStatus,
+                        "used_at" to if (ticketStatus == "USED") Timestamp.valueOf(s.start.minusMinutes(25)) else null,
+                        "created_at" to Timestamp.valueOf(createdAt.plusMinutes(3)),
+                    ),
+                )
+            }
+            return orderId
+        }
+
+        // Two VIP seats in the middle of the front rows of a seat-mapped session (freed if the random fill took them).
+        val seatSession = session("business-innovation")
+        val seats = jdbc.queryForList(
+            "SELECT st.id, st.row_label, st.seat_number, COALESCE(sp.price, s.price) AS price FROM seats st " +
+                "JOIN sessions s ON s.id = :s LEFT JOIN session_prices sp ON sp.session_id = s.id AND sp.tier_code = st.tier_code " +
+                "WHERE st.hall_id = s.hall_id AND st.disabled = FALSE AND st.tier_code = 'VIP' ORDER BY st.row_index, ABS(st.seat_number - 7) LIMIT 2",
+            mapOf("s" to seatSession.id),
+        )
+        order(seatSession, "PAID", LocalDateTime.now().minusDays(3), seats = seats)
+        order(session("hamid-hirad-concert"), "PAID", LocalDateTime.now().minusDays(6), quantity = 3)
+        order(session("iran-tech-expo", 1), "PAID", LocalDateTime.now().minusDays(1).withHour(21), quantity = 1)
+        order(session("contemporary-art-expo"), "PAID", LocalDateTime.now().minusDays(12), quantity = 2)
+        order(session("hamlet"), "REFUNDED", LocalDateTime.now().minusDays(9), quantity = 2)
+        // Unpaid orders expire after checkout.hold-minutes, so the abandoned checkout is seeded as cancelled.
+        order(session("alireza-ghorbani"), "CANCELLED", LocalDateTime.now().minusDays(2), quantity = 2)
+
+        listOf("alireza-ghorbani", "iran-tech-expo", "hamlet", "city-of-colors", "ux-workshop", "book-media-expo").forEachIndexed { i, slug ->
+            val event = events.first { it.def.slug == slug }
+            jdbc.update(
+                "INSERT INTO user_favorites (user_id, event_id, created_at) VALUES (:u, :e, :at) ON CONFLICT DO NOTHING",
+                mapOf("u" to userId, "e" to event.id, "at" to Timestamp.valueOf(LocalDateTime.now().minusDays(i * 4L + 1))),
+            )
+        }
+    }
+
+    /** One gateway payment per order: verified for paid / refunded orders, failed or still open for the others. */
+    private fun seedPayments() {
+        jdbc.update(
+            "INSERT INTO payments (order_id, gateway, amount, status, authority, reference_id, tracking_code, card_pan, created_at, verified_at) " +
+                "SELECT o.id, 'dev', o.total_amount, 'SUCCESS', 'DEMO-' || o.id || '-' || md5(o.order_number), " +
+                "  LPAD(((o.id * 7919) % 1000000000)::text, 12, '0'), o.tracking_code, " +
+                "  '6037-99**-****-' || LPAD(((o.id * 37) % 10000)::text, 4, '0'), o.created_at, COALESCE(o.paid_at, o.created_at) " +
+                "FROM orders o WHERE o.status IN ('PAID', 'REFUNDED')",
+            emptyMap<String, Any>(),
+        )
+        jdbc.update(
+            "INSERT INTO payments (order_id, gateway, amount, status, authority, failure_reason, created_at, verified_at) " +
+                "SELECT o.id, 'dev', o.total_amount, CASE WHEN o.status = 'CANCELLED' THEN 'FAILED' ELSE 'INITIATED' END, " +
+                "  'DEMO-' || o.id || '-' || md5(o.order_number), " +
+                "  CASE WHEN o.status = 'CANCELLED' THEN 'انصراف کاربر در صفحه درگاه' END, o.created_at, " +
+                "  CASE WHEN o.status = 'CANCELLED' THEN o.created_at + INTERVAL '4 minutes' END " +
+                "FROM orders o WHERE o.status IN ('PENDING', 'CANCELLED')",
+            emptyMap<String, Any>(),
         )
     }
 
@@ -837,7 +993,13 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
     private data class SessionRef(val id: Long, val event: Ev, val start: LocalDateTime, val capacity: Int)
 
     private companion object {
-        const val SEED_VERSION = "2026-10-admin-v4"
+        const val SEED_VERSION = "2026-10-demo-v5"
+
+        /** Customer account of the demo (orders, tickets and favorites on the user site). */
+        const val DEMO_CUSTOMER_MOBILE = "09121234567"
+
+        /** Events inserted by the V1 migration; on their own they do not count as the installation's data. */
+        val V1_SAMPLE_EVENTS = listOf("circus-tehran", "kids-laugh-show", "ai-youth-conference", "iranian-concert")
 
         private fun t(h: Int, m: Int = 0): LocalTime = LocalTime.of(h, m)
 
@@ -986,7 +1148,7 @@ class DemoDataSeeder(private val crud: JdbcCrud, private val seatMaps: SeatMapSe
                     tierPrices = mapOf("VIP" to 1_500_000, "GOLD" to 1_260_000, "SILVER" to 800_000, "NORMAL" to 500_000)),
 
                 // ---- Previous homepage design
-                EventDef("hamid-hirad", "کنسرت بزرگ حمید هیراد", "music", "main-tehran", "/media/events/home5-1.jpg", 450_000,
+                EventDef("hamid-hirad-concert", "کنسرت بزرگ حمید هیراد", "music", "main-tehran", "/media/events/home5-1.jpg", 450_000,
                     listOf(S(16, t(21), 0.7, 150, capacity = 2000)), popular = true, organizer = "مؤسسه فرهنگی هنری آوا"),
                 EventDef("red-hat-puppets", "نمایش عروسکی کلاه قرمزی", "kids", "ferdowsi", "/media/events/home5-2.jpg", 160_000,
                     listOf(S(7, t(17), 0.55), S(8, t(17), 0.3)), popular = true),

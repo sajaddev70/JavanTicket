@@ -104,7 +104,11 @@ class PublicDataController(
                 "LEFT JOIN cities ci ON ci.id = e.city_id " +
                 "LEFT JOIN categories cat ON cat.id = e.category_id " +
                 NEXT_SESSION_JOIN +
-                "WHERE b.active = TRUE ORDER BY b.sort_order ASC, b.id",
+                // A banner linking to an event page that does not exist (deleted or unpublished event) would lead to a 404.
+                "WHERE b.active = TRUE AND (CASE WHEN e.id IS NOT NULL THEN e.status IN ('PUBLISHED', 'CANCELLED') " +
+                "  WHEN b.link_url LIKE '/events/_%' THEN EXISTS (SELECT 1 FROM events x WHERE x.status IN ('PUBLISHED', 'CANCELLED') " +
+                "    AND '/events/' || x.slug = SPLIT_PART(b.link_url, '?', 1)) ELSE TRUE END) " +
+                "ORDER BY b.sort_order ASC, b.id",
         ),
     )
 
