@@ -1,9 +1,16 @@
 package com.devs.nisha_user.ui.app
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
@@ -45,6 +52,8 @@ import com.devs.nisha_user.core.designsystem.component.LocalSiteSettings
 import com.devs.nisha_user.core.designsystem.component.LocalToaster
 import com.devs.nisha_user.core.designsystem.component.ToastHost
 import com.devs.nisha_user.core.designsystem.theme.Jt
+import com.devs.nisha_user.core.notification.NotificationHelper
+import com.devs.nisha_user.ui.notification.NotificationPermissionSheet
 import com.devs.nisha_user.domain.model.BlockKeys
 import com.devs.nisha_user.domain.model.ThemeMode
 import com.devs.nisha_user.ui.account.ContentScreen
@@ -102,7 +111,35 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
     val cityId by app.cityId.collectAsStateWithLifecycle()
     val favoriteIds by app.favoriteIds.collectAsStateWithLifecycle()
     val contentError by app.contentError.collectAsStateWithLifecycle()
+    val notificationPromptDismissed by app.notificationPromptDismissed.collectAsStateWithLifecycle()
     var menuOpen by rememberSaveable { mutableStateOf(false) }
+    var showNotificationSheet by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        app.setNotificationPromptDismissed(true)
+        showNotificationSheet = false
+        if (granted) {
+            val sent = NotificationHelper.sendTestNotification(context)
+            if (sent) {
+                app.toaster.success("اعلان‌ها با موفقیت فعال شدند.")
+            }
+        }
+    }
+
+    LaunchedEffect(notificationPromptDismissed) {
+        if (!notificationPromptDismissed) {
+            val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            } else {
+                NotificationManagerCompat.from(context).areNotificationsEnabled()
+            }
+            if (!hasPermission) {
+                showNotificationSheet = true
+            }
+        }
+    }
 
     val actions = remember(nav, favoriteIds) {
         AppActions(
@@ -225,6 +262,26 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
             ToastHost(app.toaster)
         }
         if (menuOpen) MenuSheet(navigation, settings, user, onSignOut = { app.signOut(); nav.navigateTab(HomeRoute) }, onDismiss = { menuOpen = false })
+        if (showNotificationSheet) {
+            NotificationPermissionSheet(
+                onRequestPermission = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        app.setNotificationPromptDismissed(true)
+                        showNotificationSheet = false
+                        val sent = NotificationHelper.sendTestNotification(context)
+                        if (sent) {
+                            app.toaster.success("اعلان‌ها با موفقیت فعال شدند.")
+                        }
+                    }
+                },
+                onDismiss = {
+                    app.setNotificationPromptDismissed(true)
+                    showNotificationSheet = false
+                }
+            )
+        }
     }
 }
 

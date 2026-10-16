@@ -46,6 +46,7 @@ class AppViewModel @Inject constructor(
     val user = observeUser()
     val themeMode = appSettings.themeMode
     val cityId = appSettings.cityId
+    val notificationPromptDismissed = appSettings.notificationPromptDismissed
     val favoriteIds = favorites.ids
 
     private val _ready = MutableStateFlow(false)
@@ -79,6 +80,7 @@ class AppViewModel @Inject constructor(
 
     fun setTheme(mode: ThemeMode) = appSettings.setTheme(mode)
     fun setCity(id: Long?) = appSettings.setCity(id)
+    fun setNotificationPromptDismissed(dismissed: Boolean) = appSettings.setNotificationPromptDismissed(dismissed)
 
     /** Heart on a card / the event page; [onNeedLogin] when signed out (the web sends to /login first). */
     fun toggleFavorite(eventId: Long, onNeedLogin: () -> Unit) {

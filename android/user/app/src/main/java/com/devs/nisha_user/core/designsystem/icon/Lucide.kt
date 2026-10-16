@@ -17,6 +17,8 @@ object Lucide {
     val ArrowUpDown = LucidePaths("arrow-up-down", listOf("m21 16-4 4-4-4", "M17 20V4", "m3 8 4-4 4 4", "M7 4v16"))
     /** lucide "banknote" */
     val Banknote = LucidePaths("banknote", listOf("M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2v-8a2 2 0 0 1 2 -2Z", "M10 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0", "M6 12h.01M18 12h.01"))
+    /** lucide "bell" */
+    val Bell = LucidePaths("bell", listOf("M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9", "M10.3 21a1.94 1.94 0 0 0 3.4 0"))
     /** lucide "chart-column" */
     val BarChart3 = LucidePaths("chart-column", listOf("M3 3v16a2 2 0 0 0 2 2h16", "M18 17V9", "M13 17V5", "M8 17v-3"))
     /** lucide "building-complex" */
