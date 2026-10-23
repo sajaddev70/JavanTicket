@@ -8,7 +8,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Heart, LogOut, MapPin, Receipt, Save, Ticket } from "lucide-react";
 import { useProfile, useUpdateProfile } from "./queries";
-import { useCities } from "@/hooks/useContent";
+import { useCities, useNavigation } from "@/hooks/useContent";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { SmartLink } from "@/components/ui/SmartLink";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { AccountShell } from "@/features/account/AccountShell";
 import { Field, Input, Select } from "@/components/ui/Field";
@@ -31,6 +33,7 @@ export function ProfileView() {
   const profile = useProfile();
   const update = useUpdateProfile();
   const cities = useCities().data ?? [];
+  const footer = useNavigation().data?.footer ?? [];
   const signOut = useAuthStore((s) => s.signOut);
   const form = useForm<ProfileForm>({ resolver: zodResolver(schema), defaultValues: { first_name: "", last_name: "", email: "", city_id: "" } });
   const p = profile.data;
@@ -57,16 +60,16 @@ export function ProfileView() {
         <Skeleton className="h-[420px] rounded-[18px]" />
       ) : (
         <>
-          <ul className="grid gap-3 sm:grid-cols-3">
+          <ul className="grid grid-cols-3 gap-2.5">
             {stats.map(({ href, icon: Icon, label, value }) => (
               <li key={href}>
-                <Link href={href} className="card flex items-center gap-3 p-4 transition hover:border-brand-500/40">
-                  <span className="flex size-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-                    <Icon className="size-6" />
+                <Link href={href} className="card flex h-full flex-col items-center gap-1.5 px-2 py-3.5 text-center transition hover:border-brand-500/40 sm:flex-row sm:gap-3 sm:p-4 sm:text-right">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                    <Icon className="size-[22px]" />
                   </span>
                   <span>
-                    <span className="block text-[22px] font-black text-ink">{faNumber(value)}</span>
-                    <span className="block text-[12.5px] text-ink-2">{label}</span>
+                    <span className="block text-[20px] font-black text-ink">{faNumber(value)}</span>
+                    <span className="block text-[12px] leading-5 text-ink-2">{label}</span>
                   </span>
                 </Link>
               </li>
@@ -127,6 +130,29 @@ export function ProfileView() {
               </Button>
             </div>
           </form>
+
+          {/* Phones have no site footer: appearance and the site's information pages live here */}
+          <section aria-labelledby="more-title" className="card p-4 lg:hidden">
+            <h2 id="more-title" className="sr-only">
+              تنظیمات و اطلاعات
+            </h2>
+            <div className="flex min-h-12 items-center justify-between gap-3 border-b border-line pb-2">
+              <span className="text-[14.5px] font-bold text-ink">حالت نمایش (روشن / تیره)</span>
+              <ThemeToggle className="bg-field" />
+            </div>
+            {footer.map((col) => (
+              <nav key={col.id} aria-label={col.title} className="mt-3">
+                <p className="text-[12.5px] font-bold text-muted">{col.title}</p>
+                <ul className="mt-1">
+                  {col.links.map((l) => (
+                    <li key={l.id}>
+                      <SmartLink link={l} className="flex min-h-11 items-center text-[14px] font-semibold text-ink-2 hover:text-brand-600" />
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            ))}
+          </section>
         </>
       )}
     </AccountShell>

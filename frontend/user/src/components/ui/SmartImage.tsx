@@ -19,6 +19,8 @@ export function SmartImage({
   return (
     <Image
       {...props}
+      // A preloaded image is above the fold (the LCP candidate): load it right away instead of lazily.
+      loading={props.preload ? "eager" : props.loading}
       src={resolved}
       alt={alt}
       unoptimized={/^https?:\/\//.test(resolved)}

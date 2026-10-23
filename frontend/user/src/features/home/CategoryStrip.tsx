@@ -1,48 +1,35 @@
 "use client";
 
-import Link from "next/link";
 import { useCategories } from "@/hooks/useContent";
-import { SectionCard } from "@/components/shared/SectionCard";
+import { CategoryChip } from "@/components/shared/CategoryChip";
 import { ErrorState } from "@/components/feedback/States";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { CategoryIcon } from "@/components/ui/CategoryIcon";
 
-/** "دسته‌بندی رویدادها": pastel tiles in each category's admin-defined color. */
+/** Home categories: one horizontally scrolling row of pastel tiles in each category's admin-defined color. */
 export function CategoryStrip() {
   const { data, isLoading, isError, refetch } = useCategories();
   if (!isLoading && !isError && !data?.length) return null;
 
   return (
-    <SectionCard title="دسته‌بندی رویدادها" headingId="home-categories" moreHref="/events">
+    <section aria-label="دسته‌بندی رویدادها" className="card px-1.5 py-3.5 sm:px-4">
       {isError ? (
-        <ErrorState message="دریافت دسته‌بندی‌ها با خطا مواجه شد." onRetry={() => refetch()} />
+        <ErrorState message="دریافت دسته‌بندی‌ها با خطا مواجه شد." onRetry={() => refetch()} className="border-0" />
       ) : (
-        <ul className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1 lg:grid lg:auto-cols-fr lg:grid-flow-col lg:overflow-visible">
+        <ul className="no-scrollbar flex gap-1.5 overflow-x-auto px-1 lg:justify-between lg:gap-3">
           {isLoading
-            ? Array.from({ length: 9 }, (_, i) => (
-                <li key={i}>
-                  <Skeleton className="h-[96px] w-[112px] rounded-2xl lg:h-[88px] lg:w-auto" />
+            ? Array.from({ length: 7 }, (_, i) => (
+                <li key={i} className="flex w-[64px] shrink-0 flex-col items-center gap-2">
+                  <Skeleton className="size-[54px] rounded-2xl" />
+                  <Skeleton className="h-3 w-12" />
                 </li>
               ))
-            : data!.map((c) => {
-                const color = c.color ?? "#2f80f5";
-                return (
-                  <li key={c.id} className="shrink-0">
-                    <Link
-                      href={`/events?category=${encodeURIComponent(c.slug)}`}
-                      className="group flex h-[96px] w-[112px] flex-col items-center justify-center gap-1.5 rounded-2xl px-1.5 text-center transition hover:-translate-y-0.5 lg:h-[88px] lg:w-full"
-                      style={{ backgroundColor: `color-mix(in srgb, ${color} 10%, var(--surface))` }}
-                    >
-                      <span style={{ color }}>
-                        <CategoryIcon slug={c.slug} iconUrl={c.icon_url} className="size-8" />
-                      </span>
-                      <span className="line-clamp-2 text-[12.5px] font-bold leading-5 text-ink lg:line-clamp-1 lg:text-[13px]">{c.name}</span>
-                    </Link>
-                  </li>
-                );
-              })}
+            : data!.map((c) => (
+                <li key={c.id} className="shrink-0">
+                  <CategoryChip category={c} href={`/events?category=${encodeURIComponent(c.slug)}`} />
+                </li>
+              ))}
         </ul>
       )}
-    </SectionCard>
+    </section>
   );
 }

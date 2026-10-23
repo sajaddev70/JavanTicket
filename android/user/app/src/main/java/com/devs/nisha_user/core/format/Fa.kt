@@ -26,6 +26,7 @@ object Fa {
         val dayMonth = pattern("d MMMM")
         val day = pattern("d")
         val weekday = pattern("EEEE")
+        val month = pattern("MMMM")
         val time = pattern("HH:mm")
         val year = pattern("y")
         val ym = pattern("yyyy-MM")
@@ -56,6 +57,12 @@ object Fa {
 
     /** "جمعه" */
     fun weekday(iso: String): String = f.weekday.format(parse(iso))
+
+    /** "۲۸": Jalali day of month (event card date badge). */
+    fun day(iso: String): String = f.day.format(parse(iso))
+
+    /** "اردیبهشت" */
+    fun month(iso: String): String = f.month.format(parse(iso))
 
     /** "۲۰:۰۰" */
     fun time(iso: String): String = f.time.format(parse(iso))

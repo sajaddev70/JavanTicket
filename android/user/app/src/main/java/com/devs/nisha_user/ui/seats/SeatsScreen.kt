@@ -60,8 +60,7 @@ import com.devs.nisha_user.core.designsystem.icon.Lucide
 import com.devs.nisha_user.core.designsystem.theme.Jt
 import com.devs.nisha_user.core.designsystem.theme.JtShapes
 import com.devs.nisha_user.core.designsystem.theme.W
-import com.devs.nisha_user.core.designsystem.theme.mix
-import com.devs.nisha_user.core.designsystem.theme.parseHexColor
+import com.devs.nisha_user.domain.model.SeatStatus
 import com.devs.nisha_user.core.designsystem.theme.text
 import com.devs.nisha_user.core.format.Fa
 import com.devs.nisha_user.domain.model.PageBlock
@@ -256,27 +255,43 @@ private fun SeatSelection(data: SeatMapData, state: SeatsUiState, hero: PageBloc
     }
 }
 
-/** Legend: tiers with their prices, then the other seat states. */
+/** Legend (web SeatLegend): the seat states present in the hall, then each tier's price from the backend. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SeatLegend(data: SeatMapData) {
     val c = Jt.colors
     val fallback = data.session.price
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        data.session.tiers.filter { it.price != null || fallback > 0 }.forEach { t ->
-            LegendItem(parseHexColor(t.color, Color.Gray).mix(c.seatFree, 0.30f), "${t.name} (${Fa.price(t.price ?: fallback)})")
+    val has = { st: SeatStatus -> data.seats.any { it.status == st } }
+    Column(Modifier.fillMaxWidth().clip(JtShapes.xl2).border(1.dp, c.line, JtShapes.xl2).background(c.surface).padding(12.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            LegendItem(c.seatFree, c.seatFreeStroke, "صندلی آزاد")
+            LegendItem(c.seatSelected, c.seatSelected, "صندلی انتخاب‌شده")
+            LegendItem(c.seatSold, c.seatSoldStroke, "صندلی فروخته شده")
+            if (data.session.tiers.any { isVipTier(it.code, it.name) }) LegendItem(c.seatVip, c.seatVipStroke, "صندلی VIP")
+            if (has(SeatStatus.LOCKED)) LegendItem(c.seatLocked, c.seatLockedStroke, "در حال خرید")
+            if (has(SeatStatus.B2B_RESERVED)) LegendItem(c.seatReserved, c.seatReservedStroke, "رزرو سازمانی")
         }
-        LegendItem(c.seatSelected, "صندلی انتخاب‌شده")
-        LegendItem(c.seatSold, "فروخته شده")
-        LegendItem(c.seatLocked, "در حال خرید")
-        LegendItem(c.seatReserved, "رزرو سازمانی")
+        val priced = data.session.tiers.filter { it.price != null || fallback > 0 }
+        if (priced.size > 1) {
+            HDivider(Modifier.padding(vertical = 10.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                priced.forEach { t ->
+                    Text(
+                        "${t.name}: ${Fa.price(t.price ?: fallback)}",
+                        style = text(12f, W.Semibold),
+                        color = c.ink2,
+                        modifier = Modifier.clip(JtShapes.lg).background(c.surface2).padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun LegendItem(color: Color, label: String) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(Modifier.width(20.dp).height(16.dp).clip(JtShapes.md).background(color).border(1.dp, Color.Black.copy(alpha = 0.1f), JtShapes.md))
+private fun LegendItem(fill: Color, stroke: Color, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(Modifier.size(20.dp).clip(JtShapes.md).background(fill).border(1.2.dp, stroke, JtShapes.md))
         Text(label, style = text(12.5f), color = Jt.colors.ink2)
     }
 }

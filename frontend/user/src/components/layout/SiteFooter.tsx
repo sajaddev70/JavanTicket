@@ -55,8 +55,8 @@ export function SiteFooter() {
   ].filter(Boolean) as { icon: typeof Phone; text: string; href?: string; ltr?: boolean }[];
 
   return (
-    <footer className="bg-navy-950 text-white">
-      <div className="container-page grid gap-8 py-9 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_0.8fr_0.8fr_1.3fr_auto] lg:gap-0 lg:divide-x lg:divide-x-reverse lg:divide-white/10 lg:py-8">
+    <footer className="hidden bg-navy-950 text-white lg:block">
+      <div className="container-page grid gap-8 py-9 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_0.8fr_0.8fr_1.3fr_auto] lg:gap-0 lg:divide-x lg:divide-white/10 lg:py-8">
         <div className="lg:pl-8">
           <h2 className="text-[15px] font-extrabold">{s?.newsletter_title ?? "خبرنامه"}</h2>
           <form

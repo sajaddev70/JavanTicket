@@ -22,7 +22,7 @@ export function CopyButton({ value, label, className }: { value: string; label: 
           toast.error("کپی انجام نشد.");
         }
       }}
-      className={cn("inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-field hover:text-brand-600", className)}
+      className={cn("inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-field hover:text-brand-600", className)}
     >
       {copied ? <Check className="size-[18px] text-success" /> : <Copy className="size-[18px]" />}
     </button>

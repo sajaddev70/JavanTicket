@@ -6,7 +6,6 @@ import { ArrowLeft } from "lucide-react";
 import { useBanners, usePageBlocks } from "@/hooks/useContent";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { BrandLogo } from "@/components/ui/BrandLogo";
 import { mediaUrl } from "@/lib/media";
 import { cn } from "@/lib/cn";
 
@@ -45,7 +44,7 @@ export function HeroSlider() {
         image: b.image_url ?? b.category_cover_url,
         // A banner tied to an event always follows the event's current slug, so renaming the event never leaves a dead link.
         href: b.event_slug ? `/events/${encodeURIComponent(b.event_slug)}` : b.link_url,
-        button: b.button_text,
+        button: b.button_text ?? (b.event_slug || b.link_url ? "مشاهده و خرید بلیت" : null),
       });
     }
     return list;
@@ -58,7 +57,7 @@ export function HeroSlider() {
     return () => clearInterval(id);
   }, [count, paused]);
 
-  if (blocks.isLoading || banners.isLoading) return <Skeleton className="h-[300px] w-full rounded-[22px] sm:h-[210px] lg:h-[210px]" />;
+  if (blocks.isLoading || banners.isLoading) return <Skeleton className="h-[300px] w-full rounded-[24px] sm:h-[320px] lg:h-[380px]" />;
   if (!count) return null;
   const current = index % count;
 
@@ -66,7 +65,7 @@ export function HeroSlider() {
     <section
       aria-roledescription="carousel"
       aria-label="رویدادهای برگزیده"
-      className="relative overflow-hidden rounded-[22px] bg-navy-950 text-white shadow-float"
+      className="relative overflow-hidden rounded-[24px] bg-navy-950 text-white"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -89,27 +88,24 @@ export function HeroSlider() {
           aria-hidden={i !== current}
           className={cn("transition-opacity duration-700", i === current ? "relative opacity-100" : "pointer-events-none absolute inset-0 opacity-0")}
         >
-          <div className="absolute inset-y-0 left-0 w-full md:w-[62%]">
-            <SmartImage src={mediaUrl(slide.image)} fallback={null} alt="" fill preload={i === 0} sizes="(min-width: 768px) 62vw, 100vw" className="object-cover" />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#071834] via-[#071834]/85 to-[#071834]/25 md:bg-gradient-to-l md:from-[#0a2f7a] md:from-30% md:via-[#0b2a66]/85 md:via-50% md:to-transparent" />
-          <div className="relative flex min-h-[300px] items-end gap-8 p-5 sm:min-h-[210px] sm:items-center sm:p-8 lg:px-10">
-            <div className="hidden shrink-0 flex-col items-center md:flex">
-              <BrandLogo variant="light" width={150} className="h-auto w-[130px] lg:w-[150px]" />
-            </div>
-            <div className="max-w-[620px]">
+          <SmartImage src={mediaUrl(slide.image)} fallback={null} alt="" fill preload={i === 0} sizes="(min-width: 1280px) 1216px, 100vw" className="object-cover" />
+          {/* Text sits on the start (right) side: the photo fades into navy behind it */}
+          <div className="absolute inset-0 bg-gradient-to-l from-[#0b2b5b]/95 via-[#0b2b5b]/70 via-45% to-[#0b2b5b]/5" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#071d3e]/60 to-transparent to-50% sm:hidden" />
+          <div className="relative flex min-h-[300px] flex-col justify-center p-5 sm:min-h-[320px] sm:p-8 lg:min-h-[380px] lg:px-12">
+            <div className="max-w-[78%] sm:max-w-[560px]">
               {slide.kicker && <p className="text-[13px] font-medium text-white/80 sm:text-[14px]">{slide.kicker}</p>}
               {i === 0 ? (
-                <h1 className="mt-1 text-[24px] font-black leading-[1.45] sm:text-[30px] lg:text-[36px]">{slide.title}</h1>
+                <h1 className="mt-1 text-[26px] font-black leading-[1.45] sm:text-[32px] lg:text-[40px]">{slide.title}</h1>
               ) : (
-                <h2 className="mt-1 text-[24px] font-black leading-[1.45] sm:text-[30px] lg:text-[36px]">{slide.title}</h2>
+                <h2 className="mt-1 text-[26px] font-black leading-[1.45] sm:text-[32px] lg:text-[40px]">{slide.title}</h2>
               )}
               {slide.subtitle && <p className="mt-2 text-[14px] leading-7 text-white/85 sm:text-[16px]">{slide.subtitle}</p>}
               {slide.href && slide.button && (
                 <Link
                   href={slide.href}
                   tabIndex={i === current ? 0 : -1}
-                  className="mt-5 inline-flex min-h-12 items-center gap-3 rounded-xl bg-brand-600 px-7 text-[15px] font-bold text-white shadow-cta hover:bg-brand-700"
+                  className="mt-5 inline-flex min-h-12 items-center gap-3 rounded-xl bg-brand-600 px-6 text-[15px] font-bold text-white shadow-cta transition hover:bg-brand-700"
                 >
                   {slide.button}
                   <ArrowLeft className="size-5" />
@@ -120,7 +116,7 @@ export function HeroSlider() {
         </div>
       ))}
       {count > 1 && (
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1" role="tablist" aria-label="انتخاب اسلاید">
+        <div className="absolute bottom-3 left-4 flex gap-0.5" role="tablist" aria-label="انتخاب اسلاید">
           {slides.map((s, i) => (
             <button
               key={s.key}
@@ -129,9 +125,9 @@ export function HeroSlider() {
               aria-selected={i === current}
               aria-label={`اسلاید ${(i + 1).toLocaleString("fa-IR")}`}
               onClick={() => setIndex(i)}
-              className="flex size-6 items-center justify-center"
+              className="flex size-7 items-center justify-center"
             >
-              <span className={cn("block rounded-full transition-all", i === current ? "h-2.5 w-2.5 bg-white" : "size-2.5 border border-white/70")} />
+              <span className={cn("block rounded-full transition-all", i === current ? "h-2.5 w-2.5 bg-white" : "size-2 bg-white/45")} />
             </button>
           ))}
         </div>

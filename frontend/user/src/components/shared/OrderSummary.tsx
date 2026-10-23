@@ -1,5 +1,6 @@
-import { Armchair, CalendarDays, Clock, Layers, MapPin, ShoppingCart, Tag, Users } from "lucide-react";
+import { Info } from "lucide-react";
 import { SmartImage } from "@/components/ui/SmartImage";
+import { Icon } from "@/components/ui/Icon";
 import { faFullDate, faNumber, faPrice, faTime } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { cn } from "@/lib/cn";
@@ -22,111 +23,102 @@ export function seatText(s: Order["seats"][number]) {
   return `${s.section_name ? `${s.section_name} - ` : ""}ردیف ${s.row_label} - صندلی ${faNumber(s.seat_number)}`;
 }
 
-/** Sidebar "خلاصه سفارش": event, seats and the amounts exactly as the backend calculated them. */
-export function OrderSummary({ order, variant = "checkout", className, children }: { order: Order; variant?: "checkout" | "payment"; className?: string; children?: React.ReactNode }) {
-  const count = order.quantity ?? order.seats.length;
-  const tiers = [...new Set(order.seats.map((s) => s.tier_name).filter(Boolean))].join("، ");
-  const sections = [...new Set(order.seats.map((s) => s.section_name).filter(Boolean))].join("، ");
-  const discount = Number(order.discount_amount ?? 0);
-
+/** Event of an order: poster, title, date, time and place. */
+export function OrderEventSummary({ order, className, imageClassName }: { order: Order; className?: string; imageClassName?: string }) {
   return (
-    <aside aria-labelledby="summary-title" className={cn("card p-4 sm:p-5", className)}>
-      <h2 id="summary-title" className="flex items-center gap-2 text-[18px] font-black text-ink">
-        <ShoppingCart className="size-6 text-brand-600" />
-        خلاصه سفارش
-      </h2>
-
-      <div className={cn("mt-4 flex gap-4", variant === "checkout" && "flex-col sm:flex-row lg:flex-col xl:flex-row")}>
-        <div className={cn("relative shrink-0 overflow-hidden rounded-xl bg-field", variant === "checkout" ? "aspect-[3/4] w-full max-w-[160px]" : "aspect-square w-[120px] sm:w-[150px]")}>
-          <SmartImage src={mediaUrl(order.banner_url)} fallback={null} alt={order.event_title} fill sizes="160px" className="object-cover" />
-        </div>
-        <div className="min-w-0 space-y-2 text-[13.5px] text-ink-2">
-          <p className="text-[17px] font-black leading-7 text-ink">{order.event_title}</p>
-          {order.category_name && (
-            <p className="flex items-center gap-2">
-              <Tag className="size-[18px] shrink-0" />
-              {order.category_name}
-            </p>
-          )}
-          <p className="flex items-center gap-2">
-            <CalendarDays className="size-[18px] shrink-0" />
-            {faFullDate(order.start_time)}
-          </p>
-          <p className="flex items-center gap-2">
-            <Clock className="size-[18px] shrink-0" />
-            ساعت {faTime(order.start_time)}
-          </p>
-          <p className="flex items-start gap-2">
-            <MapPin className="mt-0.5 size-[18px] shrink-0" />
-            {[order.hall_name, order.venue_name].filter(Boolean).join(" - ")}
-          </p>
-        </div>
+    <div className={cn("flex gap-3.5", className)}>
+      <div className={cn("relative aspect-[4/3] w-[130px] shrink-0 overflow-hidden rounded-2xl bg-navy-900 sm:w-[160px]", imageClassName)}>
+        <SmartImage src={mediaUrl(order.banner_url)} fallback={null} alt={order.event_title} fill sizes="160px" className="object-cover" />
       </div>
-
-      {variant === "checkout" ? (
-        <dl className="mt-4 divide-y divide-line rounded-2xl bg-surface-2 px-4 text-[14px]">
-          <Row icon={Users} label="تعداد بلیت‌ها" value={`${faNumber(count)} عدد`} />
-          {tiers && <Row icon={Layers} label="بخش سالن" value={[tiers, sections].filter(Boolean).join(" - ")} />}
-          {order.seats.length > 0 && <Row icon={Armchair} label="شماره صندلی‌ها" value={order.seats.map((s) => `${s.row_label}${faNumber(s.seat_number)}`).join("، ")} />}
-        </dl>
-      ) : (
-        <ul className="mt-4 space-y-3 border-y border-line py-4 text-[14px]">
-          {order.quantity ? (
-            <li className="flex justify-between gap-3">
-              <span className="font-bold text-ink">× {faNumber(order.quantity)} بلیت ورود عمومی</span>
-              <span className="font-bold text-ink">{faPrice(Number(order.unit_price) * order.quantity)}</span>
-            </li>
-          ) : (
-            seatGroups(order).map((g) => (
-              <li key={g.name} className="flex justify-between gap-3">
-                <span>
-                  <span className="block font-bold text-ink">
-                    × {faNumber(g.seats.length)} بلیت - {g.name}
-                  </span>
-                  <span className="mt-0.5 block text-[12.5px] text-muted">{g.seats.map(seatText).join("، ")}</span>
-                </span>
-                <span className="shrink-0 font-bold text-ink">{faPrice(g.total)}</span>
-              </li>
-            ))
-          )}
-        </ul>
-      )}
-
-      <dl className="mt-4 space-y-3 text-[14px]">
-        <div className="flex justify-between gap-3">
-          <dt className="text-ink-2">مبلغ بلیت‌ها</dt>
-          <dd className="font-bold text-ink">{faPrice(order.subtotal)}</dd>
-        </div>
-        {discount > 0 && (
-          <div className="flex justify-between gap-3 text-success-fg">
-            <dt>تخفیف {order.discount_code && <span dir="ltr" className="font-code">({order.discount_code})</span>}</dt>
-            <dd className="font-bold">- {faPrice(discount)}</dd>
-          </div>
-        )}
-        {Number(order.service_fee) > 0 && (
-          <div className="flex justify-between gap-3">
-            <dt className="text-ink-2">هزینه خدمات سامانه</dt>
-            <dd className="font-bold text-ink">{faPrice(order.service_fee)}</dd>
-          </div>
-        )}
-        <div className="flex items-center justify-between gap-3 rounded-2xl bg-brand-50 px-4 py-3">
-          <dt className="text-[15px] font-black text-ink">جمع کل قابل پرداخت</dt>
-          <dd className="text-[20px] font-black text-brand-600">{faPrice(order.total_amount)}</dd>
-        </div>
-      </dl>
-      {children}
-    </aside>
+      <div className="min-w-0 flex-1 space-y-2 py-0.5 text-[12.5px] text-ink-2">
+        {order.category_name && <span className="inline-flex rounded-lg bg-brand-50 px-2.5 py-1 text-[12px] font-bold text-brand-600">{order.category_name}</span>}
+        <p className="text-[16px] font-black leading-7 text-ink">{order.event_title}</p>
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="flex items-center gap-1.5">
+            <Icon name="common/calendar-simple" className="size-4 shrink-0" />
+            {faFullDate(order.start_time)}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Icon name="common/clock" className="size-4 shrink-0" />
+            <span className="tabular">{faTime(order.start_time)}</span>
+          </span>
+        </p>
+        <p className="flex items-start gap-1.5">
+          <Icon name="common/location" className="mt-0.5 size-4 shrink-0" />
+          {[order.city_name, order.hall_name, order.venue_name].filter(Boolean).join("، ")}
+        </p>
+      </div>
+    </div>
   );
 }
 
-function Row({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: string }) {
+/**
+ * "خلاصه سفارش": every amount exactly as the backend calculated it (subtotal, service fee, discount, total).
+ * The frontend never derives a payable amount itself.
+ */
+export function CheckoutSummary({ order, title = "خلاصه سفارش", header, showUnitPrice, className, children }: { order: Order; title?: string; header?: React.ReactNode; showUnitPrice?: boolean; className?: string; children?: React.ReactNode }) {
+  const count = order.quantity ?? order.seats.length;
+  const discount = Number(order.discount_amount ?? 0);
+  const fee = Number(order.service_fee ?? 0);
+  const unit = order.quantity ? Number(order.unit_price) : null;
+
   return (
-    <div className="flex items-center gap-3 py-3">
-      <Icon className="size-5 shrink-0 text-ink-2" />
-      <dt className="shrink-0 text-ink-2">{label}</dt>
-      <dd className="mr-auto text-left font-bold text-ink" dir="auto">
-        {value}
-      </dd>
-    </div>
+    <section aria-labelledby="summary-title" className={cn("card p-4 sm:p-5", className)}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 id="summary-title" className="text-[18px] font-black text-ink">
+          {title}
+        </h2>
+        {header}
+      </div>
+      {children}
+      <dl className="space-y-3 text-[14px]">
+        {showUnitPrice && (
+          <>
+            <div className="flex justify-between gap-3">
+              <dt className="text-ink-2">تعداد بلیت</dt>
+              <dd className="font-bold text-ink">{faNumber(count)} عدد</dd>
+            </div>
+            {unit !== null && (
+              <div className="flex justify-between gap-3">
+                <dt className="text-ink-2">قیمت هر بلیت</dt>
+                <dd className="font-bold text-ink">{faPrice(unit)}</dd>
+              </div>
+            )}
+          </>
+        )}
+        <div className="flex justify-between gap-3">
+          <dt className="text-ink-2">{showUnitPrice ? "جمع مبلغ بلیت‌ها" : `مبلغ بلیت‌ها (${faNumber(count)} عدد)`}</dt>
+          <dd className="font-bold text-ink">{faPrice(order.subtotal)}</dd>
+        </div>
+        {fee > 0 && (
+          <div className="flex justify-between gap-3">
+            <dt className="flex items-center gap-1.5 text-ink-2">
+              کارمزد خدمات
+              <Info className="size-4 text-muted" aria-hidden />
+            </dt>
+            <dd className="font-bold text-ink">{faPrice(fee)}</dd>
+          </div>
+        )}
+        {discount > 0 && (
+          <div className="flex justify-between gap-3 text-success-fg">
+            <dt>
+              تخفیف{" "}
+              {order.discount_code && (
+                <span dir="ltr" className="font-code text-[12.5px]">
+                  ({order.discount_code})
+                </span>
+              )}
+            </dt>
+            <dd className="font-bold" dir="ltr">
+              -{faNumber(discount)} <span dir="rtl">تومان</span>
+            </dd>
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-3 rounded-2xl bg-brand-50 px-4 py-3.5">
+          <dt className="text-[15px] font-black text-ink">مبلغ قابل پرداخت</dt>
+          <dd className="text-[21px] font-black text-brand-600">{faPrice(order.total_amount)}</dd>
+        </div>
+      </dl>
+    </section>
   );
 }

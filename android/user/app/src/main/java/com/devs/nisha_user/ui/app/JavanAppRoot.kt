@@ -261,7 +261,7 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
             }
             ToastHost(app.toaster)
         }
-        if (menuOpen) MenuSheet(navigation, settings, user, onSignOut = { app.signOut(); nav.navigateTab(HomeRoute) }, onDismiss = { menuOpen = false })
+        if (menuOpen) MenuSheet(navigation, settings, user, onSignOut = { app.signOut(); nav.navigateTab(HomeRoute) }, onDismiss = { menuOpen = false }, dark = dark, onToggleTheme = { app.setTheme(if (dark) ThemeMode.LIGHT else ThemeMode.DARK) })
         if (showNotificationSheet) {
             NotificationPermissionSheet(
                 onRequestPermission = {

@@ -219,7 +219,7 @@ fun EventRow(row: HomeRow, cityName: String?, onRetry: () -> Unit) {
             events.isNullOrEmpty() -> EmptyState(if (cityName != null) "در حال حاضر رویدادی برای $cityName وجود ندارد." else "در حال حاضر رویدادی برای نمایش وجود ندارد.")
             else -> LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(events, key = { it.id }) { e ->
-                    EventCard(e, Modifier.width(if (compact) 300.dp else 330.dp), variant)
+                    EventCard(e, Modifier.width(if (compact) 300.dp else 176.dp), variant)
                 }
             }
         }

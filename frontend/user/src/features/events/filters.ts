@@ -2,7 +2,7 @@ import type { EventFilters, EventSort, EventWhen } from "@/types/event";
 
 /**
  * Events page filters live in the URL (shareable, survive refresh, work with back / forward):
- * /events?q=&category=&city=&when=&type=&min=&max=&sort=&page=&view=
+ * /events?q=&category=&city=&when=&type=&min=&max=&sort=&page=
  * `city` is a city id or "all"; without it the city picked in the header applies.
  */
 export const PAGE_SIZE = 12;
@@ -33,7 +33,7 @@ const num = (v: string | null | undefined) => {
   return v && Number.isFinite(n) && n >= 0 ? n : null;
 };
 
-export function readFilters(get: Getter, headerCityId: number | null): EventFilters & { view: "grid" | "list"; cityParam: string } {
+export function readFilters(get: Getter, headerCityId: number | null): EventFilters & { cityParam: string } {
   const cityParam = get("city") ?? "";
   const cityId = cityParam === "all" ? null : (num(cityParam) ?? headerCityId);
   const when = get("when");
@@ -50,7 +50,6 @@ export function readFilters(get: Getter, headerCityId: number | null): EventFilt
     sort: sort === "soonest" || sort === "price" ? sort : "newest",
     page: Math.max(1, Math.floor(num(get("page")) ?? 1)),
     size: PAGE_SIZE,
-    view: get("view") === "list" ? "list" : "grid",
     cityParam,
   };
 }

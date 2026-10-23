@@ -5,7 +5,7 @@ import { CalendarDays, ChevronLeft, CreditCard, MapPin, Ticket, UserRound } from
 import { useOrder } from "@/features/checkout/queries";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { AccountShell } from "@/features/account/AccountShell";
-import { OrderSummary, seatText } from "@/components/shared/OrderSummary";
+import { CheckoutSummary, OrderEventSummary, seatText } from "@/components/shared/OrderSummary";
 import { HoldTimer } from "@/components/shared/HoldTimer";
 import { ButtonLink } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -126,7 +126,7 @@ export function OrderDetailView({ number }: { number: string }) {
               )
             )}
           </div>
-          <OrderSummary order={o} variant="payment" />
+          <CheckoutSummary order={o}><OrderEventSummary order={o} className="mb-4 border-b border-line pb-4" /></CheckoutSummary>
         </div>
       )}
     </AccountShell>

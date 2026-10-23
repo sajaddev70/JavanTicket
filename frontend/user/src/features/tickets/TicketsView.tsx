@@ -61,13 +61,13 @@ export function TicketsView() {
             />
           ) : (
             <ul className={cn("grid gap-3 md:grid-cols-2", tickets.isPlaceholderData && "opacity-60")}>
-              {tickets.data.items.map((t) => {
+              {tickets.data.items.map((t, i) => {
                 const state = ticketState(t.status);
                 return (
                   <li key={t.id}>
                     <Link href={`/tickets/${t.id}`} className="group flex gap-3 rounded-2xl border border-line bg-surface p-2.5 transition hover:border-brand-500/40 hover:shadow-card">
                       <div className="relative w-[96px] shrink-0 overflow-hidden rounded-xl bg-field sm:w-[110px]">
-                        <SmartImage src={mediaUrl(t.banner_url)} fallback={null} alt="" fill sizes="110px" className="object-cover" />
+                        <SmartImage src={mediaUrl(t.banner_url)} fallback={null} alt="" fill preload={i === 0} sizes="110px" className="object-cover" />
                       </div>
                       <div className="min-w-0 flex-1 py-1">
                         <div className="flex items-start justify-between gap-2">

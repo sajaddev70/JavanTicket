@@ -1,28 +1,29 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Armchair, ArrowLeft, ArrowRight, CalendarDays, CircleAlert, Clock, CreditCard, Info, MapPin, Percent, TimerOff, UserRound, X } from "lucide-react";
+import { Armchair, ArrowLeft, ArrowRight, CircleAlert, CircleCheck, Info, TimerOff, X } from "lucide-react";
 import { orderService } from "@/services/order.service";
 import { errorMessage, isStatus } from "@/services/api";
 import { usePageBlock } from "@/hooks/useContent";
 import { useOrder, useOrderMutations } from "./queries";
 import { buyerSchema, type BuyerForm } from "@/schemas/checkout";
 import { CheckoutSteps } from "@/components/shared/CheckoutSteps";
-import { OrderSummary, seatGroups } from "@/components/shared/OrderSummary";
+import { CheckoutSummary, OrderEventSummary } from "@/components/shared/OrderSummary";
 import { HoldTimer } from "@/components/shared/HoldTimer";
-import { SmartImage } from "@/components/ui/SmartImage";
+import { Icon, type IconName } from "@/components/ui/Icon";
+import { useCountdown } from "@/hooks/useCountdown";
 import { Button, ButtonLink } from "@/components/ui/Button";
-import { Checkbox, Field, Input, Textarea } from "@/components/ui/Field";
+import { Checkbox } from "@/components/ui/Field";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/components/feedback/States";
 import { toast } from "@/stores/useToastStore";
-import { faFullDate, faNumber, faTime, normalizeIranMobile } from "@/lib/format";
-import { mediaUrl } from "@/lib/media";
+import { faNumber, normalizeIranMobile } from "@/lib/format";
+import { cn } from "@/lib/cn";
 import type { Order } from "@/types/order";
 
 /**
@@ -118,11 +119,13 @@ function CheckoutForm({ order, receivedAt, refetch }: { order: Order; receivedAt
     },
   });
   const codeRef = useRef<HTMLInputElement>(null);
+  const left = useCountdown(order.seconds_left, receivedAt);
 
   if (!order.payable) return <OrderUnavailable order={order} />;
 
   const backHref = order.quantity ? `/events/${encodeURIComponent(order.event_slug)}` : `/sessions/${order.session_id}/seats`;
   const errors = form.formState.errors;
+  const urgent = left !== null && left <= 180;
 
   const submit = form.handleSubmit(async (values) => {
     try {
@@ -141,161 +144,187 @@ function CheckoutForm({ order, receivedAt, refetch }: { order: Order; receivedAt
   });
 
   return (
-    <div className="container-page space-y-5 pb-28 pt-5 lg:pb-10">
-      <CheckoutSteps current={1} className="mx-auto max-w-[1200px]" />
+    <div className="container-page space-y-3.5 pb-32 pt-3 lg:pb-10 lg:pt-6">
+      <CheckoutSteps current={1} className="mx-auto max-w-[760px] rounded-2xl bg-surface-2 px-2 py-3" />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-start">
-        <form onSubmit={submit} noValidate className="min-w-0 space-y-4">
-          <div className="card flex flex-col gap-3 bg-brand-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <Info className="mt-0.5 size-5 shrink-0 text-brand-600" />
-              <div>
-                <p className="text-[14.5px] font-bold text-ink">لطفاً اطلاعات خود را تکمیل کرده و سفارش را بررسی کنید.</p>
-                <p className="mt-0.5 text-[13px] text-ink-2">پس از تکمیل، به درگاه پرداخت منتقل خواهید شد.</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-xl bg-surface px-4 py-2">
-              <Clock className="size-7 text-brand-600" />
-              <div>
-                <p className="text-[12.5px] text-ink-2">زمان باقی‌مانده برای تکمیل سفارش</p>
-                <HoldTimer variant="large" secondsLeft={order.seconds_left} receivedAt={receivedAt} onExpire={refetch} />
-              </div>
-            </div>
-          </div>
+      {/* Reservation countdown: the server's deadline for this order */}
+      <section aria-label="زمان رزرو" className={cn("flex items-center gap-3 rounded-2xl px-4 py-3", urgent ? "bg-danger-bg" : "bg-brand-50")}>
+        <Icon name="common/clock" className={cn("size-7 shrink-0", urgent ? "text-danger-fg" : "text-brand-600")} />
+        <div className="min-w-0 flex-1">
+          <p className={cn("text-[14px] font-black", urgent ? "text-danger-fg" : "text-ink")}>{urgent ? "زمان رزرو در حال اتمام است!" : "صندلی‌ها برای شما رزرو شده‌اند"}</p>
+          <p className="mt-0.5 text-[12px] leading-5 text-ink-2">برای تکمیل خرید، لطفاً در زمان باقی‌مانده اقدام کنید.</p>
+        </div>
+        <HoldTimer variant="boxes" secondsLeft={order.seconds_left} receivedAt={receivedAt} onExpire={refetch} />
+      </section>
 
-          <section aria-labelledby="event-title" className="card p-4 sm:p-5">
-            <h2 id="event-title" className="mb-4 flex items-center gap-2 text-[17px] font-black text-ink">
-              <CalendarDays className="size-5 text-brand-600" />
-              ۱. اطلاعات رویداد و صندلی‌ها
-            </h2>
-            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-              <div className="flex gap-4">
-                <div className="relative aspect-[3/4] w-[110px] shrink-0 overflow-hidden rounded-xl bg-field sm:w-[130px]">
-                  <SmartImage src={mediaUrl(order.banner_url)} fallback={null} alt={order.event_title} fill sizes="130px" className="object-cover" />
-                </div>
-                <div className="min-w-0 space-y-2.5 text-[13.5px] text-ink-2">
-                  <p className="text-[16px] font-black text-ink">{order.event_title}</p>
-                  <p className="flex items-center gap-2">
-                    <CalendarDays className="size-[18px] shrink-0" />
-                    {faFullDate(order.start_time)}
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Clock className="size-[18px] shrink-0" />
-                    ساعت {faTime(order.start_time)}
-                  </p>
-                  <p className="flex items-start gap-2">
-                    <MapPin className="mt-0.5 size-[18px] shrink-0" />
-                    {[order.hall_name, order.venue_name].filter(Boolean).join(" - ")}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-2xl bg-surface-2 p-3.5">
-                <h3 className="mb-2.5 flex items-center gap-2 text-[14px] font-black text-ink">
-                  <Armchair className="size-5 text-brand-600" />
-                  {order.quantity ? "بلیت‌ها" : "صندلی‌های انتخاب شده"}
-                </h3>
-                <ul className="space-y-2">
-                  {order.quantity ? (
-                    <li className="flex items-center justify-between rounded-xl bg-surface px-3 py-2.5 text-[13.5px]">
-                      <span className="text-ink-2">ورود عمومی</span>
-                      <span className="font-black text-ink">{faNumber(order.quantity)} بلیت</span>
-                    </li>
-                  ) : (
-                    seatGroups(order).flatMap((g) =>
-                      g.seats.map((s) => (
-                        <li key={s.id} className="flex items-center justify-between gap-2 rounded-xl bg-surface px-3 py-2 text-[13px]">
-                          <span className="text-ink-2">
-                            {g.name}
-                            {s.section_name && ` - ${s.section_name}`}
-                          </span>
-                          <span className="rounded-lg bg-brand-50 px-3 py-1 font-black text-brand-600">
-                            ردیف {s.row_label} • صندلی {faNumber(s.seat_number)}
-                          </span>
-                        </li>
-                      )),
-                    )
-                  )}
-                </ul>
-              </div>
+      <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-5">
+        <form id="checkout-form" onSubmit={submit} noValidate className="min-w-0 space-y-3.5">
+          <section aria-label="رویداد" className="card p-3">
+            <OrderEventSummary order={order} />
+          </section>
+
+          <section aria-labelledby="seats-title" className="card p-4 sm:p-5">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 id="seats-title" className="text-[17px] font-black text-ink">
+                {order.quantity ? "بلیت‌ها" : "صندلی‌های انتخابی"}
+              </h2>
+              <Link href={backHref} className="flex min-h-11 items-center gap-1.5 text-[13.5px] font-bold text-brand-600">
+                <Icon name="common/edit" className="size-[18px]" />
+                {order.quantity ? "تغییر تعداد" : "ویرایش صندلی‌ها"}
+              </Link>
             </div>
+            {order.quantity ? (
+              <p className="flex items-center gap-2 rounded-xl bg-surface-2 px-3.5 py-3 text-[14px] font-bold text-ink">
+                <Icon name="common/ticket" className="size-5 text-brand-600" />
+                {faNumber(order.quantity)} بلیت ورود عمومی
+              </p>
+            ) : (
+              <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+                {order.seats.map((s) => (
+                  <li key={s.id} className="flex items-center gap-2.5 rounded-xl bg-brand-50/70 px-3 py-2.5">
+                    <Armchair className="size-5 shrink-0 text-brand-600" />
+                    <span className="min-w-0 text-[12.5px] leading-5 text-ink">
+                      {s.section_name && <span className="block truncate text-muted">{s.section_name}</span>}
+                      <b className="font-bold">
+                        ردیف {s.row_label} • صندلی {faNumber(s.seat_number)}
+                      </b>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           <section aria-labelledby="buyer-title" className="card p-4 sm:p-5">
-            <h2 id="buyer-title" className="mb-4 flex items-center gap-2 text-[17px] font-black text-ink">
-              <UserRound className="size-5 text-brand-600" />
-              ۲. اطلاعات خریدار
+            <h2 id="buyer-title" className="mb-3 text-[17px] font-black text-ink">
+              اطلاعات خریدار
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <Field label="نام" required error={errors.first_name?.message}>
-                {(p) => <Input {...p} autoComplete="given-name" {...form.register("first_name")} />}
-              </Field>
-              <Field label="نام خانوادگی" required error={errors.last_name?.message}>
-                {(p) => <Input {...p} autoComplete="family-name" {...form.register("last_name")} />}
-              </Field>
-              <Field label="شماره موبایل" required error={errors.mobile?.message}>
-                {(p) => <Input {...p} type="tel" inputMode="numeric" dir="ltr" autoComplete="tel-national" className="text-left" {...form.register("mobile")} />}
-              </Field>
-              <Field label="ایمیل" error={errors.email?.message} hint="برای دریافت رسید (اختیاری)">
-                {(p) => <Input {...p} type="email" dir="ltr" autoComplete="email" className="text-left" {...form.register("email")} />}
-              </Field>
-              <Field label="یادداشت (اختیاری)" error={errors.note?.message} className="sm:col-span-2 xl:col-span-4">
-                {(p) => <Textarea {...p} rows={2} placeholder="اگر نکته‌ای برای برگزاری رویداد دارید، اینجا بنویسید ..." {...form.register("note")} />}
-              </Field>
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              <BoxField label="نام" required icon="common/profile" error={errors.first_name?.message}>
+                {(p) => <input {...p} autoComplete="given-name" {...form.register("first_name")} />}
+              </BoxField>
+              <BoxField label="نام خانوادگی" required icon="common/profile" error={errors.last_name?.message}>
+                {(p) => <input {...p} autoComplete="family-name" {...form.register("last_name")} />}
+              </BoxField>
+              <BoxField label="شماره موبایل" required icon="common/phone" error={errors.mobile?.message}>
+                {(p) => <input {...p} type="tel" inputMode="numeric" dir="ltr" autoComplete="tel-national" className={cn(p.className, "text-right")} {...form.register("mobile")} />}
+              </BoxField>
+              <BoxField label="ایمیل (اختیاری)" icon="common/mail" error={errors.email?.message}>
+                {(p) => <input {...p} type="email" dir="ltr" autoComplete="email" className={cn(p.className, "text-right")} {...form.register("email")} />}
+              </BoxField>
+              <BoxField label="یادداشت (اختیاری)" icon="common/edit" error={errors.note?.message} className="sm:col-span-2">
+                {(p) => <input {...p} placeholder="اگر نکته‌ای برای برگزاری دارید ..." {...form.register("note")} />}
+              </BoxField>
+            </div>
+            <div className="mt-3">
+              <Checkbox
+                {...form.register("terms")}
+                label={
+                  <>
+                    <Link href="/terms" target="_blank" className="font-bold text-brand-600 hover:underline">
+                      قوانین و مقررات
+                    </Link>{" "}
+                    خرید بلیت را مطالعه کرده و با آن موافقم.
+                  </>
+                }
+              />
+              {errors.terms && (
+                <p role="alert" className="text-[12.5px] font-semibold text-danger-fg">
+                  {errors.terms.message}
+                </p>
+              )}
             </div>
           </section>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {notice && (
-              <section aria-labelledby="notice-title" className="card bg-surface-2/60 p-4 sm:p-5">
-                <h2 id="notice-title" className="mb-3 flex items-center gap-2 text-[15px] font-black text-ink">
-                  <Info className="size-5 text-brand-600" />
-                  {notice.title}
-                </h2>
-                <ul className="list-disc space-y-1.5 pr-5 text-[13px] leading-6 text-ink-2 marker:text-brand-600">
-                  {(notice.subtitle ?? "").split("\n").filter(Boolean).map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-            <DiscountBox order={order} codeRef={codeRef} apply={applyDiscount} remove={removeDiscount} />
-          </div>
+          <DiscountBox order={order} codeRef={codeRef} apply={applyDiscount} remove={removeDiscount} />
 
-          <div className="card flex flex-col-reverse gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <ButtonLink href={backHref} variant="outline" size="lg">
-              <ArrowRight className="size-5" />
-              بازگشت
-            </ButtonLink>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div>
-                <Checkbox
-                  {...form.register("terms")}
-                  label={
-                    <>
-                      <Link href="/terms" target="_blank" className="font-bold text-brand-600 hover:underline">
-                        قوانین و مقررات
-                      </Link>{" "}
-                      خرید بلیت را مطالعه کرده و با آن موافقم.
-                    </>
-                  }
-                />
-                {errors.terms && (
-                  <p role="alert" className="text-[12.5px] font-semibold text-danger-fg">
-                    {errors.terms.message}
-                  </p>
-                )}
-              </div>
-              <Button type="submit" size="xl" loading={buyer.isPending} className="sm:min-w-[240px]">
-                <CreditCard className="size-5" />
-                ادامه به پرداخت
-                <ArrowLeft className="size-5" />
-              </Button>
-            </div>
-          </div>
+          {notice && (
+            <section aria-labelledby="notice-title" className="rounded-2xl bg-surface-2 p-4 sm:p-5">
+              <h2 id="notice-title" className="mb-2 flex items-center gap-2 text-[14.5px] font-black text-ink">
+                <Info className="size-[18px] text-brand-600" />
+                {notice.title}
+              </h2>
+              <ul className="list-disc space-y-1 pr-5 text-[12.5px] leading-6 text-ink-2 marker:text-brand-600">
+                {(notice.subtitle ?? "").split("\n").filter(Boolean).map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </section>
+          )}
         </form>
 
-        <OrderSummary order={order} className="lg:sticky lg:top-24" />
+        <div className="space-y-3.5 lg:sticky lg:top-24">
+          <CheckoutSummary order={order} />
+          <Button type="submit" form="checkout-form" size="xl" block loading={buyer.isPending} className="hidden lg:flex">
+            ادامه به پرداخت
+            <ArrowLeft className="size-5" />
+          </Button>
+        </div>
       </div>
+
+      {/* Phones: the payable amount and the next step stay on screen */}
+      <div className="fixed inset-x-0 bottom-0 z-30 rounded-t-[24px] border-t border-line bg-surface shadow-nav lg:hidden">
+        <div className="container-page flex items-center gap-3 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3">
+          <Button type="submit" form="checkout-form" size="xl" loading={buyer.isPending} className="flex-1">
+            ادامه به پرداخت
+            <ArrowLeft className="size-5" />
+          </Button>
+          <div className="shrink-0 text-left">
+            <p className="text-[11.5px] text-muted">مبلغ قابل پرداخت</p>
+            <p className="whitespace-nowrap text-[18px] font-black text-brand-600">
+              {faNumber(order.total_amount)} <span className="text-[12.5px] font-bold">تومان</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Bordered input with an icon and its label inside the box, as on the checkout reference. */
+function BoxField({
+  label,
+  required,
+  icon,
+  error,
+  className,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  icon: IconName;
+  error?: string;
+  className?: string;
+  children: (props: { id: string; className: string; "aria-invalid"?: boolean; "aria-describedby"?: string }) => React.ReactNode;
+}) {
+  const id = useId();
+  return (
+    <div className={className}>
+      <div
+        className={cn(
+          "flex min-h-[64px] items-center gap-3 rounded-2xl border bg-surface px-3.5 transition focus-within:ring-4",
+          error ? "border-danger/60 focus-within:ring-danger/10" : "border-line focus-within:border-brand-500/60 focus-within:ring-brand-500/10",
+        )}
+      >
+        <Icon name={icon} className="size-[22px] shrink-0 text-ink-2" />
+        <div className="min-w-0 flex-1 py-2">
+          <label htmlFor={id} className="block text-[12px] font-medium text-muted">
+            {label}
+            {required && <span className="mr-0.5 text-danger-fg" aria-hidden>*</span>}
+          </label>
+          {children({
+            id,
+            className: "h-7 w-full bg-transparent text-[15px] font-bold text-ink outline-none placeholder:text-[13px] placeholder:font-normal placeholder:text-muted",
+            "aria-invalid": error ? true : undefined,
+            "aria-describedby": error ? `${id}-error` : undefined,
+          })}
+        </div>
+      </div>
+      {error && (
+        <p id={`${id}-error`} role="alert" className="mt-1.5 text-[12.5px] font-medium text-danger-fg">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -312,28 +341,31 @@ function DiscountBox({
   remove: ReturnType<typeof useOrderMutations>["removeDiscount"];
 }) {
   const applied = !!order.discount_code && Number(order.discount_amount) > 0;
+  // The code is validated and priced by the backend only; the answer is the recalculated order.
   const submit = () => {
     const code = codeRef.current?.value.trim();
     if (!code) return;
     apply.mutate(code, { onSuccess: () => toast.success("کد تخفیف اعمال شد.") });
   };
   return (
-    <section aria-labelledby="discount-title" className="card border-success/25 bg-success-bg/60 p-4 sm:p-5">
-      <h2 id="discount-title" className="mb-3 flex items-center gap-2 text-[15px] font-black text-success-fg">
-        <Percent className="size-5" />
+    <section aria-labelledby="discount-title" className="card p-4 sm:p-5">
+      <h2 id="discount-title" className="mb-3 text-[17px] font-black text-ink">
         کد تخفیف
       </h2>
       {applied ? (
-        <div className="flex items-center justify-between gap-3 rounded-xl bg-surface px-4 py-3">
-          <p className="text-[13.5px] text-ink">
-            کد <b dir="ltr" className="font-code">{order.discount_code}</b> اعمال شد؛ تخفیف: <b className="text-success-fg">{faNumber(order.discount_amount)} تومان</b>
+        <div className="flex items-center justify-between gap-3 rounded-2xl bg-success-bg px-4 py-3">
+          <p className="flex items-center gap-2 text-[13.5px] text-ink">
+            <CircleCheck className="size-5 shrink-0 text-success-fg" />
+            <span>
+              کد <b dir="ltr" className="font-code">{order.discount_code}</b> اعمال شد؛ تخفیف: <b className="text-success-fg">{faNumber(order.discount_amount)} تومان</b>
+            </span>
           </p>
           <button
             type="button"
             onClick={() => remove.mutate(undefined, { onError: (e) => toast.error(errorMessage(e)) })}
             disabled={remove.isPending}
             aria-label="حذف کد تخفیف"
-            className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted hover:text-danger-fg"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl text-muted hover:text-danger-fg"
           >
             <X className="size-5" />
           </button>
@@ -341,25 +373,28 @@ function DiscountBox({
       ) : (
         <>
           <div className="flex gap-2">
-            <label htmlFor="discount-code" className="sr-only">
-              کد تخفیف
-            </label>
-            <input
-              id="discount-code"
-              ref={codeRef}
-              dir="ltr"
-              autoComplete="off"
-              placeholder="کد تخفیف را وارد کنید"
-              onChange={() => apply.isError && apply.reset()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  submit();
-                }
-              }}
-              className="font-code min-h-12 min-w-0 flex-1 rounded-xl border border-line-strong bg-surface px-4 text-center text-[14px] uppercase text-ink outline-none placeholder:normal-case placeholder:text-muted focus:border-success/60 focus:ring-4 focus:ring-success/10"
-            />
-            <Button variant="soft" size="lg" onClick={submit} loading={apply.isPending} className="shrink-0 bg-surface text-success-fg hover:bg-success-bg">
+            <div className="relative min-w-0 flex-1">
+              <label htmlFor="discount-code" className="sr-only">
+                کد تخفیف
+              </label>
+              <input
+                id="discount-code"
+                ref={codeRef}
+                dir="ltr"
+                autoComplete="off"
+                placeholder="کد تخفیف خود را وارد کنید"
+                onChange={() => apply.isError && apply.reset()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    submit();
+                  }
+                }}
+                className="font-code h-[52px] w-full rounded-2xl border border-line bg-surface pl-4 pr-11 text-right text-[14px] uppercase text-ink outline-none placeholder:font-sans placeholder:normal-case placeholder:text-muted focus:border-brand-500/60 focus:ring-4 focus:ring-brand-500/10"
+              />
+              <Icon name="common/discount" className="pointer-events-none absolute right-3.5 top-1/2 size-[22px] -translate-y-1/2 text-ink-2" />
+            </div>
+            <Button variant="soft" size="lg" onClick={submit} loading={apply.isPending} className="h-[52px] shrink-0 rounded-2xl px-6">
               اعمال
             </Button>
           </div>

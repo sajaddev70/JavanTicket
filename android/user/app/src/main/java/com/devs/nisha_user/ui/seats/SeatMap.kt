@@ -28,6 +28,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -43,13 +44,11 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.devs.nisha_user.core.designsystem.component.JtIconButton
 import com.devs.nisha_user.core.designsystem.icon.Lucide
-import com.devs.nisha_user.core.designsystem.theme.IranSans
+import com.devs.nisha_user.core.designsystem.theme.Vazirmatn
 import com.devs.nisha_user.core.designsystem.theme.JavanColors
 import com.devs.nisha_user.core.designsystem.theme.Jt
 import com.devs.nisha_user.core.designsystem.theme.JtShapes
 import com.devs.nisha_user.core.designsystem.theme.W
-import com.devs.nisha_user.core.designsystem.theme.mix
-import com.devs.nisha_user.core.designsystem.theme.parseHexColor
 import com.devs.nisha_user.core.format.Fa
 import com.devs.nisha_user.domain.model.Seat
 import com.devs.nisha_user.domain.model.SeatStatus
@@ -62,13 +61,17 @@ private const val MIN_SCALE = 1f
 private const val MAX_SCALE = 4f
 
 /** Fill of a seat: its tier color while free (prices differ per tier), fixed colors for every other state. */
-fun seatFill(status: SeatStatus, tierColor: Color?, c: JavanColors): Color = when (status) {
-    SeatStatus.SELECTED -> c.seatSelected
-    SeatStatus.SOLD -> c.seatSold
-    SeatStatus.LOCKED -> c.seatLocked
-    SeatStatus.B2B_RESERVED -> c.seatReserved
-    SeatStatus.DISABLED -> c.seatDisabled
-    SeatStatus.AVAILABLE -> tierColor?.mix(c.seatFree, 0.30f) ?: c.seatFree
+/** A VIP tier (by its code or name from the backend) is drawn gold with a crown while free, as on the web. */
+fun isVipTier(code: String?, name: String?): Boolean = Regex("vip", RegexOption.IGNORE_CASE).containsMatchIn("${code.orEmpty()} ${name.orEmpty()}")
+
+/** Fill and stroke of a seat per state (design package: assets/icons/seat). */
+fun seatPaint(status: SeatStatus, vip: Boolean, c: JavanColors): Pair<Color, Color> = when (status) {
+    SeatStatus.SELECTED -> c.seatSelected to c.seatSelected
+    SeatStatus.SOLD -> c.seatSold to c.seatSoldStroke
+    SeatStatus.LOCKED -> c.seatLocked to c.seatLockedStroke
+    SeatStatus.B2B_RESERVED -> c.seatReserved to c.seatReservedStroke
+    SeatStatus.DISABLED -> c.seatDisabled to c.seatSoldStroke
+    SeatStatus.AVAILABLE -> if (vip) c.seatVip to c.seatVipStroke else c.seatFree to c.seatFreeStroke
 }
 
 private class Layout(seats: List<Seat>) {
@@ -105,7 +108,7 @@ fun SeatMap(
 ) {
     val c = Jt.colors
     val layout = remember(seats.map { it.id }) { Layout(seats) }
-    val tierColors = remember(tiers) { tiers.associate { it.code to parseHexColor(it.color, Color.Gray) } }
+    val vipCodes = remember(tiers) { tiers.filter { isVipTier(it.code, it.name) }.map { it.code }.toSet() }
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
 
@@ -176,7 +179,7 @@ fun SeatMap(
                 }) {
                     drawStage(layout, c, measurer)
                     drawRowLabels(layout, c, measurer)
-                    seats.forEach { s -> drawSeat(s, seatFill(s.status, tierColors[s.tierCode], c), s.id in pending, c) }
+                    seats.forEach { s -> drawSeat(s, s.tierCode in vipCodes, s.id in pending, c) }
                 }
             }
             // Zoom controls (start side, as in the design).
@@ -192,54 +195,73 @@ fun SeatMap(
     }
 }
 
+/** Stage: a shallow arc across the front with two soft spotlights (web SeatMap.tsx). */
 private fun DrawScope.drawStage(l: Layout, c: JavanColors, measurer: androidx.compose.ui.text.TextMeasurer) {
-    val half = l.vbW * 0.24f
+    val w = minOf(l.vbW * 0.72f, (l.maxX - l.minX + 2f) * U)
+    val top = l.stageTop
     val path = Path().apply {
-        moveTo(l.cx - half, l.stageTop)
-        relativeLineTo(l.vbW * 0.48f, 0f)
-        relativeLineTo(-U * 1.4f, U * 2.8f)
-        relativeLineTo(-(l.vbW * 0.48f - U * 2.8f), 0f)
+        moveTo(l.cx - w / 2, top + U * 0.9f)
+        quadraticTo(l.cx, top - U * 0.7f, l.cx + w / 2, top + U * 0.9f)
+        lineTo(l.cx + w / 2 - U * 0.4f, top + U * 2.9f)
+        lineTo(l.cx - w / 2 + U * 0.4f, top + U * 2.9f)
         close()
     }
-    drawPath(path, Brush.verticalGradient(listOf(c.stage, c.navy800), startY = l.stageTop, endY = l.stageTop + U * 2.8f))
-    val label = measurer.measure("صحنه", TextStyle(fontFamily = IranSans, fontWeight = W.Extrabold, fontSize = androidx.compose.ui.unit.TextUnit(U * 0.85f / density / fontScale, androidx.compose.ui.unit.TextUnitType.Sp), color = Color.White))
-    drawText(label, topLeft = Offset(l.cx - label.size.width / 2f, l.stageTop + U * 1.4f - label.size.height / 2f))
+    drawPath(path, Brush.verticalGradient(listOf(c.navy800, c.stage), startY = top, endY = top + U * 2.9f))
+    listOf(-0.22f, 0.22f).forEach { k ->
+        val center = Offset(l.cx + w * k, top + U * 1.5f)
+        drawOval(
+            Brush.radialGradient(listOf(Color.White.copy(alpha = 0.4f), Color.Transparent), center = center, radius = U * 1.1f),
+            topLeft = Offset(center.x - U * 0.55f, center.y - U * 1.1f),
+            size = Size(U * 1.1f, U * 2.2f),
+        )
+    }
+    val label = measurer.measure("صحنه", TextStyle(fontFamily = Vazirmatn, fontWeight = W.Extrabold, fontSize = androidx.compose.ui.unit.TextUnit(U * 0.8f / density / fontScale, androidx.compose.ui.unit.TextUnitType.Sp), color = Color.White))
+    drawText(label, topLeft = Offset(l.cx - label.size.width / 2f, top + U * 1.9f - label.size.height / 2f))
 }
 
+/** Row letters on the start (right) side of the hall, as on the reference. */
 private fun DrawScope.drawRowLabels(l: Layout, c: JavanColors, measurer: androidx.compose.ui.text.TextMeasurer) {
-    val style = TextStyle(fontFamily = IranSans, fontWeight = W.Bold, fontSize = androidx.compose.ui.unit.TextUnit(U * 0.5f / density / fontScale, androidx.compose.ui.unit.TextUnitType.Sp), color = c.muted)
+    val style = TextStyle(fontFamily = Vazirmatn, fontWeight = W.Bold, fontSize = androidx.compose.ui.unit.TextUnit(U * 0.48f / density / fontScale, androidx.compose.ui.unit.TextUnitType.Sp), color = c.muted)
     l.edgeRows.forEach { (label, y) ->
         val m = measurer.measure(label, style)
-        listOf((l.minX - 1.3f) * U, (l.maxX + 1.3f) * U).forEach { x ->
-            drawText(m, topLeft = Offset(x - m.size.width / 2f, y * U - m.size.height / 2f))
-        }
+        val x = (l.maxX + 1.25f) * U
+        drawText(m, topLeft = Offset(x - m.size.width / 2f, y * U - m.size.height / 2f))
     }
 }
 
-private val SW = 0.82f * U
-private val SH = 0.7f * U
+private val SW = 0.8f * U
+private val SH = 0.8f * U
 
-/** Chair: seat with a backrest on the stage side; a check when selected, a dot while someone else holds it. */
-private fun DrawScope.drawSeat(s: Seat, fill: Color, busy: Boolean, c: JavanColors) {
+/** Rounded seat; a check when selected, × when sold, a crown on free VIP seats, a dot while someone else holds it. */
+private fun DrawScope.drawSeat(s: Seat, vip: Boolean, busy: Boolean, c: JavanColors) {
     val x = s.x.toFloat() * U
     val y = s.y.toFloat() * U
-    val selected = s.status == SeatStatus.SELECTED
+    val (fill, stroke) = seatPaint(s.status, vip, c)
     val alpha = if (busy) 0.55f else 1f
-    drawRoundRect(fill.copy(alpha = fill.alpha * alpha), Offset(x - SW / 2, y - SH / 2), Size(SW, SH), CornerRadius(5f))
+    val topLeft = Offset(x - SW / 2, y - SH / 2)
+    drawRoundRect(fill.copy(alpha = fill.alpha * alpha), topLeft, Size(SW, SH), CornerRadius(5f))
     drawRoundRect(
-        if (selected) c.brand700 else Color.Black.copy(alpha = 0.08f),
-        Offset(x - SW / 2, y - SH / 2), Size(SW, SH), CornerRadius(5f), style = Stroke(1f),
+        stroke, topLeft, Size(SW, SH), CornerRadius(5f),
+        style = Stroke(1.2f, pathEffect = if (s.status == SeatStatus.DISABLED) PathEffect.dashPathEffect(floatArrayOf(3f, 2f)) else null),
     )
-    drawRoundRect(fill.copy(alpha = 0.75f * alpha), Offset(x - SW / 2 + 2, y - SH / 2 - 3.2f), Size(SW - 4, 3.6f), CornerRadius(1.8f))
-    if (selected) {
-        val check = Path().apply {
-            moveTo(x - 4.5f, y)
-            relativeLineTo(3.2f, 3.2f)
-            relativeLineTo(6f, -6.4f)
-        }
-        drawPath(check, Color.White, style = Stroke(2.2f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    when {
+        s.status == SeatStatus.SELECTED -> drawPath(
+            Path().apply { moveTo(x - 4.5f, y + 0.3f); relativeLineTo(3.2f, 3.2f); relativeLineTo(6f, -6.4f) },
+            Color.White, style = Stroke(2.2f, cap = StrokeCap.Round, join = StrokeJoin.Round),
+        )
+        s.status == SeatStatus.SOLD -> drawPath(
+            Path().apply { moveTo(x - 3.6f, y - 3.6f); relativeLineTo(7.2f, 7.2f); moveTo(x + 3.6f, y - 3.6f); relativeLineTo(-7.2f, 7.2f) },
+            c.seatSoldMark, style = Stroke(1.5f, cap = StrokeCap.Round),
+        )
+        s.status == SeatStatus.AVAILABLE && vip -> drawPath(
+            Path().apply {
+                moveTo(x - 5f, y + 3f); relativeLineTo(0.8f, -6f); relativeLineTo(2.6f, 2.4f); relativeLineTo(1.6f, -3.4f)
+                relativeLineTo(1.6f, 3.4f); relativeLineTo(2.6f, -2.4f); relativeLineTo(0.8f, 6f); close()
+            },
+            Color.White,
+        )
+        s.status == SeatStatus.LOCKED -> drawCircle(c.muted, 2.4f, Offset(x, y))
     }
-    if (s.status == SeatStatus.LOCKED) drawCircle(c.ink2.copy(alpha = 0.5f), 2.2f, Offset(x, y))
 }
 
 /** Seat as read out and listed in the cart: "سکشن ... - ردیف الف - صندلی ۷". */

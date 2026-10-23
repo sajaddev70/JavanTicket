@@ -2,6 +2,18 @@ package com.devs.nisha_user.ui.app
 
 import com.devs.nisha_user.core.format.ltr
 import androidx.compose.foundation.background
+import com.devs.nisha_user.core.designsystem.icon.PackageIcons
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -83,8 +96,51 @@ val ACCOUNT_LINKS: List<Triple<Route, String, LucidePaths>> = listOf(
 )
 
 /**
- * Header of the main screens (layout/SiteHeader.tsx at phone width): logo, theme toggle, account and menu, then the
- * search box and the city picker. Every event list follows the city picked here.
+ * The brand mark of the design package (assets/brand/javan-logo-mark.svg) drawn natively, so the strokes follow the
+ * theme: navy on light surfaces, white on dark ones; the dot keeps the brand red.
+ */
+@Composable
+fun BrandMark(modifier: Modifier = Modifier) {
+    val stroke = if (Jt.colors.isDark) Color.White else Jt.colors.navy900
+    Canvas(modifier.semantics { invisibleToUser() }) {
+        // Package viewBox "30 6 160 96": scale it into the canvas, keeping the aspect ratio.
+        val k = minOf(size.width / 160f, size.height / 96f)
+        withTransform({ translate((size.width - 160f * k) / 2, (size.height - 96f * k) / 2); scale(k, k, pivot = Offset.Zero); translate(-30f, -6f) }) {
+            drawCircle(Color(0xFFF43F5E), 13f, Offset(110f, 22f))
+            listOf(
+                floatArrayOf(95f, 52f, 78f, 69f, 42f, 89f),
+                floatArrayOf(102f, 55f, 91f, 73f, 67f, 96f),
+                floatArrayOf(118f, 55f, 129f, 73f, 153f, 96f),
+                floatArrayOf(125f, 52f, 142f, 69f, 178f, 89f),
+            ).forEach { p ->
+                drawPath(Path().apply { moveTo(110f, 37f); cubicTo(p[0], p[1], p[2], p[3], p[4], p[5]) }, stroke, style = Stroke(7f, cap = StrokeCap.Round))
+            }
+        }
+    }
+}
+
+/** Horizontal lockup (web AppLogo): the mark, then the site name from the admin settings ("مرکز همایش و نمایش" / "جوان"). */
+@Composable
+fun AppLogo(settings: SiteSettings?, modifier: Modifier = Modifier) {
+    val ink = if (Jt.colors.isDark) Color.White else Jt.colors.navy900
+    val name = settings?.shortName?.trim()?.ifBlank { null } ?: settings?.siteName?.trim().orEmpty()
+    val full = settings?.siteName?.trim().orEmpty()
+    val kicker = if (name.isNotEmpty() && full.contains(name) && full != name) full.replace(name, "").trim() else null
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        BrandMark(Modifier.width(50.dp).height(30.dp))
+        if (name.isNotEmpty()) {
+            Column {
+                kicker?.let { Text(it, style = text(10.5f, W.Bold, lineHeight = 1.3f), color = ink, maxLines = 1) }
+                Text(name, style = text(22f, W.Black, lineHeight = 1.2f), color = ink)
+            }
+        }
+    }
+}
+
+/**
+ * Header of the main screens (web AppHeader at phone width, reference 01): logo, city pill and account, then the
+ * search field. Every event list follows the city picked here. The menu button opens the site menu (links,
+ * contacts, theme).
  */
 @Composable
 fun SiteHeader(
@@ -101,39 +157,42 @@ fun SiteHeader(
 ) {
     val c = Jt.colors
     val actions = LocalAppActions.current
+    val settings = com.devs.nisha_user.core.designsystem.component.LocalSiteSettings.current
     Column(modifier.fillMaxWidth().background(c.surface).statusBarsPadding()) {
-        Row(Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.clip(JtShapes.lg).clickable(role = Role.Button, onClickLabel = "صفحه اصلی") { actions.openLink("/") }) {
-                BrandLogo(Modifier.height(44.dp).width(76.dp))
+        Row(Modifier.fillMaxWidth().height(72.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.clip(JtShapes.lg).clickable(role = Role.Button, onClickLabel = "صفحه اصلی") { actions.openLink("/") }.heightIn(min = 44.dp), contentAlignment = Alignment.Center) {
+                AppLogo(settings)
             }
             Spacer(Modifier.weight(1f))
-            ThemeToggle(dark, onToggleTheme)
-            Spacer(Modifier.width(6.dp))
-            JtIconButton(
-                Lucide.UserRound,
-                onClick = { if (user != null) actions.navigate(ProfileRoute) else actions.navigate(LoginRoute()) },
-                contentDescription = if (user != null) "حساب کاربری" else "ورود / ثبت‌نام",
-                background = c.brand600,
-                tint = Color.White,
-                borderColor = null,
-            )
-            Spacer(Modifier.width(6.dp))
-            JtIconButton(Lucide.Menu, onMenu, "باز کردن منو")
-        }
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SearchBox(initialQuery, Modifier.weight(1f)) { q -> onSearch?.invoke(q) ?: actions.navigate(EventsRoute(q = q.ifBlank { null })) }
             JtPicker(
                 value = cityId,
                 options = listOf(PickerOption<Long?>(null, "همه شهرها")) + cities.map { PickerOption<Long?>(it.id, it.name) },
                 onSelect = onCity,
-                icon = Lucide.MapPin,
+                icon = PackageIcons.Location,
                 sheetTitle = "انتخاب شهر",
                 height = 44.dp,
                 compactText = true,
-                modifier = Modifier.width(142.dp),
+                filled = true,
+                modifier = Modifier.widthIn(min = 104.dp, max = 150.dp),
             )
+            Spacer(Modifier.width(8.dp))
+            Column(
+                Modifier.clip(JtShapes.lg).clickable(role = Role.Button, onClickLabel = if (user != null) "پروفایل" else "ورود / ثبت‌نام") {
+                    if (user != null) actions.navigate(ProfileRoute) else actions.navigate(LoginRoute())
+                },
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(Modifier.size(44.dp).clip(CircleShape).background(c.field), contentAlignment = Alignment.Center) {
+                    JtIcon(PackageIcons.Profile, size = 22.dp, tint = c.ink, strokeWidth = 1.8f)
+                }
+                Text(user?.fullName?.trim()?.split(" ")?.firstOrNull()?.ifBlank { null } ?: if (user != null) "پروفایل" else "ورود", style = text(11f, W.Bold, lineHeight = 1.4f), color = c.ink2, maxLines = 1)
+            }
+            Spacer(Modifier.width(4.dp))
+            JtIconButton(Lucide.Menu, onMenu, "باز کردن منو", background = c.field, borderColor = null, tint = c.ink)
         }
-        HDivider(color = c.line.copy(alpha = 0.8f))
+        Box(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp)) {
+            SearchBox(initialQuery, Modifier.fillMaxWidth()) { q -> onSearch?.invoke(q) ?: actions.navigate(EventsRoute(q = q.ifBlank { null })) }
+        }
     }
 }
 
@@ -145,9 +204,9 @@ fun SearchBox(initial: String, modifier: Modifier = Modifier, onSubmit: (String)
     JtTextField(
         value = q,
         onValueChange = { q = it },
-        placeholder = "جستجو در رویدادها ...",
-        leading = Lucide.Search,
-        height = 44.dp,
+        placeholder = "جستجو در رویدادها، هنرمندان، سالن‌ها و ...",
+        leading = PackageIcons.Search,
+        height = 48.dp,
         background = Jt.colors.field,
         textStyle = text(13.5f),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -173,10 +232,19 @@ fun MenuSheet(
     user: AuthUser?,
     onSignOut: () -> Unit,
     onDismiss: () -> Unit,
+    dark: Boolean = false,
+    onToggleTheme: (() -> Unit)? = null,
 ) {
     val c = Jt.colors
     val actions = LocalAppActions.current
     JtBottomSheet(onDismiss = onDismiss, title = "منو") {
+        if (onToggleTheme != null) {
+            Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("حالت نمایش (روشن / تیره)", style = text(15f, W.Semibold), color = c.ink, modifier = Modifier.weight(1f))
+                ThemeToggle(dark, onToggleTheme)
+            }
+            HDivider(color = c.line.copy(alpha = 0.7f))
+        }
         navigation?.header?.forEach { link ->
             Row(
                 Modifier
@@ -376,28 +444,37 @@ fun SiteFooter(settings: SiteSettings?, navigation: Navigation?, onSubscribe: su
 
 enum class Tab { HOME, EVENTS, TICKETS, ACCOUNT }
 
-/** layout/MobileTabBar.tsx: خانه، رویدادها، بلیت‌های من، حساب من / ورود. */
+/** Bottom navigation of the references: خانه، رویدادها، بلیت‌های من، پروفایل, with the active tab underlined. */
 @Composable
 fun BottomTabBar(current: Tab?, signedIn: Boolean, onSelect: (Tab) -> Unit) {
     val c = Jt.colors
     val tabs = listOf(
-        Triple(Tab.HOME, "خانه", Lucide.House),
-        Triple(Tab.EVENTS, "رویدادها", Lucide.CalendarDays),
-        Triple(Tab.TICKETS, "بلیت‌های من", Lucide.Ticket),
-        Triple(Tab.ACCOUNT, if (signedIn) "حساب من" else "ورود", Lucide.UserRound),
+        Triple(Tab.HOME, "خانه", PackageIcons.Home),
+        Triple(Tab.EVENTS, "رویدادها", PackageIcons.Events),
+        Triple(Tab.TICKETS, "بلیت‌های من", PackageIcons.MyTickets),
+        Triple(Tab.ACCOUNT, "پروفایل", PackageIcons.Profile),
     )
-    Column(Modifier.fillMaxWidth().background(c.surface.copy(alpha = 0.97f))) {
-        HDivider()
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .shadow(16.dp, JtShapes.sheet, ambientColor = c.shadow.copy(alpha = 0.08f), spotColor = c.shadow.copy(alpha = 0.08f))
+            .clip(JtShapes.sheet)
+            .background(c.surface)
+            .border(1.dp, c.line, JtShapes.sheet),
+    ) {
         Row(Modifier.fillMaxWidth().navigationBarsPadding().height(64.dp)) {
             tabs.forEach { (tab, label, icon) ->
                 val active = tab == current
-                Column(
-                    Modifier.weight(1f).fillMaxWidth().clickable(role = Role.Tab, onClickLabel = label) { onSelect(tab) }.padding(top = 10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                Box(
+                    Modifier.weight(1f).fillMaxHeight().clickable(role = Role.Tab, onClickLabel = label) { onSelect(tab) }
+                        .semantics { selected = active },
+                    contentAlignment = Alignment.Center,
                 ) {
-                    JtIcon(icon, size = 22.dp, tint = if (active) c.brand600 else c.muted, strokeWidth = if (active) 2.2f else 1.8f)
-                    Text(label, style = text(11.5f, W.Semibold), color = if (active) c.brand600 else c.muted)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        JtIcon(icon, size = 24.dp, tint = if (active) c.brand600 else c.ink2, strokeWidth = if (active) 2.1f else 1.8f)
+                        Text(label, style = text(12f, W.Bold), color = if (active) c.brand600 else c.ink2)
+                    }
+                    if (active) Box(Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).width(36.dp).height(3.dp).clip(CircleShape).background(c.brand600))
                 }
             }
         }

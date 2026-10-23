@@ -69,7 +69,7 @@ export function OtpInput({ value, onChange, onComplete, disabled, invalid }: Otp
   };
 
   return (
-    <div className="flex justify-center gap-3 sm:gap-5" dir="ltr" onPaste={handlePaste}>
+    <div className="flex justify-center gap-3 sm:gap-4" dir="ltr" onPaste={handlePaste} role="group" aria-label="کد تأیید">
       {value.map((digit, i) => (
         <input
           key={i}
@@ -88,9 +88,9 @@ export function OtpInput({ value, onChange, onComplete, disabled, invalid }: Otp
           autoFocus={i === 0}
           aria-label={`رقم ${toFaDigits(String(i + 1))} کد تأیید`}
           className={cn(
-            'size-[64px] rounded-2xl border-2 bg-surface text-center text-[30px] font-black text-ink outline-none transition sm:size-[90px] sm:text-[38px]',
-            'focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 disabled:opacity-60',
-            invalid ? 'border-danger/50' : digit ? 'border-brand-500/40' : 'border-line-strong',
+            'h-[76px] w-[66px] rounded-2xl border-2 bg-field text-center text-[32px] font-black text-ink outline-none transition sm:h-[84px] sm:w-[74px]',
+            'focus:border-brand-600 focus:bg-brand-50 disabled:opacity-60',
+            invalid ? 'border-danger/60 bg-danger-bg' : digit ? 'border-line-strong bg-surface' : 'border-line',
           )}
         />
       ))}

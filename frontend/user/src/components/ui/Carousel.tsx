@@ -33,7 +33,7 @@ export function Carousel({ label, className, itemClassName, children }: { label:
 
   return (
     <div className={cn("relative", className)} role="region" aria-roledescription="carousel" aria-label={label}>
-      <div ref={track} onScroll={update} className="no-scrollbar -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-1 pb-1">
+      <div ref={track} onScroll={update} className="no-scrollbar -mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-1 pb-1">
         {children.map((child, i) => (
           <div key={i} className={cn("shrink-0 snap-start", itemClassName)}>
             {child}

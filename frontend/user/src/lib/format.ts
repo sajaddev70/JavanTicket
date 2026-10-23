@@ -7,6 +7,8 @@ const fmt = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("fa
 const dateFormat = fmt({ day: "numeric", month: "long", year: "numeric" });
 const dayMonthFormat = fmt({ day: "numeric", month: "long" });
 const weekdayFormat = fmt({ weekday: "long" });
+const dayFormat = fmt({ day: "numeric" });
+const monthFormat = fmt({ month: "long" });
 const timeFormat = fmt({ hour: "2-digit", minute: "2-digit", hour12: false });
 const ymFormat = new Intl.DateTimeFormat("en-US-u-ca-persian", { timeZone: TZ, year: "numeric", month: "numeric" });
 const ymdFormat = new Intl.DateTimeFormat("en-US-u-ca-persian", { timeZone: TZ, year: "numeric", month: "numeric", day: "numeric" });
@@ -25,6 +27,10 @@ export function faPrice(value: number | string | null | undefined): string {
 export const faDate = (iso: string) => dateFormat.format(new Date(iso));
 /** "۲۸ اردیبهشت" */
 export const faDayMonth = (iso: string) => dayMonthFormat.format(new Date(iso));
+/** "۲۸" (Jalali day of month) */
+export const faDay = (iso: string) => dayFormat.format(new Date(iso));
+/** "اردیبهشت" */
+export const faMonth = (iso: string) => monthFormat.format(new Date(iso));
 /** "جمعه" */
 export const faWeekday = (iso: string) => weekdayFormat.format(new Date(iso));
 /** "۲۰:۰۰" */
