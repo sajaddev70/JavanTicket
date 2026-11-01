@@ -29,7 +29,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -38,12 +40,13 @@ import androidx.compose.ui.unit.dp
 import com.devs.nisha_user.core.designsystem.icon.JtIcon
 import com.devs.nisha_user.core.designsystem.icon.LucidePaths
 import com.devs.nisha_user.core.designsystem.theme.Jt
+import com.devs.nisha_user.core.designsystem.theme.JtBrushes
 import com.devs.nisha_user.core.designsystem.theme.JtShapes
 import com.devs.nisha_user.core.designsystem.theme.W
 import com.devs.nisha_user.core.designsystem.theme.text
 
 /** The site's Button variants (components/ui/Button.tsx). */
-enum class ButtonVariant { PRIMARY, OUTLINE, SOFT, GHOST, DANGER_GHOST }
+enum class ButtonVariant { PRIMARY, SUCCESS, OUTLINE, SOFT, GHOST, DANGER_GHOST }
 
 /** min-h-10 / 11 / 12 / 14 with the matching text sizes. */
 enum class ButtonSize(val minHeight: Dp, val horizontal: Dp, val text: TextStyle) {
@@ -96,19 +99,21 @@ fun JtButtonBase(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed && enabled) 0.98f else 1f, label = "press")
+    val solid = { color: Color -> SolidColor(color) as Brush }
     val (bg, fg, border) = when (variant) {
-        ButtonVariant.PRIMARY -> Triple(if (pressed) c.brand700 else c.brand600, Color.White, null)
-        ButtonVariant.OUTLINE -> Triple(c.surface, c.ink, BorderStroke(1.dp, if (pressed) c.brand500.copy(alpha = 0.5f) else c.lineStrong))
-        ButtonVariant.SOFT -> Triple(if (pressed) c.brand100 else c.brand50, c.brand600, null)
-        ButtonVariant.GHOST -> Triple(if (pressed) c.field else Color.Transparent, c.ink2, null)
-        ButtonVariant.DANGER_GHOST -> Triple(if (pressed) c.dangerBg else Color.Transparent, c.dangerFg, null)
+        ButtonVariant.PRIMARY -> Triple(if (pressed) JtBrushes.primaryPressed else JtBrushes.primary, Color.White, null)
+        ButtonVariant.SUCCESS -> Triple(JtBrushes.success, Color.White, null)
+        ButtonVariant.OUTLINE -> Triple(solid(c.surface), c.ink, BorderStroke(1.dp, if (pressed) c.brand500.copy(alpha = 0.5f) else c.lineStrong))
+        ButtonVariant.SOFT -> Triple(solid(if (pressed) c.brand100 else c.brand50), c.brand600, null)
+        ButtonVariant.GHOST -> Triple(solid(if (pressed) c.field else Color.Transparent), c.ink2, null)
+        ButtonVariant.DANGER_GHOST -> Triple(solid(if (pressed) c.dangerBg else Color.Transparent), c.dangerFg, null)
     }
     val active = enabled && !loading
     Row(
         modifier = modifier
             .then(if (block) Modifier.fillMaxWidth() else Modifier)
             .scale(scale)
-            .then(if (variant == ButtonVariant.PRIMARY && active) Modifier.shadow(8.dp, shape, ambientColor = c.brand600.copy(0.25f), spotColor = c.brand600.copy(0.35f)) else Modifier)
+            .then(if ((variant == ButtonVariant.PRIMARY || variant == ButtonVariant.SUCCESS) && active) Modifier.shadow(9.dp, shape, ambientColor = Color(0x55702CFF), spotColor = Color(0x88702CFF)) else Modifier)
             .clip(shape)
             .background(bg)
             .then(if (border != null) Modifier.border(border, shape) else Modifier)

@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import AppProviders from "@/providers/AppProviders";
 import { vazirmatn } from "@/fonts/vazirmatn";
-import { themeInitScript } from "@/lib/theme";
+import { splashInitScript, themeInitScript } from "@/lib/theme";
 import { getSiteSettings } from "@/lib/serverSettings";
 import { CITY_COOKIE, parseCityId } from "@/lib/city";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: siteName ? { default: siteName, template: `%s | ${siteName}` } : "خرید بلیت",
     description: settings?.meta_description ?? undefined,
     applicationName: settings?.short_name ?? siteName,
-    appleWebApp: { capable: true, title: settings?.short_name ?? siteName, statusBarStyle: "default" },
+    appleWebApp: { capable: true, title: settings?.short_name ?? siteName, statusBarStyle: "black-translucent" },
     icons: { apple: "/assets/pwa/apple-touch-icon.png" },
     openGraph: { siteName, locale: "fa_IR", type: "website" },
   };
@@ -25,10 +25,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a1424" },
-  ],
+  themeColor: "#071538",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -38,6 +35,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="fa" dir="rtl" className={vazirmatn.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: splashInitScript }} />
+        <noscript>
+          <style>{".app-splash{display:none}"}</style>
+        </noscript>
       </head>
       <body className="min-h-screen antialiased">
         <AppProviders initialCityId={initialCityId}>{children}</AppProviders>

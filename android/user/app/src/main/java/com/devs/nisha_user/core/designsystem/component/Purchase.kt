@@ -33,7 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.devs.nisha_user.core.designsystem.icon.JtIcon
 import com.devs.nisha_user.core.designsystem.icon.Lucide
+import com.devs.nisha_user.core.designsystem.icon.LucidePaths
 import com.devs.nisha_user.core.designsystem.theme.Jt
+import com.devs.nisha_user.core.designsystem.theme.JtBrushes
 import com.devs.nisha_user.core.designsystem.theme.JtShapes
 import com.devs.nisha_user.core.designsystem.theme.W
 import com.devs.nisha_user.core.designsystem.theme.text
@@ -70,79 +72,62 @@ fun HoldTimer(secondsLeft: Long?, receivedAt: Long, modifier: Modifier = Modifie
     val label = "زمان باقی‌مانده: ${Fa.number((left + 59) / 60)} دقیقه"
     val clock = Fa.clock(left)
     when (variant) {
-        TimerVariant.TEXT -> Text(clock, style = text(14f, W.Bold), modifier = modifier.semantics { contentDescription = label })
+        TimerVariant.TEXT -> Text(clock, style = text(13f, W.Bold), color = Color.White, modifier = modifier.semantics { contentDescription = label })
         TimerVariant.LARGE -> Text(clock, style = text(28f, W.Black), color = if (urgent) c.dangerFg else c.brand600, modifier = modifier.semantics { contentDescription = label })
         TimerVariant.CHIP -> Row(
             modifier
                 .clip(JtShapes.lg)
-                .background(if (urgent) c.dangerBg else c.brand50)
+                .background(if (urgent) c.dangerBg else c.field)
                 .padding(horizontal = 10.dp, vertical = 4.dp)
                 .semantics { contentDescription = label },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            JtIcon(Lucide.Clock, size = 16.dp, tint = if (urgent) c.dangerFg else c.brand600)
-            Text(clock, style = text(14f, W.Black), color = if (urgent) c.dangerFg else c.brand600)
+            JtIcon(Lucide.Clock, size = 16.dp, tint = if (urgent) c.dangerFg else c.ink)
+            Text(clock, style = text(13f, W.Black), color = if (urgent) c.dangerFg else c.ink)
         }
     }
 }
 
-private val STEPS = listOf(
-    "انتخاب صندلی" to Lucide.Armchair,
-    "اطلاعات خریدار" to Lucide.UserRound,
-    "پرداخت" to Lucide.CreditCard,
-    "بلیت" to Lucide.Ticket,
-)
+private val STEPS = listOf("انتخاب", "اطلاعات", "پرداخت")
 
-/** Purchase progress: seat selection → buyer details → payment → ticket ([current] is 0-based). */
+/** The design's .step row: ۱ انتخاب، ۲ اطلاعات، ۳ پرداخت ([current] is 0-based; it and the steps before it are filled). */
 @Composable
 fun CheckoutSteps(current: Int, modifier: Modifier = Modifier) {
     val c = Jt.colors
-    val done = c.brand600
-    val todo = c.lineStrong
-    Box(
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        STEPS.forEachIndexed { i, label ->
+            val on = i <= current
+            Text(
+                "${Fa.number(i + 1)} $label",
+                style = text(10f, if (on) W.Bold else W.Normal),
+                color = if (on) Color.White else c.ink2,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(JtShapes.field)
+                    .background(if (on) c.brand700 else c.field)
+                    .padding(horizontal = 4.dp, vertical = 10.dp)
+                    .semantics { contentDescription = label + if (i < current) " (انجام شد)" else if (i == current) " (مرحله فعلی)" else "" },
+            )
+        }
+    }
+}
+
+/** The design's .banner: navy-to-purple strip with a line of text. */
+@Composable
+fun InfoBanner(icon: LucidePaths?, modifier: Modifier = Modifier, centered: Boolean = false, content: @Composable () -> Unit) {
+    Row(
         modifier
             .fillMaxWidth()
-            .drawBehind {
-                // Connectors between neighbouring circles (RTL: the first step is on the right).
-                val step = size.width / STEPS.size
-                val gap = 26.dp.toPx()
-                val y = 20.dp.toPx()
-                for (i in 1 until STEPS.size) {
-                    val from = size.width - (i - 0.5f) * step - gap
-                    val to = size.width - (i + 0.5f) * step + gap
-                    drawLine(if (i <= current) done else todo, Offset(from, y), Offset(to, y), strokeWidth = 3.dp.toPx(), cap = StrokeCap.Round)
-                }
-            },
+            .clip(JtShapes.xl)
+            .background(JtBrushes.banner)
+            .border(1.dp, Color(0xFF8561FA), JtShapes.xl)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (centered) Arrangement.Center else Arrangement.spacedBy(8.dp),
     ) {
-        Row(Modifier.fillMaxWidth()) {
-            STEPS.forEachIndexed { i, (label, icon) ->
-                val isDone = i < current
-                val active = i == current
-                Column(
-                    Modifier.weight(1f).semantics { contentDescription = label + if (isDone) " (انجام شد)" else if (active) " (مرحله فعلی)" else "" },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Box(
-                        Modifier
-                            .size(40.dp)
-                            .then(if (active) Modifier.border(4.dp, c.brand500.copy(alpha = 0.15f), CircleShape).padding(2.dp) else Modifier)
-                            .clip(CircleShape)
-                            .background(if (isDone || active) c.brand600 else c.surface)
-                            .border(3.dp, if (isDone || active) c.brand600 else c.lineStrong, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        JtIcon(if (isDone) Lucide.Check else icon, size = 20.dp, tint = if (isDone || active) Color.White else c.muted, strokeWidth = if (isDone) 3f else 2f)
-                    }
-                    Text(
-                        label,
-                        style = text(12.5f, W.Black),
-                        color = if (active || isDone) c.brand600 else c.ink2,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
-            }
-        }
+        if (icon != null) JtIcon(icon, size = 18.dp, tint = Color.White)
+        content()
     }
 }

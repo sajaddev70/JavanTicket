@@ -52,7 +52,7 @@ export function CitySelector({ className }: { className?: string }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="جستجوی شهر ..."
-              className="h-12 w-full rounded-xl border border-line bg-field pl-4 pr-11 text-[14px] text-ink outline-none focus:border-brand-500/50 focus:bg-surface"
+              className="h-12 w-full rounded-xl border border-line bg-field pl-4 pr-11 text-[14px] text-ink outline-none focus:border-brand-500/50 "
             />
             <Icon name="common/search" className="pointer-events-none absolute right-3.5 top-1/2 size-5 -translate-y-1/2 text-muted" />
           </div>

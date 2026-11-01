@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,17 +41,25 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.invisibleToUser
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.devs.nisha_user.core.designsystem.icon.JtIcon
 import com.devs.nisha_user.core.designsystem.icon.Lucide
+import com.devs.nisha_user.core.designsystem.icon.LucidePaths
 import com.devs.nisha_user.core.designsystem.theme.Jt
+import com.devs.nisha_user.core.designsystem.theme.JtBrushes
 import com.devs.nisha_user.core.designsystem.theme.JtShapes
 import com.devs.nisha_user.core.designsystem.theme.W
 import com.devs.nisha_user.core.designsystem.theme.text
@@ -73,7 +84,7 @@ fun JtBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = state,
-        containerColor = c.surface,
+        containerColor = c.surfaceSolid,
         contentColor = c.ink,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         dragHandle = { Box(Modifier.padding(top = 10.dp).width(40.dp).height(4.dp).clip(JtShapes.pill).background(c.lineStrong)) },
@@ -144,7 +155,7 @@ fun ToastHost(toaster: Toaster, modifier: Modifier = Modifier) {
                     .widthIn(max = 520.dp)
                     .cardShadow(JtShapes.xl2, c.shadow, 14.dp)
                     .clip(JtShapes.xl2)
-                    .background(c.surface)
+                    .background(c.surfaceSolid)
                     .border(1.dp, c.line, JtShapes.xl2)
                     .padding(horizontal = 16.dp, vertical = 12.dp)
                     .semantics { liveRegion = LiveRegionMode.Polite },
@@ -160,18 +171,54 @@ fun ToastHost(toaster: Toaster, modifier: Modifier = Modifier) {
 
 // ---------------------------------------------------------------- top bar of inner screens
 
-/** Header of inner screens: back button, title and optional actions, on the site's translucent surface. */
+/** The design's mark: pink dot over four spreading lines (brand svg of the screens). */
 @Composable
-fun JtTopBar(title: String, onBack: (() -> Unit)?, modifier: Modifier = Modifier, actions: @Composable () -> Unit = {}) {
+fun BrandMark(modifier: Modifier = Modifier) {
     val c = Jt.colors
-    Column(modifier.fillMaxWidth().background(c.surface.copy(alpha = 0.97f)).statusBarsPadding()) {
-        Row(Modifier.fillMaxWidth().height(60.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (onBack != null) JtIconButton(Lucide.ArrowRight, onBack, "بازگشت", borderColor = null)
-            else Spacer(Modifier.width(8.dp))
-            Text(title, style = text(17f, W.Black), color = c.ink, maxLines = 1, modifier = Modifier.weight(1f).padding(horizontal = 4.dp))
-            actions()
+    val lines = if (c.isDark) Color(0xFF8ED4FF) else c.navy900
+    Canvas(modifier.semantics { invisibleToUser() }) {
+        val k = minOf(size.width / 50f, size.height / 40f)
+        withTransform({ translate((size.width - 50f * k) / 2, (size.height - 40f * k) / 2); scale(k, k, pivot = Offset.Zero) }) {
+            drawCircle(Color(0xFFFF4F94), 5f, Offset(25f, 6f))
+            listOf(3f to 34f, 47f to 34f, 15f to 35f, 35f to 35f).forEach { (x, y) ->
+                drawLine(lines, Offset(25f, 13f), Offset(x, y), strokeWidth = 3f, cap = StrokeCap.Round)
+            }
         }
-        HDivider(color = c.line.copy(alpha = 0.8f))
+    }
+}
+
+/** The design's .top row: the mark and short site name on the start side, [actions] on the end side. */
+@Composable
+fun BrandRow(modifier: Modifier = Modifier, actions: @Composable RowScope.() -> Unit = {}) {
+    val c = Jt.colors
+    val settings = LocalSiteSettings.current
+    val name = settings?.shortName?.trim()?.ifBlank { null } ?: settings?.siteName?.trim().orEmpty()
+    Row(modifier.fillMaxWidth().heightIn(min = 44.dp), verticalAlignment = Alignment.CenterVertically) {
+        BrandMark(Modifier.width(45.dp).height(36.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(name, style = text(16f, W.Black), color = c.ink, maxLines = 1, modifier = Modifier.weight(1f))
+        actions()
+    }
+}
+
+/** Round glass button of the design's header (.round). */
+@Composable
+fun RoundButton(icon: LucidePaths, onClick: () -> Unit, contentDescription: String, modifier: Modifier = Modifier) {
+    val c = Jt.colors
+    JtIconButton(icon, onClick, contentDescription, modifier, size = 40.dp, iconSize = 18.dp, background = c.field, tint = c.ink, borderColor = c.line, shape = JtShapes.xl)
+}
+
+/** Header of every screen in the design: brand row (back button at the far end), the large title and the site name under it. */
+@Composable
+fun JtTopBar(title: String, onBack: (() -> Unit)?, modifier: Modifier = Modifier, subtitle: String? = LocalSiteSettings.current?.siteName, actions: @Composable RowScope.() -> Unit = {}) {
+    val c = Jt.colors
+    Column(modifier.fillMaxWidth().statusBarsPadding().padding(start = 19.dp, end = 19.dp, top = 8.dp, bottom = 6.dp)) {
+        BrandRow {
+            actions()
+            if (onBack != null) RoundButton(Lucide.ChevronLeft, onBack, "بازگشت", Modifier.padding(start = 8.dp))
+        }
+        Text(title, style = text(24f, W.Black, lineHeight = 1.4f), color = c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp).semantics { heading() })
+        if (!subtitle.isNullOrBlank()) Text(subtitle, style = text(12f, lineHeight = 1.8f), color = c.muted, maxLines = 1)
     }
 }
 
@@ -179,60 +226,40 @@ fun JtTopBar(title: String, onBack: (() -> Unit)?, modifier: Modifier = Modifier
 
 data class TabItem<T>(val value: T, val label: String, val badge: Int? = null)
 
-/** Underlined tabs with counts ("آینده ۶"), like components/ui/Tabs.tsx. */
+/** Chip tabs with counts ("آینده (۲)"). */
 @Composable
-fun <T> JtTabs(items: List<TabItem<T>>, selected: T, onSelect: (T) -> Unit, modifier: Modifier = Modifier) {
-    val c = Jt.colors
-    Column(modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth()) {
-            items.forEach { item ->
-                val on = item.value == selected
-                Column(
-                    Modifier
-                        .weight(1f)
-                        .clip(JtShapes.lg)
-                        .clickableTab(on) { onSelect(item.value) },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Row(Modifier.height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(item.label, style = text(14.5f, W.Bold), color = if (on) c.brand600 else c.ink2)
-                        if (item.badge != null) {
-                            Text(
-                                Fa.number(item.badge),
-                                style = text(12f, W.Black),
-                                color = if (on) Color.White else c.ink2,
-                                modifier = Modifier.clip(JtShapes.pill).background(if (on) c.brand600 else c.field).padding(horizontal = 8.dp, vertical = 1.dp),
-                            )
-                        }
-                    }
-                    Box(Modifier.fillMaxWidth().height(3.dp).clip(JtShapes.pill).background(if (on) c.brand600 else Color.Transparent))
-                }
-            }
-        }
-        HDivider()
-    }
-}
+fun <T> JtTabs(items: List<TabItem<T>>, selected: T, onSelect: (T) -> Unit, modifier: Modifier = Modifier) = JtPillTabs(items, selected, onSelect, modifier)
 
-/** Pill tabs (variant="pill"): rounded chips, the selected one filled in brand blue. */
+/** The design's .chip row: glass pills, the selected one in the magenta gradient. */
 @Composable
 fun <T> JtPillTabs(items: List<TabItem<T>>, selected: T, onSelect: (T) -> Unit, modifier: Modifier = Modifier) {
-    val c = Jt.colors
     LazyRow(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(items.size) { i ->
             val item = items[i]
-            val on = item.value == selected
-            Text(
-                item.label,
-                style = text(13.5f, W.Bold),
-                color = if (on) Color.White else c.ink2,
-                modifier = Modifier
-                    .clip(JtShapes.xl)
-                    .background(if (on) c.brand600 else c.surface)
-                    .border(1.dp, if (on) c.brand600 else c.line, JtShapes.xl)
-                    .clickableTab(on) { onSelect(item.value) }
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-            )
+            JtChip(
+                item.label + (item.badge?.takeIf { it > 0 }?.let { " (${Fa.number(it)})" } ?: ""),
+                item.value == selected,
+            ) { onSelect(item.value) }
         }
+    }
+}
+
+/** One .chip / .chip.active. */
+@Composable
+fun JtChip(label: String, on: Boolean, modifier: Modifier = Modifier, leading: (@Composable () -> Unit)? = null, onClick: () -> Unit) {
+    val c = Jt.colors
+    Row(
+        modifier
+            .clip(JtShapes.pill)
+            .then(if (on) Modifier.background(JtBrushes.chip) else Modifier.background(c.field).border(1.dp, c.lineStrong, JtShapes.pill))
+            .clickableTab(on, onClick)
+            .heightIn(min = 40.dp)
+            .padding(horizontal = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        leading?.invoke()
+        Text(label, style = text(12f, if (on) W.Bold else W.Medium), color = if (on) Color.White else c.ink, maxLines = 1)
     }
 }
 

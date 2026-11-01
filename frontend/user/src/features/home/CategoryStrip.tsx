@@ -2,25 +2,26 @@
 
 import { useCategories } from "@/hooks/useContent";
 import { CategoryChip } from "@/components/shared/CategoryChip";
+import { SectionHeader } from "@/components/shared/SectionCard";
 import { ErrorState } from "@/components/feedback/States";
 import { Skeleton } from "@/components/ui/Skeleton";
 
-/** Home categories: one horizontally scrolling row of pastel tiles in each category's admin-defined color. */
+/** "دسته‌بندی رویدادها": one scrolling row of chips with each category's admin-defined icon and color. */
 export function CategoryStrip() {
   const { data, isLoading, isError, refetch } = useCategories();
   if (!isLoading && !isError && !data?.length) return null;
 
   return (
-    <section aria-label="دسته‌بندی رویدادها" className="card px-1.5 py-3.5 sm:px-4">
+    <section aria-labelledby="home-categories">
+      <SectionHeader title="دسته‌بندی رویدادها" headingId="home-categories" />
       {isError ? (
-        <ErrorState message="دریافت دسته‌بندی‌ها با خطا مواجه شد." onRetry={() => refetch()} className="border-0" />
+        <ErrorState message="دریافت دسته‌بندی‌ها با خطا مواجه شد." onRetry={() => refetch()} />
       ) : (
-        <ul className="no-scrollbar flex gap-1.5 overflow-x-auto px-1 lg:justify-between lg:gap-3">
+        <ul className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           {isLoading
-            ? Array.from({ length: 7 }, (_, i) => (
-                <li key={i} className="flex w-[64px] shrink-0 flex-col items-center gap-2">
-                  <Skeleton className="size-[54px] rounded-2xl" />
-                  <Skeleton className="h-3 w-12" />
+            ? Array.from({ length: 5 }, (_, i) => (
+                <li key={i}>
+                  <Skeleton className="h-10 w-24 rounded-full" />
                 </li>
               ))
             : data!.map((c) => (

@@ -39,6 +39,11 @@ data class EventsRoute(
     override fun path() = "/events/${encode(slug)}"
 }
 
+/** Picking a session of the event, before its seats. */
+@Serializable data class SessionsRoute(val slug: String) : Route {
+    override fun path() = "/events/${encode(slug)}/sessions"
+}
+
 @Serializable data class SeatsRoute(val sessionId: Long) : Route {
     override fun path() = "/sessions/$sessionId/seats"
 }

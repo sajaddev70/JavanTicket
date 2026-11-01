@@ -2,19 +2,14 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 
 /**
- * The brand mark of the design package (assets/brand/javan-logo-mark.svg), drawn inline so the strokes follow the
- * theme: navy on light surfaces, white on dark ones. The dot keeps the brand red.
+ * The brand mark of the app design, drawn inline so the lines follow the theme: navy on light surfaces, sky blue on
+ * dark ones. The dot keeps the brand pink.
  */
 export function BrandMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="30 6 160 96" aria-hidden className={cn("h-auto text-navy-900 dark:text-white", className)}>
-      <circle cx="110" cy="22" r="13" fill="#F43F5E" />
-      <g fill="none" stroke="currentColor" strokeWidth={7} strokeLinecap="round">
-        <path d="M110 37C95 52 78 69 42 89" />
-        <path d="M110 37C102 55 91 73 67 96" />
-        <path d="M110 37C118 55 129 73 153 96" />
-        <path d="M110 37C125 52 142 69 178 89" />
-      </g>
+    <svg viewBox="0 0 50 40" aria-hidden className={cn("h-auto text-navy-900 dark:text-[#8ed4ff]", className)}>
+      <circle cx="25" cy="6" r="5" fill="#FF4F94" />
+      <path d="M25 13 3 34M25 13 47 34M25 13 15 35M25 13 35 35" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
     </svg>
   );
 }

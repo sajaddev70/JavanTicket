@@ -32,7 +32,7 @@ class PreferencesStore @Inject constructor(@ApplicationContext context: Context)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val initial = runBlocking(Dispatchers.IO) { store.data.first() }
 
-    private val theme = MutableStateFlow(initial[THEME]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM)
+    private val theme = MutableStateFlow(initial[THEME]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.DARK)
     val themeMode: StateFlow<ThemeMode> = theme.asStateFlow()
 
     private val city = MutableStateFlow(initial[CITY]?.takeIf { it > 0 })

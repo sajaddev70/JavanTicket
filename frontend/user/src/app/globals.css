@@ -7,6 +7,7 @@
 :root {
   --page: #f7f9fc;
   --surface: #ffffff;
+  --surface-solid: #ffffff;
   --surface-2: #f5f7fb;
   --field: #f1f4f9;
   --line: #e4e7ec;
@@ -62,62 +63,86 @@
   --shadow-nav: 0 -4px 20px rgb(16 24 40 / 0.06);
 }
 
-/* ---------- Design tokens: dark ---------- */
+/* ---------- Design tokens: dark, the look of the app design (file/javan_complete_states/assets/style.css) ---------- */
 [data-theme="dark"] {
-  --page: #0a1424;
-  --surface: #111d33;
-  --surface-2: #15233b;
-  --field: #18273f;
-  --line: #22324f;
-  --line-strong: #2c3d5c;
-  --ink: #eef2f8;
-  --ink-2: #c3cee0;
-  --muted: #95a3ba;
-  --skeleton: #1f2e4a;
+  --page: #0b1240;
+  --surface: rgb(255 255 255 / 0.09);
+  --surface-solid: #111e55;
+  --surface-2: rgb(255 255 255 / 0.07);
+  --field: rgb(255 255 255 / 0.086);
+  --line: rgb(255 255 255 / 0.16);
+  --line-strong: rgb(255 255 255 / 0.23);
+  --ink: #ffffff;
+  --ink-2: #d0dbf5;
+  --muted: #b9c8e7;
+  --skeleton: rgb(255 255 255 / 0.12);
 
-  --navy-800: #13305a;
-  --navy-900: #0d2347;
-  --navy-950: #061430;
+  --navy-800: #273d91;
+  --navy-900: #0e1851;
+  --navy-950: #071538;
 
-  --brand-50: #13284a;
-  --brand-100: #1a3561;
-  --brand-500: #5596ff;
-  --brand-600: #3b86f7;
-  --brand-700: #2f74e0;
+  --brand-50: rgb(140 53 255 / 0.18);
+  --brand-100: rgb(140 53 255 / 0.28);
+  --brand-500: #80d8ff;
+  --brand-600: #b79bff;
+  --brand-700: #7739e9;
 
   --purple: #a78bfa;
   --purple-bg: #261c45;
 
-  --ticket: #fb7185;
+  --ticket: #ff4f94;
   --ticket-700: #f43f5e;
-  --success: #2ccf68;
-  --success-bg: #0f2a1e;
-  --success-fg: #4ade80;
-  --warning: #fbbf24;
-  --warning-bg: #2b2310;
-  --warning-fg: #fbbf24;
+  --success: #0dbb80;
+  --success-bg: rgb(13 187 128 / 0.3);
+  --success-fg: #d5ffef;
+  --warning: #f3b83c;
+  --warning-bg: rgb(243 184 60 / 0.2);
+  --warning-fg: #f3b83c;
   --danger: #f45b69;
-  --danger-bg: #2c1420;
-  --danger-fg: #fb7185;
+  --danger-bg: rgb(244 91 105 / 0.2);
+  --danger-fg: #ff9aa5;
 
-  --seat-free: #1d3a66;
-  --seat-free-stroke: #3a6db8;
-  --seat-selected: #3b86f7;
-  --seat-sold: #1b2a43;
-  --seat-sold-stroke: #2c3d5c;
-  --seat-sold-mark: #5f6f89;
-  --seat-vip: #d99a1a;
-  --seat-vip-stroke: #f5b223;
-  --seat-locked: #2a3a58;
-  --seat-locked-stroke: #3a4c6e;
-  --seat-reserved: #2e2554;
-  --seat-reserved-stroke: #5b5299;
+  --seat-free: #7cd5ff;
+  --seat-free-stroke: #2382bf;
+  --seat-selected: #ac30fa;
+  --seat-sold: #7584a5;
+  --seat-sold-stroke: #5c6a8a;
+  --seat-sold-mark: #2c3654;
+  --seat-vip: #f3b83c;
+  --seat-vip-stroke: #b98a1f;
+  --seat-locked: #4a5778;
+  --seat-locked-stroke: #66749a;
+  --seat-reserved: #7948d9;
+  --seat-reserved-stroke: #9b78ee;
   --seat-disabled: transparent;
-  --stage: #13305a;
+  --stage: #4523a5;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.25), 0 6px 20px rgb(0 0 0 / 0.22);
-  --shadow-float: 0 14px 44px rgb(0 0 0 / 0.45);
-  --shadow-nav: 0 -4px 20px rgb(0 0 0 / 0.35);
+  --shadow-card: 0 8px 25px rgb(2 7 37 / 0.13);
+  --shadow-float: 0 20px 60px rgb(0 0 0 / 0.55);
+  --shadow-nav: 0 -6px 28px rgb(0 0 0 / 0.13);
+}
+
+/* White event cards on the dark page (.event of the design). */
+.on-light {
+  --surface: #f8faff;
+  --surface-solid: #f8faff;
+  --surface-2: #f5f7fb;
+  --field: #f1f4f9;
+  --line: transparent;
+  --line-strong: #d0d5dd;
+  --ink: #13224d;
+  --ink-2: #152456;
+  --muted: #63708f;
+  --skeleton: #eaeef4;
+  --brand-50: #eef5ff;
+  --brand-600: #0567b5;
+  --success-bg: #ecfdf3;
+  --success-fg: #15803d;
+  --warning-bg: #fff8eb;
+  --warning-fg: #b45309;
+  --danger-bg: #fef2f2;
+  --danger-fg: #dc2626;
+  color: var(--ink);
 }
 
 @theme inline {
@@ -125,6 +150,7 @@
 
   --color-page: var(--page);
   --color-surface: var(--surface);
+  --color-surface-solid: var(--surface-solid);
   --color-surface-2: var(--surface-2);
   --color-field: var(--field);
   --color-line: var(--line);
@@ -159,12 +185,12 @@
   --color-danger-bg: var(--danger-bg);
   --color-danger-fg: var(--danger-fg);
 
-  /* Radii of the design tokens: button / input 12, card 16, event card 18, hero / sheet 24. */
-  --radius-btn: 12px;
-  --radius-card: 16px;
-  --radius-event: 18px;
-  --radius-hero: 24px;
-  --radius-sheet: 24px;
+  /* Radii of the design: button 15, field 13, card 20, event card 17, hero 23, sheet 23, state box 22. */
+  --radius-btn: 15px;
+  --radius-card: 20px;
+  --radius-event: 17px;
+  --radius-hero: 23px;
+  --radius-sheet: 23px;
 
   --shadow-card: var(--shadow-card);
   --shadow-float: var(--shadow-float);
@@ -177,6 +203,9 @@
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
   }
+  html[data-theme="dark"] {
+    background-color: #071538;
+  }
   body {
     background-color: var(--page);
     color: var(--ink);
@@ -185,6 +214,20 @@
     transition: background-color 0.2s ease;
   }
   /* Form controls do not inherit the font by default; keep Vazirmatn (and its Persian digits) everywhere. */
+  /* The page behind every dark screen: navy-to-indigo with two soft glows (fixed, so it never moves with the content). */
+  [data-theme="dark"] body {
+    background-color: transparent;
+  }
+  [data-theme="dark"] body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse at 100% 4%, #273d91 0%, transparent 45%),
+      radial-gradient(ellipse at 5% 85%, #401a8d 0%, transparent 43%),
+      linear-gradient(160deg, #071538, #0e1851 65%, #140e47);
+  }
   input,
   textarea,
   select,
@@ -219,12 +262,46 @@
   }
 }
 
-/* White rounded panel (radius.card = 16). */
+/* Rounded panel: glass on the dark page (.glass of the design), white in the light theme. */
 @utility card {
   border-radius: var(--radius-card);
   border: 1px solid var(--line);
   background-color: var(--surface);
   box-shadow: var(--shadow-card);
+}
+
+/* The primary action, the green pay action and the selected chip (.btn, .btn.green and .chip.active of the design). */
+@utility bg-cta {
+  background-image: linear-gradient(105deg, #5c50ff, #ac30fa 60%, #ff45b7);
+}
+@utility bg-pay {
+  background-image: linear-gradient(100deg, #0dbb80, #17dc9c);
+}
+@utility bg-chip {
+  background-image: linear-gradient(110deg, #8c35ff, #ef42ce);
+}
+@utility bg-banner {
+  background-image: linear-gradient(100deg, #092e64, #4523a5);
+}
+
+/* The design's hero and thumbnail gradients, under the event's own image. */
+@utility bg-hero {
+  background-image:
+    radial-gradient(circle at 70% 30%, rgb(223 58 255 / 0.54), transparent 34%),
+    radial-gradient(circle at 15% 80%, rgb(6 207 255 / 0.53), transparent 38%),
+    linear-gradient(115deg, #0b1854, #3a1385 55%, #071c5a);
+}
+@utility bg-thumb {
+  background-image: radial-gradient(circle at 45% 35%, #a535ff, transparent 40%), linear-gradient(135deg, #071b5c, #096cc6 55%, #a02cef);
+}
+
+[data-splash-seen] .app-splash {
+  display: none;
+}
+
+[data-theme="dark"] .card {
+  background-color: transparent;
+  background-image: linear-gradient(140deg, rgb(255 255 255 / 0.11), rgb(255 255 255 / 0.03));
 }
 
 @layer utilities {
@@ -248,9 +325,9 @@
   .pt-safe {
     padding-top: env(safe-area-inset-top);
   }
-  /* Room for the fixed mobile bottom navigation (64px) and the home indicator. */
+  /* Room for the fixed mobile bottom navigation (70px) and the home indicator. */
   .h-bottom-nav {
-    height: calc(64px + env(safe-area-inset-bottom));
+    height: calc(70px + env(safe-area-inset-bottom));
   }
 }
 
@@ -339,5 +416,18 @@
   }
   [data-print-hidden] {
     display: none !important;
+  }
+  body::before {
+    display: none !important;
+  }
+  [data-print-area],
+  [data-print-area] .card {
+    --ink: #101828;
+    --ink-2: #344054;
+    --muted: #667085;
+    --line: #e4e7ec;
+    --surface: #ffffff;
+    --surface-2: #f5f7fb;
+    background: #fff !important;
   }
 }

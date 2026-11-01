@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 import { showsBottomNav } from "./chrome";
 
 /** Height of the bar without the home indicator; screens with a sticky action bar sit right above it. */
-export const BOTTOM_NAV_HEIGHT = 64;
+export const BOTTOM_NAV_HEIGHT = 70;
 
 /** The four destinations of the PWA on phones: خانه، رویدادها، بلیت‌های من، پروفایل. */
 export function MobileBottomNav() {
@@ -32,21 +32,20 @@ export function MobileBottomNav() {
     <>
       {/* Keeps the end of the page clear of the fixed bar */}
       <div className="h-bottom-nav lg:hidden" aria-hidden />
-      <nav aria-label="دسترسی سریع" className="fixed inset-x-0 bottom-0 z-40 rounded-t-[22px] border-t border-line bg-surface pb-safe shadow-nav lg:hidden">
-        <ul className="mx-auto grid h-16 max-w-[560px] grid-cols-4">
+      <nav aria-label="دسترسی سریع" className="fixed inset-x-0 bottom-0 z-40 rounded-t-[23px] bg-[#f4f5ff] pb-safe shadow-[0_-6px_28px_rgb(0_0_0/0.13)] lg:hidden">
+        <ul className="mx-auto grid h-[70px] max-w-[560px] grid-cols-4">
           {tabs.map(({ href, label, icon, active }) => (
             <li key={label}>
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex h-full flex-col items-center justify-center gap-1 text-[12px] font-bold transition-colors",
-                  active ? "text-brand-600" : "text-ink-2 hover:text-ink",
+                  "relative flex h-full flex-col items-center justify-center gap-[5px] text-[10px] transition-colors",
+                  active ? "font-black text-[#ac20d9]" : "text-[#152456]",
                 )}
               >
-                <Icon name={icon} className="size-6" />
+                <Icon name={icon} className={cn("size-[22px]", !active && "text-[#3d7fc4]")} />
                 {label}
-                {active && <span aria-hidden className="absolute bottom-1 h-[3px] w-9 rounded-full bg-brand-600" />}
               </Link>
             </li>
           ))}

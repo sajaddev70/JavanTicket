@@ -14,7 +14,8 @@ import { cn } from "@/lib/cn";
 import { CitySelector } from "./CitySelector";
 import { SearchField } from "./SearchField";
 import { UserMenu } from "./UserMenu";
-import { hasOwnTopBar, showsHeaderSearch } from "./chrome";
+import { BrandRow } from "./PageTopBar";
+import { hasOwnTopBar } from "./chrome";
 
 function isActive(pathname: string, url: string) {
   const path = url.split("?")[0];
@@ -35,9 +36,24 @@ export function AppHeader() {
   const firstName = user?.fullName?.trim().split(/\s+/)[0];
 
   return (
-    <header className={cn("bg-surface lg:sticky lg:top-0 lg:z-40 lg:border-b lg:border-line lg:bg-surface/95 lg:backdrop-blur", hasOwnTopBar(pathname) && "hidden lg:block")}>
+    <header className={cn("lg:sticky lg:top-0 lg:z-40 lg:border-b lg:border-line lg:bg-surface-solid/95 lg:backdrop-blur", hasOwnTopBar(pathname) && "hidden lg:block")}>
       <div className="container-page pt-safe">
-        <div className="flex h-[72px] items-center gap-2 min-[400px]:gap-3 lg:h-[76px] lg:gap-6">
+        {/* Phones: the design's brand row and large title (home only; other screens have their own header) */}
+        <div className="pt-2 lg:hidden">
+          <BrandRow>
+            <CitySelector />
+            <Link
+              href={user ? "/profile" : `/login${next}`}
+              aria-label={hydrated && user ? (firstName ?? "پروفایل") : "ورود / ثبت‌نام"}
+              className="flex size-10 shrink-0 items-center justify-center rounded-[15px] border border-line bg-field text-ink"
+            >
+              <Icon name="common/profile" className="size-5" />
+            </Link>
+          </BrandRow>
+          <h1 className="mt-2.5 text-[24px] font-black leading-[1.4] text-ink">خانه</h1>
+          {settings?.site_name && <p className="text-[12px] leading-[1.8] text-muted">{settings.site_name}</p>}
+        </div>
+        <div className="hidden h-[76px] items-center gap-6 lg:flex">
           <AppLogo siteName={settings?.site_name} shortName={settings?.short_name} />
 
           <nav aria-label="منوی اصلی" className="hidden h-full items-center gap-6 xl:flex">
@@ -52,7 +68,7 @@ export function AppHeader() {
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "relative flex h-full items-center text-[14px] font-bold transition-colors",
-                        active ? "text-brand-600 after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-brand-600" : "text-ink-2 hover:text-ink",
+                        active ? "text-ink after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-chip" : "text-ink-2 hover:text-ink",
                       )}
                     />
                   );
@@ -61,10 +77,10 @@ export function AppHeader() {
 
           <SearchField className="hidden flex-1 lg:block lg:max-w-[420px] xl:mr-auto" />
 
-          <div className="mr-auto flex items-center gap-2 min-[400px]:gap-2.5 lg:mr-0">
+          <div className="mr-auto flex items-center gap-2.5 lg:mr-0">
             <CitySelector />
-            <ThemeToggle className="hidden lg:flex" />
-            <div className="hidden lg:block">
+            <ThemeToggle />
+            <div>
               {!hydrated ? (
                 <Skeleton className="h-11 w-[120px] rounded-xl" />
               ) : user ? (
@@ -76,20 +92,8 @@ export function AppHeader() {
                 </ButtonLink>
               )}
             </div>
-            {/* Phones: round account button with its label underneath, as in the references */}
-            <Link
-              href={user ? "/profile" : `/login${next}`}
-              aria-label={user ? "پروفایل" : "ورود / ثبت‌نام"}
-              className="flex min-w-11 flex-col items-center gap-0.5 lg:hidden"
-            >
-              <span className="flex size-11 items-center justify-center rounded-full bg-field text-ink">
-                <Icon name="common/profile" className="size-[22px]" />
-              </span>
-              <span className="max-w-[64px] truncate text-[11px] font-bold leading-4 text-ink-2">{hydrated && user ? (firstName ?? "پروفایل") : "ورود"}</span>
-            </Link>
           </div>
         </div>
-        {showsHeaderSearch(pathname) && <SearchField className="pb-3 lg:hidden" />}
       </div>
     </header>
   );

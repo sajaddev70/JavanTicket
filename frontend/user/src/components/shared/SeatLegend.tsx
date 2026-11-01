@@ -1,5 +1,4 @@
 import { faPrice } from "@/lib/format";
-import { cn } from "@/lib/cn";
 import type { Seat, SeatTier } from "@/types/event";
 
 type Swatch = "free" | "selected" | "sold" | "vip" | "locked" | "reserved";
@@ -16,7 +15,7 @@ function SeatSwatch({ kind }: { kind: Swatch }) {
   };
   const { fill, stroke } = paint[kind];
   return (
-    <svg viewBox="0 0 24 24" className="size-6 shrink-0" aria-hidden>
+    <svg viewBox="0 0 24 24" className="size-3.5 shrink-0" aria-hidden>
       <rect x="2.5" y="2.5" width="19" height="19" rx="5" fill={fill} stroke={stroke} strokeWidth="1.3" />
       {kind === "selected" && <path d="m7.5 12.3 3 3 6-6.3" stroke="#fff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />}
       {kind === "sold" && <path d="m8.5 8.5 7 7m0-7-7 7" stroke="var(--seat-sold-mark)" strokeWidth="1.6" strokeLinecap="round" />}
@@ -31,29 +30,29 @@ export function SeatLegend({ seats, tiers, fallbackPrice, isVip, className }: { 
   const has = (status: Seat["status"]) => seats.some((s) => s.status === status);
   const vipTiers = tiers.filter(isVip);
   const items: { kind: Swatch; label: string }[] = [
-    { kind: "free", label: "صندلی آزاد" },
-    { kind: "selected", label: "صندلی انتخاب‌شده" },
-    { kind: "sold", label: "صندلی فروخته شده" },
-    ...(vipTiers.length ? [{ kind: "vip" as const, label: "صندلی VIP" }] : []),
+    { kind: "free", label: "آزاد" },
+    { kind: "selected", label: "انتخاب‌شده" },
+    { kind: "sold", label: "فروخته‌شده" },
+    ...(vipTiers.length ? [{ kind: "vip" as const, label: "VIP" }] : []),
     ...(has("LOCKED") ? [{ kind: "locked" as const, label: "در حال خرید" }] : []),
     ...(has("B2B_RESERVED") ? [{ kind: "reserved" as const, label: "رزرو سازمانی" }] : []),
   ];
   const priced = tiers.filter((t) => t.price !== null || fallbackPrice);
   return (
-    <div className={cn("rounded-2xl border border-line bg-surface px-3.5 py-3", className)}>
-      <ul className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 text-[12.5px] text-ink-2">
+    <div className={className}>
+      <ul className="flex flex-wrap items-center gap-2 text-[11px] text-ink">
         {items.map((i) => (
-          <li key={i.kind} className="flex items-center gap-1.5">
+          <li key={i.kind} className="flex items-center gap-1.5 rounded-full border border-line-strong bg-field px-[11px] py-[7px]">
             <SeatSwatch kind={i.kind} />
             {i.label}
           </li>
         ))}
       </ul>
       {priced.length > 1 && (
-        <ul className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3 text-[12px]" aria-label="قیمت بخش‌ها">
+        <ul className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted" aria-label="قیمت بخش‌ها">
           {priced.map((t) => (
-            <li key={t.code} className="rounded-lg bg-surface-2 px-2.5 py-1 text-ink-2">
-              {t.name}: <b className="font-bold text-ink">{faPrice(t.price ?? fallbackPrice)}</b>
+            <li key={t.code}>
+              {t.name}: {faPrice(t.price ?? fallbackPrice)}
             </li>
           ))}
         </ul>

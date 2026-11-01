@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Clock, Pencil, RefreshCw } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { authService } from "@/services/auth.service";
 import { errorMessage } from "@/services/api";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -12,10 +11,10 @@ import { toast } from "@/stores/useToastStore";
 import { loginSession } from "./session";
 import { OtpInput } from "@/components/auth/OtpInput";
 import { PageTopBar } from "@/components/layout/PageTopBar";
+import { StateDialog, SYMBOL } from "@/components/feedback/StateDialog";
 import { Button } from "@/components/ui/Button";
 import { formatClock } from "@/hooks/useCountdown";
 import { maskMobile, toFaDigits } from "@/lib/format";
-import { cn } from "@/lib/cn";
 
 const LENGTH = 4;
 const RESEND_SECONDS = 120;
@@ -38,6 +37,7 @@ function useWebOtp(onCode: (code: string) => void, enabled: boolean) {
   }, [enabled, onCode]);
 }
 
+/** 03 تأیید شماره موبایل: عادی، کد اشتباه، انقضای کد، تأیید موفق. */
 export function VerifyView() {
   const router = useRouter();
   const signIn = useAuthStore((s) => s.signIn);
@@ -46,7 +46,7 @@ export function VerifyView() {
   const [otp, setOtp] = useState<string[]>(empty);
   const [deadline, setDeadline] = useState(() => Date.now() + RESEND_SECONDS * 1000);
   const [left, setLeft] = useState(RESEND_SECONDS);
-
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     const tick = () => setLeft(Math.max(0, Math.round((deadline - Date.now()) / 1000)));
@@ -59,13 +59,17 @@ export function VerifyView() {
     mutationFn: (code: string) => authService.verifyOtp(mobile!, code),
     onSuccess: (data) => {
       signIn(data.accessToken, data.user, data.refreshToken);
-      const next = loginSession.next();
-      loginSession.clear();
-      toast.success("ورود با موفقیت انجام شد.");
-      router.replace(next);
+      setDone(true);
     },
     onError: () => setOtp(empty()),
   });
+
+  /** "متوجه شدم" on the success box: on to wherever the sign-in started. */
+  function finish() {
+    const next = loginSession.next();
+    loginSession.clear();
+    router.replace(next);
+  }
 
   // No sign-in in progress (opened directly or after a refresh in another tab): start over.
   // Not after success, when the pending number has just been cleared on the way to the next page.
@@ -104,91 +108,67 @@ export function VerifyView() {
   const error = verify.isError ? errorMessage(verify.error) : "";
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-surface lg:min-h-[calc(100vh-77px)] lg:bg-page">
+    <>
       <PageTopBar fallbackHref="/login" />
-      <Image src="/assets/auth/login-wave.svg" alt="" aria-hidden width={1200} height={320} loading="eager" className="pointer-events-none absolute inset-x-0 bottom-0 h-auto w-full opacity-80 dark:opacity-20" />
-
-      <div className="relative flex flex-1 items-start justify-center px-5 pb-16 pt-2 lg:items-center lg:py-12">
-        <div className="w-full max-w-[440px] text-center lg:card lg:max-w-[520px] lg:px-10 lg:py-10">
-          <Image src="/assets/illustrations/otp-message.svg" alt="" aria-hidden width={240} height={165} preload className="mx-auto h-auto w-[200px] sm:w-[230px]" />
-          <h1 className="mt-4 text-[28px] font-black text-ink">تایید کد</h1>
-          <p className="mx-auto mt-2 max-w-[340px] text-[15px] leading-8 text-ink-2">
-            کد {LENGTH === 4 ? "چهار" : toFaDigits(String(LENGTH))} رقمی ارسال شده به شماره موبایل{" "}
-            <span dir="ltr" className="tabular whitespace-nowrap font-bold text-ink">
-              {mobile ? maskMobile(mobile) : "—"}
-            </span>{" "}
-            را وارد کنید.
-          </p>
-
-          <div className="mt-7">
-            <OtpInput
-              value={otp}
-              onChange={(v) => {
-                setOtp(v);
-                if (verify.isError) verify.reset();
-              }}
-              onComplete={submit}
-              disabled={verify.isPending || !mobile}
-              invalid={!!error}
-            />
-          </div>
-
-          <p className="mt-6 text-[14.5px] text-ink-2" aria-live="polite">
-            {left > 0 ? (
-              <>
-                ارسال مجدد کد در{" "}
-                <span dir="ltr" className="tabular font-black text-brand-600">
-                  {toFaDigits(formatClock(left))}
-                </span>
-              </>
-            ) : (
-              "کد را دریافت نکردید؟"
-            )}
-          </p>
-          <button
-            type="button"
-            onClick={() => resend.mutate()}
-            disabled={left > 0 || resend.isPending || !mobile}
-            className={cn(
-              "mx-auto mt-3 flex h-12 w-full max-w-[300px] items-center justify-center gap-2 rounded-2xl text-[14.5px] font-bold transition",
-              left > 0 ? "cursor-not-allowed bg-field text-muted" : "bg-brand-50 text-brand-600 hover:bg-brand-100",
-            )}
-          >
-            {left > 0 ? <Clock className="size-5" /> : <RefreshCw className={cn("size-5", resend.isPending && "animate-spin")} />}
-            ارسال مجدد کد
-          </button>
-          <button type="button" onClick={() => router.push("/login")} className="mx-auto mt-3 flex min-h-11 items-center gap-2 px-2 text-[14.5px] font-bold text-brand-600 hover:text-brand-700">
-            <Pencil className="size-[18px]" />
-            ویرایش شماره موبایل
-          </button>
-
-          <Button
-            size="xl"
-            block
-            className="mt-5 h-[60px] rounded-2xl text-[17px]"
-            onClick={() => submit(otp.join(""))}
-            disabled={otp.some((d) => !d) && !verify.isPending}
-            loading={verify.isPending}
-          >
-            {verify.isPending ? "در حال بررسی ..." : "تایید کد"}
-            {!verify.isPending && <ArrowLeft className="size-5" />}
-          </Button>
-
-          <div aria-live="assertive">
-            {error && (
-              <div role="alert" className="mt-4 flex items-center gap-3 rounded-2xl bg-danger-bg px-4 py-3.5 text-right">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-danger text-[17px] font-black text-white" aria-hidden>
-                  !
-                </span>
-                <div>
-                  <p className="text-[14.5px] font-bold text-danger-fg">{error}</p>
-                  <p className="mt-0.5 text-[12.5px] text-muted">لطفاً دوباره تلاش کنید.</p>
-                </div>
-              </div>
-            )}
-          </div>
+      <div className="mx-auto w-full max-w-[440px] px-4 pb-10 pt-10 text-center lg:pt-8">
+        <div aria-hidden className="text-[70px] leading-[1.25]">
+          {SYMBOL.shield}
         </div>
+        <h1 className="mt-3 text-[22px] font-black text-ink">تأیید شماره موبایل</h1>
+        <p className="mt-2 text-[12px] leading-[2] text-muted">
+          کد {toFaDigits(String(LENGTH))} رقمی ارسال‌شده به{" "}
+          <span dir="ltr" className="tabular whitespace-nowrap">
+            {mobile ? maskMobile(mobile) : "—"}
+          </span>{" "}
+          را وارد کنید.
+        </p>
+
+        <div className="mt-5">
+          <OtpInput
+            value={otp}
+            onChange={(v) => {
+              setOtp(v);
+              if (verify.isError) verify.reset();
+            }}
+            onComplete={submit}
+            disabled={verify.isPending || !mobile}
+            invalid={!!error}
+          />
+        </div>
+
+        <div className="mt-4 text-[12px] text-muted" aria-live="polite">
+          {left > 0 ? (
+            <>
+              ارسال مجدد کد در{" "}
+              <span dir="ltr" className="tabular">
+                {toFaDigits(formatClock(left))}
+              </span>
+            </>
+          ) : (
+            <button type="button" onClick={() => resend.mutate()} disabled={resend.isPending || !mobile} className="min-h-11 px-3 text-[13px] font-bold text-brand-500">
+              ارسال مجدد کد
+            </button>
+          )}
+        </div>
+        <button type="button" onClick={() => router.push("/login")} className="mx-auto mt-1 flex min-h-11 items-center gap-1.5 px-3 text-[13px] text-ink">
+          ویرایش شماره موبایل
+          <Pencil className="size-3.5" />
+        </button>
+
+        <Button size="xl" block className="mt-3" onClick={() => submit(otp.join(""))} disabled={otp.some((d) => !d) && !verify.isPending} loading={verify.isPending}>
+          تأیید و ورود
+          {!verify.isPending && <ArrowLeft className="size-5" />}
+        </Button>
       </div>
-    </div>
+
+      {done && <StateDialog symbol={SYMBOL.success} title="شماره تأیید شد" message="اکنون می‌توانید وارد حساب خود شوید." onAction={finish} />}
+      {error && (/منقضی/.test(error) ? (
+        <StateDialog symbol={SYMBOL.wait} title="زمان اعتبار کد تمام شد" message="برای دریافت کد جدید اقدام کنید." onAction={() => verify.reset()} />
+      ) : /صحیح نیست/.test(error) ? (
+        <StateDialog symbol={SYMBOL.warning} title="کد واردشده صحیح نیست" message="لطفاً کد پیامک‌شده را دوباره بررسی کنید." actionLabel="تلاش مجدد" onAction={() => verify.reset()} />
+      ) : (
+        <StateDialog symbol={SYMBOL.warning} title="تأیید انجام نشد" message={error} actionLabel="تلاش مجدد" onAction={() => verify.reset()} />
+      ))}
+    </>
   );
 }

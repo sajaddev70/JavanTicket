@@ -23,8 +23,7 @@ class MainActivity : ComponentActivity() {
     private val app: AppViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // The splash stays until the site content (logo, menus, categories) has answered once.
-        installSplashScreen().setKeepOnScreenCondition { !app.ready.value }
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             val mode by app.themeMode.collectAsStateWithLifecycle()

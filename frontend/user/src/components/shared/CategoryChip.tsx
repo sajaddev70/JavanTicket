@@ -4,11 +4,9 @@ import { cn } from "@/lib/cn";
 
 type ChipCategory = { slug: string; name: string; icon_url?: string | null; color?: string | null };
 
-const tint = (color: string) => ({ color, backgroundColor: `color-mix(in srgb, ${color} 11%, var(--surface))` });
-
 /**
  * Category of the API with its admin-chosen color and icon.
- * - tile: pastel icon square with the name underneath (home strip)
+ * - tile: link pill with the icon in the category's color (home strip)
  * - chip: compact pill for filters (events page); `selected` fills it with the primary color
  */
 export function CategoryChip({
@@ -27,18 +25,16 @@ export function CategoryChip({
   className?: string;
 }) {
   const color = category.color ?? "#1268E8";
-  const icon = <CategoryIcon slug={category.slug} iconUrl={category.icon_url} className={variant === "tile" ? "size-[27px]" : "size-[18px]"} />;
+  const icon = <CategoryIcon slug={category.slug} iconUrl={category.icon_url} className={variant === "tile" ? "size-4" : "size-4"} />;
 
   if (variant === "tile") {
     const body = (
       <>
-        <span className="flex size-[54px] items-center justify-center rounded-2xl transition group-hover:-translate-y-0.5 sm:size-[64px]" style={tint(color)}>
-          {icon}
-        </span>
-        <span className="line-clamp-2 text-[12px] font-bold leading-[18px] text-ink">{category.name}</span>
+        <span style={{ color }}>{icon}</span>
+        {category.name}
       </>
     );
-    const cls = cn("group flex w-[64px] flex-col items-center gap-2 text-center sm:w-[80px]", className);
+    const cls = cn("flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-line-strong bg-field px-[13px] text-[12px] text-ink", className);
     return href ? (
       <Link href={href} className={cls}>
         {body}
@@ -56,8 +52,8 @@ export function CategoryChip({
       onClick={onClick}
       aria-pressed={selected}
       className={cn(
-        "flex h-11 shrink-0 items-center gap-2 rounded-[14px] border px-3.5 text-[13.5px] font-bold transition",
-        selected ? "border-brand-600 bg-brand-600 text-white" : "border-line bg-surface text-ink hover:border-brand-500/40",
+        "flex min-h-10 shrink-0 items-center gap-1.5 rounded-full px-[13px] text-[12px] transition",
+        selected ? "bg-chip font-bold text-white" : "border border-line-strong bg-field text-ink",
         className,
       )}
     >

@@ -2,7 +2,7 @@
 
 import { Mail, MapPin, Phone } from "lucide-react";
 import { useContentPage, useSiteSettings } from "@/hooks/useContent";
-import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { PageTopBar } from "@/components/layout/PageTopBar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/feedback/States";
 import { errorMessage } from "@/services/api";
@@ -35,12 +35,11 @@ export function ContentPageView({ slug }: { slug: string }) {
       : [];
 
   return (
-    <div className="container-page max-w-[960px] py-6 lg:py-8">
-      <Breadcrumb items={[{ label: "خانه", href: "/" }, { label: page.title }]} />
-      <article className="card mt-3 p-5 sm:p-8">
-        <h1 className="text-[26px] font-black text-ink sm:text-[30px]">{page.title}</h1>
-        {page.updated_at && <p className="mt-2 text-[12.5px] text-muted">آخرین به‌روزرسانی: {faDate(page.updated_at)}</p>}
-        <div className="mt-6 space-y-4 text-[15px] leading-8 text-ink-2">
+    <>
+    <PageTopBar title={page.title} subtitle={page.updated_at ? `آخرین به‌روزرسانی: ${faDate(page.updated_at)}` : undefined} />
+    <div className="container-page max-w-[960px] pb-8 pt-1.5">
+      <article className="card p-5 sm:p-8">
+        <div className="space-y-4 text-[14px] leading-8 text-ink-2">
           {paragraphs.map((p, i) => (
             <p key={i} className="whitespace-pre-line">
               {p}
@@ -67,5 +66,6 @@ export function ContentPageView({ slug }: { slug: string }) {
         )}
       </article>
     </div>
+    </>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { notFound, useRouter } from "next/navigation";
-import { Info, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, RotateCcw, X } from "lucide-react";
 import { useSeatLocks, useSeatMap } from "./hooks";
 import { isVipTier, SeatMap } from "./SeatMap";
 import { useSiteSettings } from "@/hooks/useContent";
@@ -10,28 +10,25 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { loginHref } from "@/components/shared/RequireAuth";
 import { HoldTimer } from "@/components/shared/HoldTimer";
 import { SeatLegend } from "@/components/shared/SeatLegend";
-import { SeatSummarySheet } from "@/components/shared/SeatSummarySheet";
 import { PageTopBar } from "@/components/layout/PageTopBar";
-import { SmartImage } from "@/components/ui/SmartImage";
-import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
-import { Icon } from "@/components/ui/Icon";
 import { EmptyState, ErrorState } from "@/components/feedback/States";
+import { LoadingOverlay, StateDialog, SYMBOL } from "@/components/feedback/StateDialog";
 import { errorMessage, isStatus } from "@/services/api";
 import { toast } from "@/stores/useToastStore";
 import { faFullDate, faNumber, faPrice, faTime } from "@/lib/format";
-import { mediaUrl } from "@/lib/media";
 import type { Seat, SeatMapData } from "@/types/event";
 
+/** 08 انتخاب صندلی: عادی، صندلی انتخاب‌شده، صندلی رزروشده، اتمام زمان رزرو. */
 export function SeatSelectionView({ sessionId }: { sessionId: number }) {
   const map = useSeatMap(sessionId);
   if (isStatus(map.error, 404)) notFound();
   if (map.isError && !map.data) {
     return (
       <>
-        <PageTopBar fallbackHref="/events" />
-        <ErrorState className="container-page my-6" message={errorMessage(map.error, "دریافت نقشه سالن با خطا مواجه شد.")} onRetry={() => map.refetch()} />
+        <PageTopBar title="انتخاب صندلی" fallbackHref="/events" />
+        <ErrorState className="container-page" message={errorMessage(map.error, "دریافت نقشه سالن با خطا مواجه شد.")} onRetry={() => map.refetch()} />
       </>
     );
   }
@@ -42,8 +39,9 @@ export function SeatSelectionView({ sessionId }: { sessionId: number }) {
 function SeatSelection({ sessionId, data, receivedAt, refetch }: { sessionId: number; data: SeatMapData; receivedAt: number; refetch: () => void }) {
   const router = useRouter();
   const authenticated = useAuthStore((s) => s.isAuthenticated);
-  const { toggle, releaseAll, pending } = useSeatLocks(sessionId);
+  const { toggle, releaseAll, pending, taken, dismissTaken } = useSeatLocks(sessionId);
   const [cartOpen, setCartOpen] = useState(false);
+  const [expired, setExpired] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const { session, seats, sections } = data;
 
@@ -71,7 +69,7 @@ function SeatSelection({ sessionId, data, receivedAt, refetch }: { sessionId: nu
 
   // The hold deadline is the server's (seconds_left); when it passes, the seats are released there: reload the map.
   const onExpire = useCallback(() => {
-    toast.error("زمان نگهداری صندلی‌ها به پایان رسید و آزاد شدند. لطفاً دوباره انتخاب کنید.");
+    setExpired(true);
     refetch();
   }, [refetch]);
 
@@ -157,93 +155,59 @@ function SeatSelection({ sessionId, data, receivedAt, refetch }: { sessionId: nu
     </>
   );
 
-  const place = [session.hall_name ?? session.venue_name, session.city_name].filter(Boolean).join("، ");
+  const short = selected.map((x) => `${x.row_label}${faNumber(x.seat_number)}`).join(" ، ");
 
   return (
     <>
-      <PageTopBar fallbackHref={`/events/${encodeURIComponent(session.event_slug)}`} />
-      <div className="container-page space-y-3 pb-[200px] pt-1 lg:pb-10 lg:pt-6">
-        {/* Event strip: photo with the title, place, date and time */}
-        <section aria-label="اطلاعات سانس" className="relative overflow-hidden rounded-[18px] bg-navy-950 text-white">
-          <SmartImage src={mediaUrl(session.banner_url)} fallback={null} alt="" fill preload sizes="(min-width: 1280px) 1216px, 100vw" className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-l from-[#0b2b5b] via-[#0b2b5b]/85 via-50% to-[#0b2b5b]/30" />
-          <div className="relative p-4 sm:p-5">
-            <h1 className="text-[20px] font-black leading-8 sm:text-[24px]">{session.event_title}</h1>
-            {(session.title || session.event_subtitle) && <p className="mt-0.5 text-[13.5px] text-white/85">{session.title ?? session.event_subtitle}</p>}
-            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[12.5px] text-white/90">
-              {place && (
-                <li className="flex items-center gap-1.5">
-                  <Icon name="common/location" className="size-4" />
-                  {place}
-                </li>
-              )}
-              <li className="flex items-center gap-1.5">
-                <Icon name="common/calendar-simple" className="size-4" />
-                {faFullDate(session.start_time)}
-              </li>
-              <li className="flex items-center gap-1.5">
-                <Icon name="common/clock" className="size-4" />
-                <span className="tabular">{faTime(session.start_time)}</span>
-              </li>
-            </ul>
-          </div>
-        </section>
-
+      <PageTopBar title="انتخاب صندلی" subtitle={session.event_title} fallbackHref={`/events/${encodeURIComponent(session.event_slug)}`} />
+      <div className="container-page pb-32 pt-1.5 lg:pb-10">
         {!onSale && (
-          <p role="alert" className="rounded-2xl bg-warning-bg px-4 py-3 text-[14px] font-semibold text-ink">
+          <p role="alert" className="mb-3 rounded-[15px] bg-warning-bg px-4 py-3 text-[13px] font-semibold text-ink">
             فروش این سانس فعال نیست؛ امکان انتخاب صندلی وجود ندارد.
           </p>
         )}
 
-        {/* Reservation countdown from the server's hold deadline */}
-        {data.hold?.seconds_left != null && selected.length > 0 ? (
-          <section aria-label="زمان رزرو" className="flex items-center gap-3 rounded-2xl bg-brand-50 px-4 py-3">
-            <p className="min-w-0 flex-1 text-[12.5px] leading-6 text-ink-2">
-              صندلی‌های انتخاب‌شده برای شما محفوظ هستند. لطفاً در زمان مقرر خرید را تکمیل کنید.
-            </p>
-            <div className="shrink-0 text-left">
-              <p className="text-[11.5px] text-ink-2">زمان باقی‌مانده برای رزرو</p>
-              <div className="flex items-center justify-end gap-2">
-                <HoldTimer variant="large" secondsLeft={data.hold.seconds_left} receivedAt={receivedAt} onExpire={onExpire} />
-                <Icon name="common/clock" className="size-7 text-brand-600" />
-              </div>
-            </div>
-          </section>
-        ) : (
-          <p className="flex items-center gap-2 rounded-2xl bg-surface-2 px-4 py-3 text-[12.5px] leading-6 text-ink-2">
-            <Info className="size-[18px] shrink-0 text-brand-600" />
-            با انتخاب هر صندلی، آن صندلی تا {faNumber(data.hold?.hold_minutes ?? 10)} دقیقه برای شما نگه داشته می‌شود.
-          </p>
-        )}
-
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-          <section aria-labelledby="map-title" className="card min-w-0 p-3 sm:p-4">
-            <h2 id="map-title" className="sr-only">
-              نقشه سالن
-            </h2>
+          <section aria-labelledby="map-title" className="min-w-0">
+            <div className="mb-[9px] flex items-center justify-between gap-3">
+              <h2 id="map-title" className="text-[15px] font-black text-ink">
+                نمای سالن
+              </h2>
+              <span className="text-[11px] text-muted">{faFullDate(session.start_time)} · {faTime(session.start_time)}</span>
+            </div>
             {seats.length === 0 ? (
-              <EmptyState className="border-0" message="برای این سانس نقشه صندلی تعریف نشده است." />
+              <EmptyState symbol={SYMBOL.ticket} message="برای این سانس نقشه صندلی تعریف نشده است." />
             ) : (
               <SeatMap seats={seats} sections={sections} tiers={session.tiers} fallbackPrice={Number(session.price)} pending={pending} onToggle={onSale ? onToggle : () => {}} />
             )}
-            <SeatLegend className="mt-3" seats={seats} tiers={session.tiers} fallbackPrice={Number(session.price)} isVip={isVipTier} />
           </section>
 
-          <aside className="lg:sticky lg:top-24">
-            <SeatSummarySheet
-              count={selected.length}
-              description={description}
-              total={subtotal + fee}
-              onContinue={proceed}
-              onExpand={() => setCartOpen(true)}
-              continuing={leaving}
-              disabled={pending.size > 0}
-            >
-              {cart}
-            </SeatSummarySheet>
+          <aside className="card p-4 lg:sticky lg:top-24">
+            <SeatLegend seats={seats} tiers={session.tiers} fallbackPrice={Number(session.price)} isVip={isVipTier} />
+            <p className="mt-3 text-[13px] text-ink">{selected.length ? `صندلی‌های انتخابی: ${short}` : "برای انتخاب، روی صندلی‌های آزاد نقشه بزنید."}</p>
+            {selected.length > 0 && <p className="sr-only">{description}</p>}
+            <div className="mt-1.5 flex items-center justify-between gap-2">
+              <b className="text-[14px] font-black text-ink">مجموع: {faPrice(subtotal + fee)}</b>
+              {data.hold?.seconds_left != null && selected.length > 0 && <HoldTimer secondsLeft={data.hold.seconds_left} receivedAt={receivedAt} onExpire={onExpire} />}
+            </div>
+            {selected.length > 0 && (
+              <button type="button" onClick={() => setCartOpen(true)} aria-haspopup="dialog" className="mt-1 min-h-10 text-[12px] font-bold text-brand-500">
+                مشاهده سبد خرید
+              </button>
+            )}
           </aside>
         </div>
+
+        <div className="fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-page via-page/80 to-transparent lg:bg-none px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-6 lg:static lg:mt-4 lg:ml-auto lg:max-w-[380px] lg:p-0">
+          <Button size="xl" block onClick={proceed} disabled={pending.size > 0 || !selected.length} loading={leaving}>
+            ادامه خرید
+            <ArrowLeft className="size-5" />
+          </Button>
+        </div>
       </div>
+
+      {taken && <StateDialog symbol={SYMBOL.warning} title="صندلی دیگر در دسترس نیست" message="این صندلی توسط کاربر دیگری رزرو شده است." actionLabel="تلاش مجدد" onAction={dismissTaken} />}
+      {expired && <StateDialog symbol={SYMBOL.wait} title="زمان رزرو به پایان رسید" message="صندلی‌ها آزاد شدند؛ انتخاب را از نو آغاز کنید." onAction={() => setExpired(false)} />}
 
       <Dialog
         open={cartOpen}
@@ -264,15 +228,8 @@ function SeatSelection({ sessionId, data, receivedAt, refetch }: { sessionId: nu
 function SeatSelectionSkeleton() {
   return (
     <>
-      <PageTopBar fallbackHref="/events" />
-      <div className="container-page space-y-3 pt-1 lg:pt-6" aria-busy>
-        <Skeleton className="h-[120px] rounded-[18px]" />
-        <Skeleton className="h-[64px] rounded-2xl" />
-        <div className="card flex h-[460px] flex-col items-center justify-center gap-3 text-[14px] text-muted">
-          <span className="size-10 animate-spin rounded-full border-4 border-brand-100 border-t-brand-600" />
-          در حال بارگذاری نقشه سالن ...
-        </div>
-      </div>
+      <PageTopBar title="انتخاب صندلی" fallbackHref="/events" />
+      <LoadingOverlay title="در حال بارگذاری" message="نقشه سالن آماده می‌شود." />
     </>
   );
 }

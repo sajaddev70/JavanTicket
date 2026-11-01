@@ -1,33 +1,37 @@
 "use client";
 
-import { Heart } from "lucide-react";
 import { useFavorites } from "./queries";
 import { AccountShell } from "@/features/account/AccountShell";
 import { EventCard, EventCardSkeleton } from "@/components/shared/EventCard";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState, ErrorState } from "@/components/feedback/States";
+import { SYMBOL } from "@/components/feedback/StateDialog";
 import { errorMessage } from "@/services/api";
 
+/** 18 علاقه‌مندی‌ها: عادی، بدون علاقه‌مندی. */
 export function FavoritesView() {
   const favorites = useFavorites();
   return (
-    <AccountShell title="علاقه‌مندی‌ها" description="رویدادهایی که نشان کرده‌اید.">
+    <AccountShell title="علاقه‌مندی‌ها">
       {favorites.isError ? (
         <ErrorState message={errorMessage(favorites.error)} onRetry={() => favorites.refetch()} />
       ) : favorites.isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-[11px] md:grid-cols-2">
           {[0, 1, 2].map((i) => (
             <EventCardSkeleton key={i} />
           ))}
         </div>
       ) : !favorites.data?.length ? (
-        <EmptyState icon={Heart} message="هنوز رویدادی را به علاقه‌مندی‌ها اضافه نکرده‌اید." description="با زدن نماد قلب روی هر رویداد، آن را اینجا ذخیره کنید." action={<ButtonLink href="/events">مشاهده رویدادها</ButtonLink>} />
+        <EmptyState symbol={SYMBOL.heart} message="هنوز رویدادی ذخیره نکرده‌اید" description="رویدادهای موردعلاقه را با قلب نشان‌دار کنید." action={<ButtonLink href="/events" size="xl">مشاهده رویدادها</ButtonLink>} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {favorites.data.map((e) => (
-            <EventCard key={e.id} event={e} />
-          ))}
-        </div>
+        <>
+          <h2 className="mb-[9px] text-[15px] font-black text-ink">رویدادهای ذخیره‌شده</h2>
+          <div className="grid gap-[11px] md:grid-cols-2">
+            {favorites.data.map((e) => (
+              <EventCard key={e.id} event={e} />
+            ))}
+          </div>
+        </>
       )}
     </AccountShell>
   );

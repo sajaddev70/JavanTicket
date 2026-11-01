@@ -116,7 +116,7 @@ fun JtTextField(
         focused -> c.brand500.copy(alpha = 0.6f)
         else -> c.lineStrong
     }
-    FieldFrame(label, modifier, required, error, hint) {
+    FieldFrame(null, modifier, required, error, hint) {
         val field: @Composable () -> Unit = {
             BasicTextField(
                 value = value,
@@ -144,16 +144,25 @@ fun JtTextField(
                         Modifier
                             .fillMaxWidth()
                             .defaultMinSize(minHeight = height)
-                            .then(if (focused) Modifier.border(BorderStroke(4.dp, (if (error != null) c.danger else c.brand500).copy(alpha = 0.10f)), JtShapes.xl) else Modifier)
-                            .clip(JtShapes.xl)
+                            .clip(JtShapes.field)
                             .background(if (enabled) background else c.field)
-                            .border(1.dp, borderColor, JtShapes.xl)
-                            .padding(horizontal = 14.dp, vertical = if (singleLine) 0.dp else 12.dp),
+                            .border(1.dp, borderColor, JtShapes.field)
+                            .padding(horizontal = 15.dp, vertical = if (singleLine && label == null) 0.dp else 10.dp),
                         verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         if (leading != null) JtIcon(leading, size = 18.dp, tint = c.ink2)
-                        Box(Modifier.weight(1f), contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart) {
+                        Column(Modifier.weight(1f)) {
+                            if (label != null) {
+                                // Stays right-aligned even in left-to-right fields: the label itself is Persian.
+                                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                                    Row(Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
+                                        Text(label, style = text(11f), color = c.muted)
+                                        if (required) Text(" *", style = text(11f, W.Bold), color = c.dangerFg)
+                                    }
+                                }
+                            }
+                            Box(contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart) {
                             if (value.isEmpty() && placeholder != null) {
                                 Text(
                                     placeholder,
@@ -165,6 +174,7 @@ fun JtTextField(
                                 )
                             }
                             inner()
+                            }
                         }
                         trailing?.invoke()
                     }
@@ -233,7 +243,7 @@ fun <T> JtPicker(
                 .heightIn(min = height)
                 .clip(shape)
                 .background(if (filled) c.field else c.surface)
-                .then(if (filled) Modifier else Modifier.border(1.dp, c.lineStrong, shape))
+                .border(1.dp, if (filled) c.line else c.lineStrong, shape)
                 .clickable(role = Role.DropdownList, onClickLabel = sheetTitle) { open = true }
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,

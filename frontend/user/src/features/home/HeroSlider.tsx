@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { useBanners, usePageBlocks } from "@/hooks/useContent";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -57,7 +56,7 @@ export function HeroSlider() {
     return () => clearInterval(id);
   }, [count, paused]);
 
-  if (blocks.isLoading || banners.isLoading) return <Skeleton className="h-[300px] w-full rounded-[24px] sm:h-[320px] lg:h-[380px]" />;
+  if (blocks.isLoading || banners.isLoading) return <Skeleton className="h-[168px] w-full rounded-[23px] lg:h-[320px]" />;
   if (!count) return null;
   const current = index % count;
 
@@ -65,7 +64,7 @@ export function HeroSlider() {
     <section
       aria-roledescription="carousel"
       aria-label="رویدادهای برگزیده"
-      className="relative overflow-hidden rounded-[24px] bg-navy-950 text-white"
+      className="bg-hero relative overflow-hidden rounded-[23px] text-white"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -88,27 +87,20 @@ export function HeroSlider() {
           aria-hidden={i !== current}
           className={cn("transition-opacity duration-700", i === current ? "relative opacity-100" : "pointer-events-none absolute inset-0 opacity-0")}
         >
-          <SmartImage src={mediaUrl(slide.image)} fallback={null} alt="" fill preload={i === 0} sizes="(min-width: 1280px) 1216px, 100vw" className="object-cover" />
-          {/* Text sits on the start (right) side: the photo fades into navy behind it */}
-          <div className="absolute inset-0 bg-gradient-to-l from-[#0b2b5b]/95 via-[#0b2b5b]/70 via-45% to-[#0b2b5b]/5" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#071d3e]/60 to-transparent to-50% sm:hidden" />
-          <div className="relative flex min-h-[300px] flex-col justify-center p-5 sm:min-h-[320px] sm:p-8 lg:min-h-[380px] lg:px-12">
-            <div className="max-w-[78%] sm:max-w-[560px]">
-              {slide.kicker && <p className="text-[13px] font-medium text-white/80 sm:text-[14px]">{slide.kicker}</p>}
-              {i === 0 ? (
-                <h1 className="mt-1 text-[26px] font-black leading-[1.45] sm:text-[32px] lg:text-[40px]">{slide.title}</h1>
-              ) : (
-                <h2 className="mt-1 text-[26px] font-black leading-[1.45] sm:text-[32px] lg:text-[40px]">{slide.title}</h2>
-              )}
-              {slide.subtitle && <p className="mt-2 text-[14px] leading-7 text-white/85 sm:text-[16px]">{slide.subtitle}</p>}
+          <SmartImage src={mediaUrl(slide.image)} fallback={null} alt="" fill preload={i === 0} sizes="(min-width: 1280px) 1216px, 100vw" className="object-cover opacity-55" />
+          {/* Text sits on the start (right) side: the photo fades into the hero's indigo behind it */}
+          <div className="absolute inset-0 bg-gradient-to-l from-[#0b1854]/80 to-transparent" />
+          <div className="relative flex min-h-[168px] flex-col justify-center p-[18px] pb-7 lg:min-h-[320px] lg:px-12">
+            <div className="max-w-[90%] sm:max-w-[560px]">
+              <h2 className="text-[20px] font-black leading-[1.8] lg:text-[36px]">{slide.title}</h2>
+              {(slide.subtitle ?? slide.kicker) && <p className="mt-1 text-[11px] leading-[1.8] text-white/90 lg:text-[15px]">{slide.subtitle ?? slide.kicker}</p>}
               {slide.href && slide.button && (
                 <Link
                   href={slide.href}
                   tabIndex={i === current ? 0 : -1}
-                  className="mt-5 inline-flex min-h-12 items-center gap-3 rounded-xl bg-brand-600 px-6 text-[15px] font-bold text-white shadow-cta transition hover:bg-brand-700"
+                  className="bg-cta mt-2.5 inline-flex min-h-10 items-center gap-2 rounded-[15px] px-5 text-[12px] font-black text-white"
                 >
                   {slide.button}
-                  <ArrowLeft className="size-5" />
                 </Link>
               )}
             </div>

@@ -184,7 +184,7 @@ fun SeatMap(
             }
             // Zoom controls (start side, as in the design).
             Column(
-                Modifier.align(Alignment.CenterEnd).padding(12.dp).clip(JtShapes.xl).background(c.surface).border(1.dp, c.line, JtShapes.xl),
+                Modifier.align(Alignment.CenterEnd).padding(12.dp).clip(JtShapes.xl).background(c.surfaceSolid).border(1.dp, c.line, JtShapes.xl),
             ) {
                 JtIconButton(Lucide.Plus, { zoomAt(1.35f) }, "بزرگ‌نمایی", borderColor = null, enabled = animatedScale < MAX_SCALE - 0.01f)
                 JtIconButton(Lucide.Minus, { zoomAt(1 / 1.35f) }, "کوچک‌نمایی", borderColor = null, enabled = view.scale > 1.01f)
@@ -206,7 +206,7 @@ private fun DrawScope.drawStage(l: Layout, c: JavanColors, measurer: androidx.co
         lineTo(l.cx - w / 2 + U * 0.4f, top + U * 2.9f)
         close()
     }
-    drawPath(path, Brush.verticalGradient(listOf(c.navy800, c.stage), startY = top, endY = top + U * 2.9f))
+    drawPath(path, Brush.verticalGradient(listOf(c.stage, c.navy800), startY = top, endY = top + U * 2.9f))
     listOf(-0.22f, 0.22f).forEach { k ->
         val center = Offset(l.cx + w * k, top + U * 1.5f)
         drawOval(

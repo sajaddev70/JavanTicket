@@ -1,8 +1,9 @@
-import { CalendarX2, RefreshCw, TriangleAlert, WifiOff, type LucideIcon } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/cn";
+import { SYMBOL } from "./StateDialog";
 
-/** API failure: Persian message and a retry button (never raw error text). Offline gets its own hint. */
+/** API failure: Persian message and a retry button (never raw error text). Offline uses the design's wording. */
 export function ErrorState({
   message = "دریافت اطلاعات با خطا مواجه شد.",
   onRetry,
@@ -13,19 +14,15 @@ export function ErrorState({
   className?: string;
 }) {
   const offline = /اتصال اینترنت|ارتباط با سرور/.test(message);
-  const Icon = offline ? WifiOff : TriangleAlert;
   return (
-    <div role="alert" className={cn("flex flex-col items-center justify-center gap-3 rounded-2xl border border-line bg-surface px-5 py-10 text-center", className)}>
-      <span className="flex size-12 items-center justify-center rounded-full bg-danger-bg text-danger-fg">
-        <Icon className="size-6" />
+    <div role="alert" className={cn("flex flex-col items-center justify-center gap-3 px-3 py-10 text-center", className)}>
+      <span aria-hidden className="text-[52px] leading-[1.25]">
+        {SYMBOL.warning}
       </span>
-      <p className="max-w-md text-[14.5px] font-bold leading-7 text-ink">{message}</p>
+      <p className="max-w-md text-[15px] font-black leading-7 text-ink">{offline ? "ارتباط برقرار نشد" : message}</p>
+      {offline && <p className="max-w-md text-[13px] leading-7 text-muted">اتصال اینترنت را بررسی و دوباره تلاش کنید.</p>}
       {onRetry && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand-50 px-5 text-[14px] font-bold text-brand-600 transition hover:bg-brand-100"
-        >
+        <button type="button" onClick={onRetry} className="mt-1 inline-flex min-h-[52px] w-full max-w-[360px] items-center justify-center gap-2 rounded-[15px] bg-cta px-5 text-[15px] font-black text-white">
           <RefreshCw className="size-4" />
           تلاش مجدد
         </button>
@@ -34,27 +31,28 @@ export function ErrorState({
   );
 }
 
+/** The design's .empty: a large symbol, title, description and an action. */
 export function EmptyState({
   message,
   description,
-  icon: Icon = CalendarX2,
+  symbol = SYMBOL.calendar,
   action,
   className,
 }: {
   message: string;
   description?: string;
-  icon?: LucideIcon;
+  symbol?: string;
   action?: React.ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-3 rounded-2xl border border-line bg-surface px-5 py-12 text-center", className)}>
-      <span className="flex size-14 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-        <Icon className="size-7" />
+    <div className={cn("flex flex-col items-center justify-center px-3 pb-7 pt-11 text-center", className)}>
+      <span aria-hidden className="mb-[15px] block text-[68px] leading-[1.25] text-ink">
+        {symbol}
       </span>
-      <p className="text-[15.5px] font-black text-ink">{message}</p>
-      {description && <p className="max-w-md text-[13.5px] leading-7 text-muted">{description}</p>}
-      {action}
+      <h2 className="text-[19px] font-black text-ink">{message}</h2>
+      {description && <p className="mt-2 max-w-md text-[13px] leading-[2] text-muted">{description}</p>}
+      {action && <div className="mt-4 flex w-full max-w-[360px] flex-col gap-2 [&>*]:w-full">{action}</div>}
     </div>
   );
 }
@@ -73,17 +71,17 @@ export function LoadingSkeleton({ variant = "card", count = 3, className }: { va
   }
   if (variant === "grid") {
     return (
-      <div className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)} aria-busy>
+      <div className={cn("grid gap-3 lg:grid-cols-2", className)} aria-busy>
         {Array.from({ length: count }, (_, i) => (
-          <Skeleton key={i} className="h-[260px] rounded-[18px]" />
+          <Skeleton key={i} className="h-[113px] rounded-[17px]" />
         ))}
       </div>
     );
   }
   return (
-    <div className={cn("space-y-4", className)} aria-busy>
+    <div className={cn("space-y-3", className)} aria-busy>
       {Array.from({ length: count }, (_, i) => (
-        <Skeleton key={i} className="h-[160px] rounded-2xl" />
+        <Skeleton key={i} className="h-[113px] rounded-[20px]" />
       ))}
     </div>
   );

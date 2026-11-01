@@ -22,8 +22,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -34,7 +32,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -46,12 +43,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.devs.nisha_user.BuildConfig
-import com.devs.nisha_user.core.designsystem.component.ErrorState
 import com.devs.nisha_user.core.designsystem.component.LocalMediaOrigin
 import com.devs.nisha_user.core.designsystem.component.LocalSiteSettings
 import com.devs.nisha_user.core.designsystem.component.LocalToaster
 import com.devs.nisha_user.core.designsystem.component.ToastHost
 import com.devs.nisha_user.core.designsystem.theme.Jt
+import com.devs.nisha_user.core.designsystem.theme.designBackdrop
 import com.devs.nisha_user.core.notification.NotificationHelper
 import com.devs.nisha_user.ui.notification.NotificationPermissionSheet
 import com.devs.nisha_user.domain.model.BlockKeys
@@ -67,6 +64,7 @@ import com.devs.nisha_user.ui.checkout.CheckoutScreen
 import com.devs.nisha_user.ui.common.AppActions
 import com.devs.nisha_user.ui.common.LocalAppActions
 import com.devs.nisha_user.ui.eventdetail.EventDetailScreen
+import com.devs.nisha_user.ui.eventdetail.SessionsScreen
 import com.devs.nisha_user.ui.events.EventsScreen
 import com.devs.nisha_user.ui.home.HomeScreen
 import com.devs.nisha_user.ui.navigation.CheckoutRoute
@@ -86,6 +84,7 @@ import com.devs.nisha_user.ui.navigation.PaymentRoute
 import com.devs.nisha_user.ui.navigation.ProfileRoute
 import com.devs.nisha_user.ui.navigation.Route
 import com.devs.nisha_user.ui.navigation.SeatsRoute
+import com.devs.nisha_user.ui.navigation.SessionsRoute
 import com.devs.nisha_user.ui.navigation.TicketRoute
 import com.devs.nisha_user.ui.navigation.TicketsRoute
 import com.devs.nisha_user.ui.navigation.VerifyRoute
@@ -106,7 +105,6 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
     val navigation by app.navigation.collectAsStateWithLifecycle()
     val categories by app.categories.collectAsStateWithLifecycle()
     val cities by app.cities.collectAsStateWithLifecycle()
-    val features by app.features.collectAsStateWithLifecycle()
     val blocks by app.pageBlocks.collectAsStateWithLifecycle()
     val cityId by app.cityId.collectAsStateWithLifecycle()
     val favoriteIds by app.favoriteIds.collectAsStateWithLifecycle()
@@ -161,28 +159,15 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
 
     val backStack by nav.currentBackStackEntryAsState()
     val destination = backStack?.destination
+    // The design keeps the bar on the browsing and account screens; login and the purchase steps have the screen to themselves.
     val tab = when {
         destination?.hasRoute(HomeRoute::class) == true -> Tab.HOME
-        destination?.hasRoute(EventsRoute::class) == true -> Tab.EVENTS
-        destination?.hasRoute(TicketsRoute::class) == true -> Tab.TICKETS
-        destination?.hasRoute(ProfileRoute::class) == true -> Tab.ACCOUNT
+        destination?.hasRoute(EventsRoute::class) == true || destination?.hasRoute(EventDetailRoute::class) == true || destination?.hasRoute(SessionsRoute::class) == true -> Tab.EVENTS
+        destination?.hasRoute(TicketsRoute::class) == true || destination?.hasRoute(TicketRoute::class) == true -> Tab.TICKETS
+        destination?.hasRoute(ProfileRoute::class) == true || destination?.hasRoute(OrdersRoute::class) == true || destination?.hasRoute(OrderRoute::class) == true || destination?.hasRoute(FavoritesRoute::class) == true -> Tab.ACCOUNT
         else -> null
     }
     val selectedCity = cities.firstOrNull { it.id == cityId }
-
-    val header: @Composable (query: String, onSearch: ((String) -> Unit)?) -> Unit = { query, onSearch ->
-        SiteHeader(
-            user = user,
-            cities = cities,
-            cityId = cityId,
-            onCity = app::setCity,
-            dark = dark,
-            onToggleTheme = { app.setTheme(if (dark) ThemeMode.LIGHT else ThemeMode.DARK) },
-            onMenu = { menuOpen = true },
-            initialQuery = query,
-            onSearch = onSearch,
-        )
-    }
 
     CompositionLocalProvider(
         LocalAppActions provides actions,
@@ -190,10 +175,11 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
         LocalMediaOrigin provides BuildConfig.API_BASE_URL.replace(Regex("/api/v\\d+/?$"), ""),
         LocalToaster provides app.toaster,
     ) {
-        Box(Modifier.fillMaxSize().background(Jt.colors.page)) {
-            if (settings == null && contentError != null) {
-                // Nothing could be loaded at all (no connection at first start): the offline page with a retry.
-                Column(Modifier.fillMaxSize().statusBarsPadding().padding(top = 48.dp)) { ErrorState(contentError, onRetry = { app.loadContent(force = true) }) }
+        val ready by app.ready.collectAsStateWithLifecycle()
+        var splashDone by rememberSaveable { mutableStateOf(false) }
+        Box(Modifier.fillMaxSize().then(if (Jt.colors.isDark) Modifier.designBackdrop() else Modifier.background(Jt.colors.page))) {
+            if (!splashDone) {
+                AppSplash(ready = ready && settings != null, error = contentError, onRetry = { app.loadContent(force = true) }, onDone = { splashDone = true })
             } else {
                 Column(Modifier.fillMaxSize()) {
                     NavHost(
@@ -208,7 +194,7 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
                     ) {
                         composable<HomeRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
                             HomeScreen(
-                                header = { header("", null) },
+                                header = { SiteHeader("خانه", cities, cityId, app::setCity, onMenu = { menuOpen = true }) },
                                 footer = { SiteFooter(settings, navigation, app::subscribe) },
                                 categories = categories,
                                 cities = cities,
@@ -216,10 +202,11 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
                             )
                         }
                         composable<EventsRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
-                            EventsScreen(header = { onSearch, q -> header(q, onSearch) }, hero = blocks[BlockKeys.EVENTS_HERO], categories = categories, cities = cities)
+                            EventsScreen(categories = categories, cities = cities)
                         }
                         composable<EventDetailRoute> { EventDetailScreen() }
-                        composable<SeatsRoute> { SeatsScreen(blocks[BlockKeys.SEAT_HERO], signedIn = user != null) }
+                        composable<SessionsRoute> { SessionsScreen(signedIn = user != null) }
+                        composable<SeatsRoute> { SeatsScreen(signedIn = user != null) }
                         composable<CheckoutRoute> { entry -> Guarded(entry.toRoute<CheckoutRoute>(), user != null, nav) { CheckoutScreen(blocks[BlockKeys.CHECKOUT_NOTICE]) } }
                         composable<PaymentRoute> { entry -> Guarded(entry.toRoute<PaymentRoute>(), user != null, nav) { PaymentScreen(blocks[BlockKeys.PAYMENT_NOTICE]) } }
                         composable<GatewayRoute> { entry ->
@@ -235,18 +222,22 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
                         composable<OrderRoute> { entry -> Guarded(entry.toRoute<OrderRoute>(), user != null, nav) { OrderScreen() } }
                         composable<ProfileRoute>(enterTransition = { EnterTransition.None }, exitTransition = { ExitTransition.None }) {
                             Guarded(ProfileRoute, user != null, nav) {
-                                ProfileScreen(cities, onSignOut = {
-                                    app.signOut()
-                                    nav.navigateTab(HomeRoute)
-                                })
+                                ProfileScreen(
+                                    cities,
+                                    dark = dark,
+                                    onToggleTheme = { app.setTheme(if (dark) ThemeMode.LIGHT else ThemeMode.DARK) },
+                                    onSignOut = {
+                                        app.signOut()
+                                        nav.navigateTab(HomeRoute)
+                                    },
+                                )
                             }
                         }
                         composable<FavoritesRoute> { Guarded(FavoritesRoute, user != null, nav) { FavoritesScreen() } }
-                        composable<LoginRoute> { LoginScreen(blocks[BlockKeys.AUTH_HERO], features) }
-                        composable<VerifyRoute> { VerifyScreen(blocks[BlockKeys.AUTH_HERO]) }
+                        composable<LoginRoute> { LoginScreen() }
+                        composable<VerifyRoute> { VerifyScreen() }
                         composable<ContentRoute> { ContentScreen() }
                     }
-                    // Screens with their own sticky action bar (event, seats, checkout, payment, login) hide the tabs.
                     if (tab != null) {
                         BottomTabBar(tab, signedIn = user != null) { t ->
                             when (t) {
@@ -322,6 +313,7 @@ private fun NavHostController.currentPath(): String {
             d.hasRoute(EventDetailRoute::class) -> entry.toRoute<EventDetailRoute>().path()
             d.hasRoute(EventsRoute::class) -> entry.toRoute<EventsRoute>().path()
             d.hasRoute(SeatsRoute::class) -> entry.toRoute<SeatsRoute>().path()
+            d.hasRoute(SessionsRoute::class) -> entry.toRoute<SessionsRoute>().path()
             d.hasRoute(ContentRoute::class) -> entry.toRoute<ContentRoute>().path()
             else -> "/"
         }

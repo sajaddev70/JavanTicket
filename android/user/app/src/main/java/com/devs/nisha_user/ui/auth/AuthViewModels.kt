@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.devs.nisha_user.core.common.AppError
 import com.devs.nisha_user.core.common.appError
 import com.devs.nisha_user.core.designsystem.component.Toaster
 import com.devs.nisha_user.domain.usecase.SendOtpUseCase
@@ -22,19 +23,22 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class LoginUiState(val mobile: String = "", val error: String? = null, val sending: Boolean = false)
+data class LoginUiState(val mobile: String = "", val error: AppError? = null, val sending: Boolean = false)
 
-/** features/auth/LoginView.tsx: the mobile number; the backend sends the code by SMS. */
+/** The mobile number; the backend sends the code by SMS. */
 @HiltViewModel
 class LoginViewModel @Inject constructor(savedState: SavedStateHandle, private val sendOtp: SendOtpUseCase) : ViewModel() {
     val next: String = LinkRouter.safeNext(savedState.toRoute<LoginRoute>().next)
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
     private val _sent = Channel<String>(Channel.BUFFERED)
+
     /** Normalized mobile the code was sent to. */
     val sent = _sent.receiveAsFlow()
 
     fun setMobile(value: String) = _state.update { it.copy(mobile = value, error = null) }
+
+    fun dismissError() = _state.update { it.copy(error = null) }
 
     fun submit() {
         if (_state.value.sending) return
@@ -44,16 +48,32 @@ class LoginViewModel @Inject constructor(savedState: SavedStateHandle, private v
                 _sent.send(sendOtp(_state.value.mobile))
                 _state.update { it.copy(sending = false) }
             } catch (e: Exception) {
-                _state.update { it.copy(sending = false, error = e.appError.message) }
+                _state.update { it.copy(sending = false, error = e.appError) }
             }
+        }
+    }
+}
+
+sealed interface VerifyProblem {
+    data object Wrong : VerifyProblem
+    data object Expired : VerifyProblem
+    data class Other(val message: String) : VerifyProblem
+
+    companion object {
+        /** The backend tells these apart only by message (AuthService). */
+        fun of(error: AppError): VerifyProblem = when {
+            "منقضی" in error.message -> Expired
+            "صحیح نیست" in error.message -> Wrong
+            else -> Other(error.message)
         }
     }
 }
 
 data class VerifyUiState(
     val digits: List<String> = List(VerifyOtpUseCase.OTP_LENGTH) { "" },
-    val error: String? = null,
+    val problem: VerifyProblem? = null,
     val verifying: Boolean = false,
+    val verified: Boolean = false,
     val resendLeft: Int = VerifyOtpUseCase.RESEND_SECONDS,
     val resending: Boolean = false,
 ) {
@@ -61,7 +81,7 @@ data class VerifyUiState(
     val complete: Boolean get() = digits.all { it.isNotEmpty() }
 }
 
-/** features/auth/VerifyView.tsx: the 4-digit code, resend after two minutes, then back to where the user was. */
+/** The 4-digit code, resend after two minutes, then back to where the user was. */
 @HiltViewModel
 class VerifyViewModel @Inject constructor(
     savedState: SavedStateHandle,
@@ -75,6 +95,7 @@ class VerifyViewModel @Inject constructor(
     private val _state = MutableStateFlow(VerifyUiState())
     val state: StateFlow<VerifyUiState> = _state.asStateFlow()
     private val _done = Channel<String>(Channel.BUFFERED)
+
     /** Emits the path to continue to after signing in. */
     val done = _done.receiveAsFlow()
 
@@ -93,23 +114,30 @@ class VerifyViewModel @Inject constructor(
     }
 
     fun setDigits(digits: List<String>) {
-        _state.update { it.copy(digits = digits, error = null) }
+        _state.update { it.copy(digits = digits, problem = null) }
         if (_state.value.complete) submit()
     }
+
+    fun dismissProblem() = _state.update { it.copy(problem = null) }
 
     fun submit() {
         val s = _state.value
         if (s.verifying || !s.complete) return
-        _state.update { it.copy(verifying = true, error = null) }
+        _state.update { it.copy(verifying = true, problem = null) }
         viewModelScope.launch {
             try {
                 verifyOtp(mobile, s.code)
-                toaster.success("ورود با موفقیت انجام شد.")
-                _done.send(next)
+                _state.update { it.copy(verifying = false, verified = true) }
             } catch (e: Exception) {
-                _state.update { it.copy(verifying = false, error = e.appError.message, digits = List(VerifyOtpUseCase.OTP_LENGTH) { "" }) }
+                _state.update { it.copy(verifying = false, problem = VerifyProblem.of(e.appError), digits = List(VerifyOtpUseCase.OTP_LENGTH) { "" }) }
             }
         }
+    }
+
+    /** "متوجه شدم" on the success box. */
+    fun finish() {
+        _state.update { it.copy(verified = false) }
+        _done.trySend(next)
     }
 
     fun resend() {
@@ -119,7 +147,7 @@ class VerifyViewModel @Inject constructor(
             try {
                 sendOtp(mobile)
                 toaster.success("کد تأیید جدید ارسال شد.")
-                _state.update { it.copy(resending = false, digits = List(VerifyOtpUseCase.OTP_LENGTH) { "" }, error = null) }
+                _state.update { it.copy(resending = false, digits = List(VerifyOtpUseCase.OTP_LENGTH) { "" }, problem = null) }
                 startCountdown()
             } catch (e: Exception) {
                 _state.update { it.copy(resending = false) }

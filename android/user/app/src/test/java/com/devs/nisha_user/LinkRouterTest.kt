@@ -10,6 +10,7 @@ import com.devs.nisha_user.ui.navigation.LinkTarget
 import com.devs.nisha_user.ui.navigation.OrderRoute
 import com.devs.nisha_user.ui.navigation.PaymentResultRoute
 import com.devs.nisha_user.ui.navigation.SeatsRoute
+import com.devs.nisha_user.ui.navigation.SessionsRoute
 import com.devs.nisha_user.ui.navigation.TicketRoute
 import com.devs.nisha_user.ui.navigation.TicketsRoute
 import org.junit.Assert.assertEquals
@@ -63,5 +64,11 @@ class LinkRouterTest {
         assertEquals("/", LinkRouter.safeNext("//evil.example"))
         assertEquals("/", LinkRouter.safeNext("/login?next=/x"))
         assertEquals("/", LinkRouter.safeNext(null))
+    }
+
+    @Test
+    fun `sessions page of an event opens the sessions screen`() {
+        assertEquals(SessionsRoute("concert-1"), LinkRouter.route("/events/concert-1/sessions"))
+        assertEquals("/events/concert-1/sessions", SessionsRoute("concert-1").path())
     }
 }
