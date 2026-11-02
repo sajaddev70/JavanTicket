@@ -16,8 +16,8 @@ fun OrderStatusBadge(status: OrderStatus, modifier: Modifier = Modifier) {
     val c = Jt.colors
     val (label, bg, fg) = when (status) {
         OrderStatus.PENDING -> Triple("در انتظار پرداخت", c.warningBg, c.pendingFg)
-        OrderStatus.PAID -> Triple("پرداخت شده", c.successBg, c.successFg)
-        OrderStatus.CANCELLED -> Triple("لغو شده", c.field, c.ink2)
+        OrderStatus.PAID -> Triple("پرداخت‌شده", c.successBg, c.successFg)
+        OrderStatus.CANCELLED -> Triple("لغوشده", c.dangerBg, c.dangerFg)
         OrderStatus.REFUNDED -> Triple("مسترد شده", c.dangerBg, c.dangerFg)
     }
     Badge(label, bg, fg, modifier)
@@ -32,7 +32,7 @@ fun ticketState(status: TicketStatus, sessionCancelled: Boolean = false): Ticket
     return when {
         status == TicketStatus.CANCELLED || sessionCancelled -> TicketState("لغو شده", c.dangerBg, c.dangerFg, Lucide.CircleX)
         status == TicketStatus.USED -> TicketState("استفاده شده", c.field, c.ink2, Lucide.ScanLine)
-        else -> TicketState("معتبر", c.success, Color.White, Lucide.CircleCheck)
+        else -> TicketState("معتبر", c.successBg, c.successFg, Lucide.CircleCheck)
     }
 }
 

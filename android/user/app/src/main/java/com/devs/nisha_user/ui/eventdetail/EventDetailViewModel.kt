@@ -11,6 +11,7 @@ import com.devs.nisha_user.domain.model.EventDetail
 import com.devs.nisha_user.domain.usecase.GetEventDetailUseCase
 import com.devs.nisha_user.domain.usecase.availability
 import com.devs.nisha_user.ui.navigation.EventDetailRoute
+import com.devs.nisha_user.ui.navigation.SessionsRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +49,38 @@ class EventDetailViewModel @Inject constructor(
                 val event = result.getOrNull()
                 s.copy(
                     event = Async.of(result, previous),
+                    selectedSessionId = s.selectedSessionId ?: event?.sessions?.firstOrNull { it.availability(Fa::number).bookable }?.id,
+                )
+            }
+        }
+    }
+
+    fun select(sessionId: Long) = _state.update { it.copy(selectedSessionId = sessionId) }
+}
+
+/** The event's sessions (07 انتخاب سانس): the first bookable one is preselected until the user picks another. */
+@HiltViewModel
+class SessionsViewModel @Inject constructor(
+    savedState: SavedStateHandle,
+    private val getEvent: GetEventDetailUseCase,
+) : ViewModel() {
+
+    val slug: String = savedState.toRoute<SessionsRoute>().slug
+    private val _state = MutableStateFlow(EventDetailUiState())
+    val state: StateFlow<EventDetailUiState> = _state.asStateFlow()
+
+    init {
+        load()
+    }
+
+    fun load() {
+        _state.update { it.copy(event = Async.Loading(it.event.valueOrNull)) }
+        viewModelScope.launch {
+            val result = appResult { getEvent(slug) }
+            _state.update { s ->
+                val event = result.getOrNull()
+                s.copy(
+                    event = Async.of(result, s.event.valueOrNull),
                     selectedSessionId = s.selectedSessionId ?: event?.sessions?.firstOrNull { it.availability(Fa::number).bookable }?.id,
                 )
             }

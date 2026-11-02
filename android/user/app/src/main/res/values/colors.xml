@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="launcher_background">#FFFFFF</color>
-    <!-- The "page" color of the web design tokens (light / dark), used behind the splash and before Compose draws. -->
-    <color name="window_background">#F4F7FC</color>
+    <!-- The top color of the design page gradient, used behind the splash and before Compose draws. -->
+    <color name="window_background">#071538</color>
 </resources>

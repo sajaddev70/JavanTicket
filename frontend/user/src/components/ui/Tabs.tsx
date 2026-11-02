@@ -19,7 +19,7 @@ export function Tabs<T extends string>({
   onChange,
   idBase,
   className,
-  variant = "underline",
+  variant = "pill",
 }: {
   items: TabItem<T>[];
   value: T;
@@ -58,17 +58,13 @@ export function Tabs<T extends string>({
             onClick={() => onChange(item.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
-              "flex min-h-12 shrink-0 items-center gap-2 px-4 text-[14.5px] font-bold transition",
+              "flex min-h-10 shrink-0 items-center gap-1.5 px-[13px] text-[12px] font-bold transition",
               variant === "underline" && ["-mb-px border-b-[3px]", active ? "border-brand-600 text-brand-600" : "border-transparent text-ink-2 hover:text-ink"],
-              variant === "pill" && ["rounded-xl border", active ? "border-brand-600 bg-brand-600 text-white" : "border-line bg-surface text-ink-2 hover:border-brand-500/40"],
+              variant === "pill" && ["rounded-full", active ? "bg-chip text-white" : "border border-line-strong bg-field text-ink hover:border-brand-500/40"],
             )}
           >
             {item.label}
-            {item.badge !== undefined && (
-              <span className={cn("min-w-6 rounded-full px-1.5 py-0.5 text-center text-[11.5px]", active && variant === "pill" ? "bg-white/20" : "bg-field text-muted")}>
-                {item.badge.toLocaleString("fa-IR")}
-              </span>
-            )}
+            {item.badge !== undefined && item.badge > 0 && <span>({item.badge.toLocaleString("fa-IR")})</span>}
           </button>
         );
       })}

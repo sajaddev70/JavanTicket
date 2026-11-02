@@ -7,12 +7,12 @@ type Variant = "primary" | "outline" | "soft" | "ghost" | "danger" | "success";
 type Size = "sm" | "md" | "lg" | "xl";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-brand-600 text-white shadow-cta hover:bg-brand-700 disabled:shadow-none",
+  primary: "bg-cta text-white shadow-[0_9px_22px_rgb(112_44_255/0.33)] hover:brightness-110 disabled:shadow-none",
   outline: "border border-line-strong bg-surface text-ink hover:border-brand-500/50 hover:text-brand-600",
   soft: "bg-brand-50 text-brand-600 hover:bg-brand-100",
   ghost: "text-ink-2 hover:bg-field hover:text-ink",
   danger: "bg-danger text-white hover:bg-danger-fg",
-  success: "bg-success text-white hover:brightness-95",
+  success: "bg-pay text-white shadow-[0_9px_22px_rgb(13_187_128/0.3)] hover:brightness-105 disabled:shadow-none",
 };
 
 // Every size keeps the 44px minimum touch target on phones.
@@ -20,12 +20,12 @@ const SIZES: Record<Size, string> = {
   sm: "min-h-11 px-4 text-[13.5px] sm:min-h-10",
   md: "min-h-11 px-5 text-[14.5px]",
   lg: "min-h-12 px-6 text-[15.5px]",
-  xl: "min-h-14 px-7 text-[16.5px]",
+  xl: "min-h-[52px] px-7 text-[15px]",
 };
 
 export function buttonClass({ variant = "primary", size = "md", block, className }: { variant?: Variant; size?: Size; block?: boolean; className?: string } = {}) {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-xl font-bold transition select-none",
+    "inline-flex items-center justify-center gap-2 rounded-[15px] font-black transition select-none",
     "disabled:cursor-not-allowed disabled:opacity-55 aria-disabled:pointer-events-none aria-disabled:opacity-55",
     VARIANTS[variant],
     SIZES[size],

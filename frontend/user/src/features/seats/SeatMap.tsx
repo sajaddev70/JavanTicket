@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Crosshair, Minus, Plus } from "lucide-react";
+import { Minus, Plus, RotateCcw } from "lucide-react";
 import { faNumber, faPrice } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { HallSection, Seat, SeatStatus, SeatTier } from "@/types/event";
@@ -10,6 +10,8 @@ import type { HallSection, Seat, SeatStatus, SeatTier } from "@/types/event";
 const U = 24;
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
+/** Phones open zoomed in just enough for seats of about this size (px), so they can be tapped. */
+const SEAT_TAP_PX = 18;
 
 export const STATUS_LABEL: Record<SeatStatus, string> = {
   AVAILABLE: "آزاد",
@@ -36,21 +38,24 @@ interface View {
   y: number;
 }
 
-/** Fill of a seat: its tier color while free (prices differ per tier), fixed colors for every other state. */
-function seatFill(seat: Seat, tierColor: string | undefined): string {
+/** A VIP tier (by its code or name from the backend) is drawn gold with a crown while free. */
+export const isVipTier = (tier?: SeatTier | null) => !!tier && /vip/i.test(`${tier.code} ${tier.name}`);
+
+/** Fill and stroke of a seat per state (design package: assets/icons/seat). */
+function seatPaint(seat: Seat, vip: boolean): { fill: string; stroke: string } {
   switch (seat.status) {
     case "SELECTED":
-      return "var(--seat-selected)";
+      return { fill: "var(--seat-selected)", stroke: "var(--seat-selected)" };
     case "SOLD":
-      return "var(--seat-sold)";
+      return { fill: "var(--seat-sold)", stroke: "var(--seat-sold-stroke)" };
     case "LOCKED":
-      return "var(--seat-locked)";
+      return { fill: "var(--seat-locked)", stroke: "var(--seat-locked-stroke)" };
     case "B2B_RESERVED":
-      return "var(--seat-reserved)";
+      return { fill: "var(--seat-reserved)", stroke: "var(--seat-reserved-stroke)" };
     case "DISABLED":
-      return "var(--seat-disabled)";
+      return { fill: "var(--seat-disabled)", stroke: "var(--seat-sold-stroke)" };
     default:
-      return tierColor ? `color-mix(in srgb, ${tierColor} 30%, var(--seat-free))` : "var(--seat-free)";
+      return vip ? { fill: "var(--seat-vip)", stroke: "var(--seat-vip-stroke)" } : { fill: "var(--seat-free)", stroke: "var(--seat-free-stroke)" };
   }
 }
 
@@ -118,7 +123,7 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
     if (!size.w || initialized.current) return;
     initialized.current = true;
     const seatPx = U * (size.w / layout.vb.w);
-    const scale = Math.min(MAX_SCALE, Math.max(1, 22 / seatPx));
+    const scale = Math.min(MAX_SCALE, Math.max(1, SEAT_TAP_PX / seatPx));
     // Centered horizontally, stage at the top.
     setView(clamp({ scale, x: (size.w - size.w * scale) / 2, y: 0 }));
   }, [size.w, layout.vb.w, clamp]);
@@ -274,50 +279,45 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
       }
     : null;
 
-  const sw = 0.82 * U;
-  const sh = 0.7 * U;
+  const sw = 0.8 * U;
+  const sh = 0.8 * U;
   const cx = ((layout.minX + layout.maxX) / 2) * U;
   const stageTop = (layout.minY - 2.2 - layout.stage + 0.3) * U;
+  const stageW = Math.min(layout.vb.w * 0.72, (layout.maxX - layout.minX + 2) * U);
 
-  const drawing = (mini: boolean) => (
-    <svg
-      viewBox={`${layout.vb.x} ${layout.vb.y} ${layout.vb.w} ${layout.vb.h}`}
-      className="block h-auto w-full select-none"
-      role={mini ? "presentation" : "group"}
-      aria-label={mini ? undefined : "نقشه صندلی‌های سالن"}
-      aria-hidden={mini || undefined}
-    >
+  const drawing = (
+    <svg viewBox={`${layout.vb.x} ${layout.vb.y} ${layout.vb.w} ${layout.vb.h}`} className="block h-auto w-full select-none" role="group" aria-label="نقشه صندلی‌های سالن">
       <defs>
-        <linearGradient id={mini ? "stage-m" : "stage"} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="var(--stage)" />
-          <stop offset="1" stopColor="var(--navy-800)" />
+        <linearGradient id="stage-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="var(--navy-800)" />
+          <stop offset="1" stopColor="var(--stage)" />
         </linearGradient>
+        <radialGradient id="stage-light" cx="0.5" cy="0" r="1">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </radialGradient>
       </defs>
+      {/* Stage: a shallow arc across the front, with two spotlights */}
       <path
-        d={`M ${cx - layout.vb.w * 0.24} ${stageTop} h ${layout.vb.w * 0.48} l ${-U * 1.4} ${U * 2.8} h ${-(layout.vb.w * 0.48 - U * 2.8)} z`}
-        fill={`url(#${mini ? "stage-m" : "stage"})`}
+        d={`M ${cx - stageW / 2} ${stageTop + U * 0.9} Q ${cx} ${stageTop - U * 0.7} ${cx + stageW / 2} ${stageTop + U * 0.9} L ${cx + stageW / 2 - U * 0.4} ${stageTop + U * 2.9} L ${cx - stageW / 2 + U * 0.4} ${stageTop + U * 2.9} Z`}
+        fill="url(#stage-fill)"
       />
-      {!mini && (
-        <text x={cx} y={stageTop + U * 1.7} textAnchor="middle" fontSize={U * 0.85} fontWeight={800} fill="#fff" fontFamily="var(--font-sans)">
-          صحنه
+      {[-0.22, 0.22].map((k) => (
+        <ellipse key={k} cx={cx + stageW * k} cy={stageTop + U * 1.5} rx={U * 0.55} ry={U * 1.1} fill="url(#stage-light)" opacity={0.7} />
+      ))}
+      <text x={cx} y={stageTop + U * 2.2} textAnchor="middle" fontSize={U * 0.8} fontWeight={800} fill="#fff" fontFamily="var(--font-sans)">
+        صحنه
+      </text>
+      {layout.edgeRows.map((r) => (
+        <text key={r.label + r.y} x={(layout.maxX + 1.25) * U} y={r.y * U + U * 0.17} fontSize={U * 0.48} fontWeight={700} fill="var(--muted)" textAnchor="middle" fontFamily="var(--font-sans)" aria-hidden>
+          {r.label}
         </text>
-      )}
-      {!mini &&
-        layout.edgeRows.map((r) => (
-          <g key={r.label + r.y} fontSize={U * 0.5} fontWeight={700} fill="var(--muted)" textAnchor="middle" fontFamily="var(--font-sans)" aria-hidden>
-            <text x={(layout.minX - 1.3) * U} y={r.y * U + U * 0.18}>
-              {r.label}
-            </text>
-            <text x={(layout.maxX + 1.3) * U} y={r.y * U + U * 0.18}>
-              {r.label}
-            </text>
-          </g>
-        ))}
+      ))}
       {seats.map((s) => {
         const x = Number(s.x) * U;
         const y = Number(s.y) * U;
-        const fill = seatFill(s, tierByCode.get(s.tier_code ?? "")?.color);
-        if (mini) return <rect key={s.id} x={x - sw / 2} y={y - sh / 2} width={sw} height={sh} rx={4} fill={fill} />;
+        const vip = isVipTier(tierByCode.get(s.tier_code ?? ""));
+        const { fill, stroke } = seatPaint(s, vip);
         const can = selectable(s);
         const busy = pending.has(s.id);
         const selected = s.status === "SELECTED";
@@ -344,34 +344,59 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
             onPointerLeave={() => setHover((h) => (h === s.id ? null : h))}
             className={cn("outline-none [&:focus-visible>rect:first-child]:stroke-[3px] [&:focus-visible>rect:first-child]:stroke-brand-500", can ? "cursor-pointer" : "cursor-not-allowed", busy && "animate-pulse")}
           >
-            {/* chair: seat with a backrest on the stage side */}
-            <rect x={x - sw / 2} y={y - sh / 2} width={sw} height={sh} rx={5} fill={fill} stroke={selected ? "var(--brand-700)" : "rgb(0 0 0 / 0.08)"} strokeWidth={1} />
-            <rect x={x - sw / 2 + 2} y={y - sh / 2 - 3.2} width={sw - 4} height={3.6} rx={1.8} fill={fill} opacity={0.75} />
-            {selected && <path d={`M ${x - 4.5} ${y} l 3.2 3.2 l 6 -6.4`} stroke="#fff" strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />}
-            {s.status === "LOCKED" && <circle cx={x} cy={y} r={2.2} fill="var(--ink-2)" opacity={0.5} pointerEvents="none" />}
+            <rect
+              x={x - sw / 2}
+              y={y - sh / 2}
+              width={sw}
+              height={sh}
+              rx={5}
+              fill={fill}
+              stroke={stroke}
+              strokeWidth={1.2}
+              strokeDasharray={s.status === "DISABLED" ? "3 2" : undefined}
+            />
+            {selected && <path d={`M ${x - 4.5} ${y + 0.3} l 3.2 3.2 l 6 -6.4`} stroke="#fff" strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />}
+            {s.status === "SOLD" && (
+              <path d={`M ${x - 3.6} ${y - 3.6} l 7.2 7.2 M ${x + 3.6} ${y - 3.6} l -7.2 7.2`} stroke="var(--seat-sold-mark)" strokeWidth={1.5} strokeLinecap="round" pointerEvents="none" />
+            )}
+            {s.status === "AVAILABLE" && vip && <path d={`M ${x - 5} ${y + 3} l 0.8 -6 l 2.6 2.4 l 1.6 -3.4 l 1.6 3.4 l 2.6 -2.4 l 0.8 6 z`} fill="#fff" pointerEvents="none" />}
+            {s.status === "LOCKED" && <circle cx={x} cy={y} r={2.4} fill="var(--muted)" pointerEvents="none" />}
           </g>
         );
       })}
     </svg>
   );
 
-  const zoomed = view.scale > 1.01;
-  // Minimap viewport rectangle, as fractions of the drawing.
-  const viewport =
-    contentW && contentH
-      ? {
-          left: Math.max(0, -view.x / (contentW * view.scale)),
-          top: Math.max(0, -view.y / (contentH * view.scale)),
-          width: Math.min(1, size.w / (contentW * view.scale)),
-          height: Math.min(1, size.h / (contentH * view.scale)),
-        }
-      : null;
+  const reset = () => {
+    const seatPx = U * (size.w / layout.vb.w);
+    const scale = Math.min(MAX_SCALE, Math.max(1, SEAT_TAP_PX / seatPx));
+    setView(clamp({ scale, x: (size.w - size.w * scale) / 2, y: 0 }));
+  };
 
   return (
-    <div className="relative">
+    <div>
+      {/* Toolbar: zoom on the start side, reset on the end side (reference 04) */}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex h-11 items-center rounded-xl border border-line bg-surface shadow-card" role="group" aria-label="بزرگ‌نمایی نقشه">
+          <button type="button" onClick={() => zoomAt(1.25)} disabled={view.scale >= MAX_SCALE} aria-label="بزرگ‌نمایی" className="flex size-11 items-center justify-center text-ink hover:text-brand-600 disabled:opacity-40">
+            <Plus className="size-5" />
+          </button>
+          <span className="tabular w-12 text-center text-[13px] font-bold text-ink-2" aria-live="polite">
+            {faNumber(Math.round(view.scale * 100))}٪
+          </span>
+          <button type="button" onClick={() => zoomAt(1 / 1.25)} disabled={view.scale <= MIN_SCALE} aria-label="کوچک‌نمایی" className="flex size-11 items-center justify-center text-ink hover:text-brand-600 disabled:opacity-40">
+            <Minus className="size-5" />
+          </button>
+        </div>
+        <button type="button" onClick={reset} className="flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-[13px] font-bold text-ink shadow-card hover:text-brand-600">
+          <RotateCcw className="size-[18px]" />
+          بازنشانی نقشه
+        </button>
+      </div>
+
       <div
         ref={box}
-        className="relative h-[58vh] max-h-[640px] min-h-[340px] touch-none overflow-hidden rounded-2xl bg-surface-2"
+        className="relative h-[58vh] max-h-[640px] min-h-[340px] touch-none overflow-hidden rounded-2xl"
         // The whole hall fits at the initial zoom: height follows the drawing's aspect ratio.
         style={contentH ? { height: Math.round(contentH) } : undefined}
         onPointerDown={onPointerDown}
@@ -380,9 +405,7 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
         onPointerCancel={onPointerUp}
       >
         {/* No will-change: it would rasterize the SVG once at scale 1 and stretch that bitmap, so zoomed seats looked blurry. */}
-        <div style={{ width: contentW || "100%", transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`, transformOrigin: "0 0" }}>
-          {drawing(false)}
-        </div>
+        <div style={{ width: contentW || "100%", transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`, transformOrigin: "0 0" }}>{drawing}</div>
 
         {tip && hovered && (
           <div
@@ -391,7 +414,7 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
             style={{ left: tip.left, top: tip.top }}
           >
             <p className="font-bold">
-              {sectionById.get(hovered.section_id)?.name && `سکشن ${sectionById.get(hovered.section_id)?.name} - `}ردیف {hovered.row_label} - صندلی {faNumber(hovered.seat_number)}
+              {sectionById.get(hovered.section_id)?.name && `${sectionById.get(hovered.section_id)?.name} - `}ردیف {hovered.row_label} - صندلی {faNumber(hovered.seat_number)}
             </p>
             <p className="text-white/80">
               {tierByCode.get(hovered.tier_code ?? "")?.name ?? "عادی"} • {faPrice(tierByCode.get(hovered.tier_code ?? "")?.price ?? fallbackPrice)}
@@ -400,63 +423,6 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
           </div>
         )}
       </div>
-
-      {/* Zoom controls (start side, as in the design) */}
-      <div className="absolute right-3 top-1/2 flex -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-card">
-        <button type="button" onClick={() => zoomAt(1.35)} disabled={view.scale >= MAX_SCALE} aria-label="بزرگ‌نمایی" className="flex size-11 items-center justify-center text-ink hover:text-brand-600 disabled:opacity-40">
-          <Plus className="size-5" />
-        </button>
-        <button type="button" onClick={() => zoomAt(1 / 1.35)} disabled={!zoomed} aria-label="کوچک‌نمایی" className="flex size-11 items-center justify-center border-y border-line text-ink hover:text-brand-600 disabled:opacity-40">
-          <Minus className="size-5" />
-        </button>
-        <button type="button" onClick={() => setView(clamp({ scale: 1, x: 0, y: 0 }))} aria-label="بازنشانی بزرگ‌نمایی" className="flex size-11 items-center justify-center text-ink hover:text-brand-600">
-          <Crosshair className="size-5" />
-        </button>
-      </div>
-
-      {/* Minimap: the whole hall with the visible area; click to jump there */}
-      <div className="absolute left-3 top-3 hidden w-[150px] rounded-xl border border-line bg-surface p-2 shadow-card md:block">
-        <div
-          className="relative cursor-pointer overflow-hidden rounded-lg bg-surface-2"
-          onClick={(e) => {
-            const r = e.currentTarget.getBoundingClientRect();
-            const fx = (e.clientX - r.left) / r.width;
-            const fy = (e.clientY - r.top) / r.height;
-            setView((v) => clamp({ ...v, x: size.w / 2 - fx * contentW * v.scale, y: size.h / 2 - fy * contentH * v.scale }));
-          }}
-          aria-hidden
-        >
-          {drawing(true)}
-          {zoomed && viewport && (
-            <span
-              className="absolute rounded-sm border-2 border-brand-600 bg-brand-500/10"
-              style={{ left: `${viewport.left * 100}%`, top: `${viewport.top * 100}%`, width: `${viewport.width * 100}%`, height: `${viewport.height * 100}%` }}
-            />
-          )}
-        </div>
-        <p className="mt-1.5 text-center text-[11.5px] font-semibold text-ink-2">نمای کلی سالن</p>
-      </div>
     </div>
   );
 });
-
-/** Legend under the map: tiers with their prices, then the other seat states. */
-export function SeatLegend({ tiers, fallbackPrice }: { tiers: SeatTier[]; fallbackPrice: number }) {
-  const swatch = (fill: string) => <span className="inline-block h-4 w-5 rounded-[5px] border border-black/10" style={{ background: fill }} aria-hidden />;
-  return (
-    <ul className="flex flex-wrap items-center gap-x-5 gap-y-2.5 text-[12.5px] text-ink-2">
-      {tiers
-        .filter((t) => t.price !== null || fallbackPrice)
-        .map((t) => (
-          <li key={t.code} className="flex items-center gap-2">
-            {swatch(`color-mix(in srgb, ${t.color} 30%, var(--seat-free))`)}
-            {t.name} <span className="text-muted">({faPrice(t.price ?? fallbackPrice)})</span>
-          </li>
-        ))}
-      <li className="flex items-center gap-2">{swatch("var(--seat-selected)")} صندلی انتخاب‌شده</li>
-      <li className="flex items-center gap-2">{swatch("var(--seat-sold)")} فروخته شده</li>
-      <li className="flex items-center gap-2">{swatch("var(--seat-locked)")} در حال خرید</li>
-      <li className="flex items-center gap-2">{swatch("var(--seat-reserved)")} رزرو سازمانی</li>
-    </ul>
-  );
-}

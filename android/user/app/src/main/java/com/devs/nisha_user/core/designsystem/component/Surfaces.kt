@@ -45,6 +45,7 @@ import com.devs.nisha_user.core.designsystem.icon.JtIcon
 import com.devs.nisha_user.core.designsystem.icon.Lucide
 import com.devs.nisha_user.core.designsystem.icon.LucidePaths
 import com.devs.nisha_user.core.designsystem.theme.Jt
+import com.devs.nisha_user.core.designsystem.theme.JtBrushes
 import com.devs.nisha_user.core.designsystem.theme.JtShapes
 import com.devs.nisha_user.core.designsystem.theme.W
 import com.devs.nisha_user.core.designsystem.theme.text
@@ -70,7 +71,7 @@ fun JtCard(
         modifier
             .then(if (shadow) Modifier.cardShadow(shape, c.shadow) else Modifier)
             .clip(shape)
-            .background(background)
+            .then(if (c.isDark && background == c.surface) Modifier.background(JtBrushes.glass) else Modifier.background(background))
             .border(1.dp, borderColor, shape)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(padding),
@@ -78,7 +79,7 @@ fun JtCard(
     )
 }
 
-/** White section panel with a title and an optional "مشاهده همه" link (shared/SectionCard.tsx). */
+/** The design's .section: a heading with an optional quiet "مشاهده همه" link, then its content directly on the page. */
 @Composable
 fun SectionCard(
     title: String,
@@ -88,20 +89,19 @@ fun SectionCard(
     moreLabel: String = "مشاهده همه",
     onMore: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    contentPadding: PaddingValues = PaddingValues(16.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    JtCard(modifier.fillMaxWidth(), padding = contentPadding) {
-        Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+    Column(modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth().padding(bottom = 9.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (icon != null) JtIcon(icon, size = 24.dp, tint = Jt.colors.brand600)
-                    Text(title, style = text(18f, W.Black), color = Jt.colors.ink, modifier = Modifier.semantics { heading() })
+                    if (icon != null) JtIcon(icon, size = 20.dp, tint = Jt.colors.brand600)
+                    Text(title, style = text(15f, W.Black), color = Jt.colors.ink, modifier = Modifier.semantics { heading() })
                 }
-                if (subtitle != null) Text(subtitle, style = text(13f), color = Jt.colors.muted, modifier = Modifier.padding(top = 4.dp))
+                if (subtitle != null) Text(subtitle, style = text(12f), color = Jt.colors.muted, modifier = Modifier.padding(top = 2.dp))
             }
             actions()
-            if (onMore != null) TextLink(moreLabel, onMore, trailing = Lucide.ArrowLeft)
+            if (onMore != null) TextLink(moreLabel, onMore, color = Jt.colors.muted, style = text(11f))
         }
         content()
     }
@@ -180,12 +180,12 @@ fun InfoRow(
 @Composable
 fun Badge(label: String, background: Color, color: Color, modifier: Modifier = Modifier, icon: LucidePaths? = null, large: Boolean = false) {
     Row(
-        modifier.clip(if (large) JtShapes.xl else JtShapes.lg).background(background).padding(horizontal = if (large) 12.dp else 10.dp, vertical = if (large) 6.dp else 3.dp),
+        modifier.clip(JtShapes.pill).background(background).padding(horizontal = if (large) 14.dp else 11.dp, vertical = if (large) 6.dp else 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         if (icon != null) JtIcon(icon, size = if (large) 20.dp else 16.dp, tint = color)
-        Text(label, style = text(if (large) 14f else 12.5f, if (large) W.Black else W.Bold), color = color, maxLines = 1)
+        Text(label, style = text(if (large) 13f else 10f, if (large) W.Black else W.Medium), color = color, maxLines = 1)
     }
 }
 

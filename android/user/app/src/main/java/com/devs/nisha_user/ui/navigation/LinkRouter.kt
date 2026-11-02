@@ -48,6 +48,7 @@ object LinkRouter {
                 sort = p("sort"),
             )
             segments[0] == "events" && segments.size == 2 -> EventDetailRoute(segments[1])
+            segments[0] == "events" && segments.size == 3 && segments[2] == "sessions" -> SessionsRoute(segments[1])
             segments[0] == "sessions" && segments.size >= 2 -> segments[1].toLongOrNull()?.let { SeatsRoute(it) }
             segments[0] == "checkout" -> CheckoutRoute(p("session")?.toLongOrNull(), p("quantity")?.toIntOrNull(), p("order"))
             segments[0] == "payment" && segments.getOrNull(1) == "result" -> p("id")?.toLongOrNull()?.let { PaymentResultRoute(it) }

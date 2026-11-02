@@ -1,48 +1,36 @@
 "use client";
 
-import Link from "next/link";
 import { useCategories } from "@/hooks/useContent";
-import { SectionCard } from "@/components/shared/SectionCard";
+import { CategoryChip } from "@/components/shared/CategoryChip";
+import { SectionHeader } from "@/components/shared/SectionCard";
 import { ErrorState } from "@/components/feedback/States";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { CategoryIcon } from "@/components/ui/CategoryIcon";
 
-/** "دسته‌بندی رویدادها": pastel tiles in each category's admin-defined color. */
+/** "دسته‌بندی رویدادها": one scrolling row of chips with each category's admin-defined icon and color. */
 export function CategoryStrip() {
   const { data, isLoading, isError, refetch } = useCategories();
   if (!isLoading && !isError && !data?.length) return null;
 
   return (
-    <SectionCard title="دسته‌بندی رویدادها" headingId="home-categories" moreHref="/events">
+    <section aria-labelledby="home-categories">
+      <SectionHeader title="دسته‌بندی رویدادها" headingId="home-categories" />
       {isError ? (
         <ErrorState message="دریافت دسته‌بندی‌ها با خطا مواجه شد." onRetry={() => refetch()} />
       ) : (
-        <ul className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1 lg:grid lg:auto-cols-fr lg:grid-flow-col lg:overflow-visible">
+        <ul className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
           {isLoading
-            ? Array.from({ length: 9 }, (_, i) => (
+            ? Array.from({ length: 5 }, (_, i) => (
                 <li key={i}>
-                  <Skeleton className="h-[96px] w-[112px] rounded-2xl lg:h-[88px] lg:w-auto" />
+                  <Skeleton className="h-10 w-24 rounded-full" />
                 </li>
               ))
-            : data!.map((c) => {
-                const color = c.color ?? "#2f80f5";
-                return (
-                  <li key={c.id} className="shrink-0">
-                    <Link
-                      href={`/events?category=${encodeURIComponent(c.slug)}`}
-                      className="group flex h-[96px] w-[112px] flex-col items-center justify-center gap-1.5 rounded-2xl px-1.5 text-center transition hover:-translate-y-0.5 lg:h-[88px] lg:w-full"
-                      style={{ backgroundColor: `color-mix(in srgb, ${color} 10%, var(--surface))` }}
-                    >
-                      <span style={{ color }}>
-                        <CategoryIcon slug={c.slug} iconUrl={c.icon_url} className="size-8" />
-                      </span>
-                      <span className="line-clamp-2 text-[12.5px] font-bold leading-5 text-ink lg:line-clamp-1 lg:text-[13px]">{c.name}</span>
-                    </Link>
-                  </li>
-                );
-              })}
+            : data!.map((c) => (
+                <li key={c.id} className="shrink-0">
+                  <CategoryChip category={c} href={`/events?category=${encodeURIComponent(c.slug)}`} />
+                </li>
+              ))}
         </ul>
       )}
-    </SectionCard>
+    </section>
   );
 }

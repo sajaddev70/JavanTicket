@@ -12,16 +12,16 @@ import androidx.compose.ui.unit.sp
 import com.devs.nisha_user.R
 
 /**
- * IRANSans FaNum, the site's font (digits are drawn as Persian digits). Weights follow the browser's matching of the
- * site's three files: 400 Regular, 500 the "Medium" file, 600–900 Bold (font-semibold / bold / extrabold / black).
+ * Vazirmatn "FD" (Farsi Digits), the site's font (digits are drawn as Persian digits), one file per weight like the
+ * web (frontend/user/src/fonts). SIL Open Font License 1.1.
  */
-val IranSans = FontFamily(
-    Font(R.font.iransans_regular, FontWeight.Normal),
-    Font(R.font.iransans_medium, FontWeight.Medium),
-    Font(R.font.iransans_bold, FontWeight.SemiBold),
-    Font(R.font.iransans_bold, FontWeight.Bold),
-    Font(R.font.iransans_bold, FontWeight.ExtraBold),
-    Font(R.font.iransans_bold, FontWeight.Black),
+val Vazirmatn = FontFamily(
+    Font(R.font.vazirmatn_regular, FontWeight.Normal),
+    Font(R.font.vazirmatn_medium, FontWeight.Medium),
+    Font(R.font.vazirmatn_semibold, FontWeight.SemiBold),
+    Font(R.font.vazirmatn_bold, FontWeight.Bold),
+    Font(R.font.vazirmatn_extrabold, FontWeight.ExtraBold),
+    Font(R.font.vazirmatn_black, FontWeight.Black),
 )
 
 /** Font weights by their Tailwind names. */
@@ -39,7 +39,7 @@ object W {
  * Persian text gets a generous default line height ([lineHeight] em), with the font's extra padding removed.
  */
 fun text(size: Float, weight: FontWeight = W.Normal, lineHeight: Float = 1.7f): TextStyle = TextStyle(
-    fontFamily = IranSans,
+    fontFamily = Vazirmatn,
     fontSize = size.sp,
     fontWeight = weight,
     lineHeight = lineHeight.em,
@@ -52,6 +52,6 @@ fun text(size: Float, weight: FontWeight, lineHeightPx: TextUnit): TextStyle = t
 
 /**
  * Codes people may type back (order / ticket / tracking / discount codes, card numbers): Latin digits in a monospaced
- * face, like the site's `font-code` (IRANSans FaNum would draw them as Persian digits).
+ * face, like the site's `font-code` (Vazirmatn FD would draw them as Persian digits).
  */
 fun code(size: Float, weight: FontWeight = W.Bold): TextStyle = text(size, weight).copy(fontFamily = FontFamily.Monospace, letterSpacing = 0.02.em)
