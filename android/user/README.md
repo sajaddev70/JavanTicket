@@ -206,8 +206,8 @@ cd android/user
 
 | نسخه | آدرس پیش‌فرض API | تغییر در `local.properties` |
 |---|---|---|
-| Debug | `http://localhost:8081/api/v1` | `javan.apiBaseUrl=...` و `javan.siteUrl=...` |
-| Release | `http://45.156.186.169:8081/api/v1` | `javan.apiBaseUrl.release=...` و `javan.siteUrl.release=...` |
+| Debug | `https://sakooticket.ir/api/v1` | `javan.apiBaseUrl=...` و `javan.siteUrl=...` |
+| Release | `https://sakooticket.ir/api/v1` | `javan.apiBaseUrl.release=...` و `javan.siteUrl.release=...` |
 
 اجرا روی گوشی متصل با USB و بک‌اند روی کامپیوتر:
 

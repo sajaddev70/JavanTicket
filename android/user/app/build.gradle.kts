@@ -22,8 +22,8 @@ val localProps = Properties().apply {
 fun setting(key: String, default: String): String =
     (findProperty(key) as String?) ?: localProps.getProperty(key) ?: default
 
-val releaseApiUrl = setting("javan.apiBaseUrl.release", "http://45.156.186.169:8081/api/v1")
-val releaseSiteUrl = setting("javan.siteUrl.release", "http://45.156.186.169:3003")
+val releaseApiUrl = setting("javan.apiBaseUrl.release", "https://sakooticket.ir/api/v1")
+val releaseSiteUrl = setting("javan.siteUrl.release", "https://sakooticket.ir")
 
 android {
     namespace = "com.devs.nisha_user"
@@ -42,8 +42,8 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"${setting("javan.apiBaseUrl", "http://45.156.186.169:8081/api/v1")}\"")
-            buildConfigField("String", "SITE_URL", "\"${setting("javan.siteUrl", "http://45.156.186.169:3003")}\"")
+            buildConfigField("String", "API_BASE_URL", "\"${setting("javan.apiBaseUrl", "https://sakooticket.ir/api/v1")}\"")
+            buildConfigField("String", "SITE_URL", "\"${setting("javan.siteUrl", "https://sakooticket.ir")}\"")
         }
         release {
             isMinifyEnabled = true
