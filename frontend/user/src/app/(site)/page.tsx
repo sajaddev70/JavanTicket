@@ -26,7 +26,7 @@ export default async function HomePage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="container-page space-y-4 pt-1 lg:space-y-5 lg:pt-5">
+      <div className="container-page pt-[15px] lg:pt-5">
         <HeroSlider />
         <CategoryStrip />
         <HomeEventSections />

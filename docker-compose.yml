@@ -55,7 +55,7 @@ services:
     volumes:
       - uploads:/app/uploads
     ports:
-      - "${BACKEND_PORT:-8081}:8081"
+      - "${BIND_ADDRESS:-0.0.0.0}:${BACKEND_PORT:-8081}:8081"
     healthcheck:
       # Tomcat opens the port only after the Spring context (and Flyway migrations) are ready.
       test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/8081"]
@@ -80,7 +80,7 @@ services:
       # Server-side rendering talks to the backend over the Docker network.
       API_INTERNAL_URL: http://backend:8081/api/v1
     ports:
-      - "${ADMIN_PORT:-3002}:3002"
+      - "${BIND_ADDRESS:-0.0.0.0}:${ADMIN_PORT:-3002}:3002"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/admin/login').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
@@ -102,7 +102,7 @@ services:
     environment:
       API_INTERNAL_URL: http://backend:8081/api/v1
     ports:
-      - "${USER_PORT:-3003}:3003"
+      - "${BIND_ADDRESS:-0.0.0.0}:${USER_PORT:-3003}:3003"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3003/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
       interval: 10s

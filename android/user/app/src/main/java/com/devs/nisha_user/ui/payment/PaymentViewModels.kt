@@ -41,6 +41,7 @@ data class PaymentUiState(
     val chosen: String? = null,
     val starting: Boolean = false,
     val startError: String? = null,
+    val gatewayNoticeDismissed: Boolean = false,
 ) {
     val method: PaymentMethod? get() = methods?.firstOrNull { it.code == (chosen ?: methods.firstOrNull()?.code) }
 }
@@ -94,6 +95,15 @@ class PaymentViewModel @Inject constructor(
     }
 
     fun choose(code: String) = _state.update { it.copy(chosen = code) }
+
+    /** "تلاش مجدد" on the gateway box: start again when a gateway was picked, otherwise look for gateways again. */
+    fun retryGateway() {
+        val hadStartError = _state.value.startError != null
+        _state.update { it.copy(startError = null, gatewayNoticeDismissed = false) }
+        if (hadStartError && _state.value.method != null) start() else loadMethods()
+    }
+
+    fun dismissGatewayError() = _state.update { it.copy(startError = null, gatewayNoticeDismissed = true) }
 
     fun start() {
         val method = _state.value.method ?: return

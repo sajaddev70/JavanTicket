@@ -54,7 +54,7 @@ export function UserMenu() {
         <ChevronDown className={cn("size-4 opacity-75 transition", open && "rotate-180")} />
       </button>
       {open && (
-        <div role="menu" className="absolute left-0 top-[calc(100%+8px)] z-50 w-60 animate-[toast-in_0.15s_ease] rounded-2xl border border-line bg-surface p-2 shadow-float">
+        <div role="menu" className="absolute left-0 top-[calc(100%+8px)] z-50 w-60 animate-[toast-in_0.15s_ease] rounded-2xl border border-line bg-surface-solid p-2 shadow-float">
           <p className="px-3 pb-2 pt-1 text-[12.5px] text-muted" dir="ltr">
             {maskMobile(user.mobile)}
           </p>

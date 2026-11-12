@@ -10,7 +10,7 @@ export type Availability = { label: string; tone: "ok" | "low" | "none"; bookabl
 export function sessionAvailability(s: EventSession): Availability {
   if (s.status !== "ACTIVE") return { label: "به‌زودی", tone: "none", bookable: false };
   if (s.available_seats <= 0) return { label: "تکمیل ظرفیت", tone: "none", bookable: false };
-  if (s.available_seats <= Math.max(10, s.capacity * 0.1)) return { label: "تعداد محدود", tone: "low", bookable: true };
+  if (s.available_seats <= Math.max(10, s.capacity * 0.1)) return { label: "ظرفیت محدود", tone: "low", bookable: true };
   return { label: "ظرفیت مناسب", tone: "ok", bookable: true };
 }
 

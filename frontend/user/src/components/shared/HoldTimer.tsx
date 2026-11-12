@@ -75,7 +75,7 @@ export function HoldTimer({
     <span
       role="timer"
       aria-label={label}
-      className={cn("inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[14px] font-black", urgent ? "bg-danger-bg text-danger-fg" : "bg-brand-50 text-brand-600", className)}
+      className={cn("inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[14px] font-black", urgent ? "bg-danger-bg text-danger-fg" : "bg-field text-ink", className)}
     >
       <Clock className="size-4" />
       {clock}

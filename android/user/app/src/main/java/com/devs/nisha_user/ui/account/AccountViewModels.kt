@@ -120,6 +120,8 @@ data class ProfileUiState(
     val fieldErrors: Map<String, String> = emptyMap(),
     val saving: Boolean = false,
     val saveError: String? = null,
+    /** "تغییرات ذخیره شد" box. */
+    val saved: Boolean = false,
 ) {
     val dirty: Boolean
         get() = profile != null && form != ProfileForm(profile.firstName.orEmpty(), profile.lastName.orEmpty(), profile.email.orEmpty(), profile.cityId)
@@ -130,7 +132,6 @@ data class ProfileUiState(
 class ProfileViewModel @Inject constructor(
     private val getProfile: GetProfileUseCase,
     private val updateProfile: UpdateProfileUseCase,
-    private val toaster: Toaster,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ProfileUiState())
     val state: StateFlow<ProfileUiState> = _state.asStateFlow()
@@ -152,14 +153,15 @@ class ProfileViewModel @Inject constructor(
 
     fun edit(change: (ProfileForm) -> ProfileForm) = _state.update { it.copy(form = change(it.form), fieldErrors = emptyMap(), saveError = null) }
 
+    fun dismissSaved() = _state.update { it.copy(saved = false) }
+
     fun save() {
         val f = _state.value.form
         _state.update { it.copy(saving = true, saveError = null) }
         viewModelScope.launch {
             try {
                 val p = updateProfile(f.firstName, f.lastName, f.email, f.cityId)
-                _state.update { it.copy(profile = p, saving = false, form = ProfileForm(p.firstName.orEmpty(), p.lastName.orEmpty(), p.email.orEmpty(), p.cityId)) }
-                toaster.success("اطلاعات حساب کاربری ذخیره شد.")
+                _state.update { it.copy(profile = p, saving = false, saved = true, form = ProfileForm(p.firstName.orEmpty(), p.lastName.orEmpty(), p.email.orEmpty(), p.cityId)) }
             } catch (e: Exception) {
                 val error = e.appError
                 _state.update { it.copy(saving = false, fieldErrors = error.fieldErrors, saveError = if (error.fieldErrors.isEmpty()) error.message else null) }

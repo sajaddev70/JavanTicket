@@ -1,6 +1,6 @@
 # اپلیکیشن اندروید کاربر — جوان تیکت
 
-نسخه بومی (Native) سایت کاربر (`frontend/user`) برای اندروید: همه صفحات، همان داده‌ها از همان API، همان رنگ‌ها، فونت، آیکون‌ها و متن‌ها؛ راست‌چین، تم تیره و روشن.
+نسخه بومی (Native) سایت کاربر (`frontend/user`) برای اندروید: همه صفحات، همان داده‌ها از همان API و همان طراحی (`file/javan_complete_states`)؛ راست‌چین، با تم تیرهٔ طرح به‌عنوان پیش‌فرض و تم روشن به‌صورت اختیاری.
 
 ## فهرست
 
@@ -149,8 +149,9 @@ UC08 --> Bank
 | صفحه اصلی | `/` | `HomeViewModel` |
 | رویدادها | `/events?q=&category=&city=&when=&type=&sort=` | `EventsViewModel` |
 | رویداد | `/events/{slug}` | `EventDetailViewModel` |
+| انتخاب سانس | `/events/{slug}/sessions` | `SessionsViewModel` |
 | انتخاب صندلی | `/sessions/{id}/seats` | `SeatsViewModel` |
-| تکمیل خرید | `/checkout?session=` یا `?order=` | `CheckoutViewModel` |
+| اطلاعات خریدار و خلاصه خرید | `/checkout?session=` یا `?order=` | `CheckoutViewModel` |
 | پرداخت | `/payment?order=` | `PaymentViewModel` |
 | درگاه (WebView) | صفحه بانک | — |
 | نتیجه پرداخت | `/payment/result?id=` | `PaymentResultViewModel` |
@@ -166,17 +167,18 @@ UC08 --> Bank
 
 ## ۵. جریان خرید و پرداخت
 
-1. **رویداد** → سانس → «انتخاب صندلی» (سالن صندلی‌دار) یا «انتخاب تعداد» (ورود عمومی).
+1. **رویداد** → «انتخاب سانس» → «انتخاب صندلی» (سالن صندلی‌دار) یا «انتخاب تعداد» (ورود عمومی).
 2. **نقشه صندلی**: هر لمس یک قفل روی سرور است (`POST /holds`)؛ صندلی گرفته‌شده توسط دیگری پاسخ ۴۰۹ می‌دهد و نقشه به‌روز می‌شود؛ نقشه هر ۱۵ ثانیه تازه می‌شود. بزرگ‌نمایی با دو انگشت، دکمه‌ها یا دو ضربه.
 3. **ورود** (اگر لازم باشد) و بازگشت به خرید.
-4. **تکمیل خرید**: ساخت سفارش، اطلاعات خریدار با همان قواعد و پیام‌های سایت، کد تخفیف، پذیرش قوانین.
+4. **تکمیل خرید**: ساخت سفارش، اطلاعات خریدار با همان قواعد سایت، کد تخفیف و پذیرش قوانین؛ سپس «خلاصه خرید» با مبالغی که بک‌اند حساب کرده.
 5. **پرداخت**: انتخاب درگاه؛ صفحه بانک داخل اپ (WebView) باز می‌شود. بانک خریدار را به `/payment/result?id=` سایت برمی‌گرداند؛ اپ همین آدرس را تشخیص می‌دهد و صفحه نتیجه خودش را باز می‌کند. با «بازگشت» از صفحه بانک هم وضعیت پرداخت در صفحه نتیجه بررسی می‌شود.
 6. **بلیت**: QR (قابل اسکن در گیت)، دانلود PDF/چاپ، ارسال پیامک، اشتراک‌گذاری، افزودن به تقویم گوشی.
 
 ## ۶. طراحی: رنگ، فونت، آیکون
 
-- **رنگ‌ها**: همه توکن‌های `frontend/user/src/app/globals.css` در `core/designsystem/theme/Color.kt` (روشن و تیره) با همان نام‌ها (`page`، `surface`، `ink`، `brand600` ...).
-- **فونت**: IRANSans FaNum، تبدیل‌شده از فایل‌های `woff2` سایت به `ttf` (`res/font`)؛ ارقام همه‌جا فارسی‌اند. کدها (شماره سفارش، بلیت، پیگیری، کارت) مثل `font-code` سایت با فونت Monospace و ارقام لاتین نمایش داده می‌شوند.
+- **طراحی**: مرجع اسکرین‌ها و حالت‌ها `file/javan_complete_states` است. پس‌زمینهٔ گرادیانی، کارت‌های شیشه‌ای و دکمه‌های گرادیانی در `core/designsystem/theme/Theme.kt` (`designBackdrop`، `JtBrushes`) و دیالوگ حالت‌ها در `component/StateDialog.kt` است.
+- **رنگ‌ها**: همه توکن‌های `frontend/user/src/app/globals.css` در `core/designsystem/theme/Color.kt` (روشن و تیره) با همان نام‌ها (`page`، `surface`، `ink`، `brand600` ...)؛ کارت رویداد و نوار پایین با `OnLight` روشن می‌مانند.
+- **فونت**: Vazirmatn FD (`res/font`)؛ ارقام همه‌جا فارسی‌اند. طرح IRANSans را پیشنهاد کرده، ولی آن فونت تجاری است و داخل پکیج نیامده. کدها (شماره سفارش، بلیت، پیگیری، کارت) مثل `font-code` سایت با فونت Monospace و ارقام لاتین نمایش داده می‌شوند.
 - **آیکون‌ها**: همان ۷۲ آیکون lucide که سایت استفاده می‌کند، از بسته `lucide-react` با `tools/gen-icons.mjs` به `core/designsystem/icon/Lucide.kt` تبدیل شده‌اند (ضخامت خط قابل تنظیم، مثل نوار پایین سایت). آیکون‌های شبکه‌های اجتماعی فوتر از `SiteFooter.tsx` کپی شده‌اند.
 - **فایل‌های سایت**: لوگوها، آیکون دسته‌ها و موج صفحه ورود از `frontend/user/public/assets` در `assets/web/`؛ آیکون اپ از آیکون PWA سایت.
 - **راست‌چین**: کل اپ در `JavanTheme` با `LayoutDirection.Rtl`؛ شماره موبایل، تلفن و کدها با جداکننده LTR (`ltr()`) مثل `dir="ltr"` وب.
@@ -204,8 +206,8 @@ cd android/user
 
 | نسخه | آدرس پیش‌فرض API | تغییر در `local.properties` |
 |---|---|---|
-| Debug | `http://localhost:8081/api/v1` | `javan.apiBaseUrl=...` و `javan.siteUrl=...` |
-| Release | `http://45.156.186.169:8081/api/v1` | `javan.apiBaseUrl.release=...` و `javan.siteUrl.release=...` |
+| Debug | `https://sakooticket.ir/api/v1` | `javan.apiBaseUrl=...` و `javan.siteUrl=...` |
+| Release | `https://sakooticket.ir/api/v1` | `javan.apiBaseUrl.release=...` و `javan.siteUrl.release=...` |
 
 اجرا روی گوشی متصل با USB و بک‌اند روی کامپیوتر:
 
