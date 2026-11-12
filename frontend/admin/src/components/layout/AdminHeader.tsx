@@ -149,7 +149,7 @@ export function AdminHeader({ onOpenMenu }: { onOpenMenu: () => void }) {
             <span className="block text-[12px] text-muted">{roleLabel}</span>
           </span>
           <ChevronDown className="hidden size-4 text-muted sm:block" />
-          <span className="flex size-11 items-center justify-center rounded-full bg-navy-900 text-sm font-bold text-white ring-4 ring-navy-900/10">
+          <span className="flex size-11 items-center justify-center rounded-full bg-grad-primary text-sm font-bold text-white ring-4 ring-brand-500/15">
             {initials(fullName ?? undefined)}
           </span>
         </button>

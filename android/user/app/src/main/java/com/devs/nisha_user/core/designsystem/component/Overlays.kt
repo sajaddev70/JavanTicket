@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -160,18 +161,19 @@ fun ToastHost(toaster: Toaster, modifier: Modifier = Modifier) {
 
 // ---------------------------------------------------------------- top bar of inner screens
 
-/** Header of inner screens: back button, title and optional actions, on the site's translucent surface. */
+/**
+ * Header of inner screens on the navy band (references 04–11): the large white title on the start side, extra
+ * actions and the round glass back button on the end side.
+ */
 @Composable
-fun JtTopBar(title: String, onBack: (() -> Unit)?, modifier: Modifier = Modifier, actions: @Composable () -> Unit = {}) {
-    val c = Jt.colors
-    Column(modifier.fillMaxWidth().background(c.surface.copy(alpha = 0.97f)).statusBarsPadding()) {
-        Row(Modifier.fillMaxWidth().height(60.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (onBack != null) JtIconButton(Lucide.ArrowRight, onBack, "بازگشت", borderColor = null)
-            else Spacer(Modifier.width(8.dp))
-            Text(title, style = text(17f, W.Black), color = c.ink, maxLines = 1, modifier = Modifier.weight(1f).padding(horizontal = 4.dp))
+fun JtTopBar(title: String, onBack: (() -> Unit)?, modifier: Modifier = Modifier, subtitle: String? = null, actions: @Composable () -> Unit = {}) {
+    Column(modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp)) {
+        Row(Modifier.fillMaxWidth().height(72.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(title, style = text(22f, W.Black), color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             actions()
+            if (onBack != null) GlassIconButton(Lucide.ArrowLeft, onBack, "بازگشت", iconSize = 22.dp)
         }
-        HDivider(color = c.line.copy(alpha = 0.8f))
+        if (subtitle != null) Text(subtitle, style = text(13.5f), color = Color.White.copy(alpha = 0.8f), modifier = Modifier.padding(bottom = 8.dp))
     }
 }
 
@@ -179,41 +181,36 @@ fun JtTopBar(title: String, onBack: (() -> Unit)?, modifier: Modifier = Modifier
 
 data class TabItem<T>(val value: T, val label: String, val badge: Int? = null)
 
-/** Underlined tabs with counts ("آینده ۶"), like components/ui/Tabs.tsx. */
+/** Tabs on the navy band (references 08, 10): glass pills, the selected one in the violet gradient, with counts. */
 @Composable
 fun <T> JtTabs(items: List<TabItem<T>>, selected: T, onSelect: (T) -> Unit, modifier: Modifier = Modifier) {
-    val c = Jt.colors
-    Column(modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth()) {
-            items.forEach { item ->
-                val on = item.value == selected
-                Column(
-                    Modifier
-                        .weight(1f)
-                        .clip(JtShapes.lg)
-                        .clickableTab(on) { onSelect(item.value) },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Row(Modifier.height(48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(item.label, style = text(14.5f, W.Bold), color = if (on) c.brand600 else c.ink2)
-                        if (item.badge != null) {
-                            Text(
-                                Fa.number(item.badge),
-                                style = text(12f, W.Black),
-                                color = if (on) Color.White else c.ink2,
-                                modifier = Modifier.clip(JtShapes.pill).background(if (on) c.brand600 else c.field).padding(horizontal = 8.dp, vertical = 1.dp),
-                            )
-                        }
-                    }
-                    Box(Modifier.fillMaxWidth().height(3.dp).clip(JtShapes.pill).background(if (on) c.brand600 else Color.Transparent))
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.forEach { item ->
+            val on = item.value == selected
+            Row(
+                Modifier
+                    .weight(1f)
+                    .height(46.dp)
+                    .clip(JtShapes.pill)
+                    .then(if (on) Modifier.background(Jt.brushes.primary) else Modifier.background(Color.White.copy(alpha = 0.12f)).border(1.dp, Color.White.copy(alpha = 0.14f), JtShapes.pill))
+                    .clickableTab(on) { onSelect(item.value) },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+            ) {
+                Text(item.label, style = text(14f, if (on) W.Black else W.Bold), color = Color.White.copy(alpha = if (on) 1f else 0.9f), maxLines = 1)
+                if (item.badge != null) {
+                    Text(
+                        "(${Fa.number(item.badge)})",
+                        style = text(12.5f, W.Black),
+                        color = Color.White.copy(alpha = if (on) 1f else 0.8f),
+                    )
                 }
             }
         }
-        HDivider()
     }
 }
 
-/** Pill tabs (variant="pill"): rounded chips, the selected one filled in brand blue. */
+/** Scrolling pill tabs on the navy band: glass chips, the selected one in the violet gradient. */
 @Composable
 fun <T> JtPillTabs(items: List<TabItem<T>>, selected: T, onSelect: (T) -> Unit, modifier: Modifier = Modifier) {
     val c = Jt.colors
@@ -224,13 +221,12 @@ fun <T> JtPillTabs(items: List<TabItem<T>>, selected: T, onSelect: (T) -> Unit, 
             Text(
                 item.label,
                 style = text(13.5f, W.Bold),
-                color = if (on) Color.White else c.ink2,
+                color = Color.White,
                 modifier = Modifier
-                    .clip(JtShapes.xl)
-                    .background(if (on) c.brand600 else c.surface)
-                    .border(1.dp, if (on) c.brand600 else c.line, JtShapes.xl)
+                    .clip(JtShapes.pill)
+                    .then(if (on) Modifier.background(Jt.brushes.primary) else Modifier.background(Color.White.copy(alpha = 0.12f)).border(1.dp, Color.White.copy(alpha = 0.14f), JtShapes.pill))
                     .clickableTab(on) { onSelect(item.value) }
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = 18.dp, vertical = 12.dp),
             )
         }
     }

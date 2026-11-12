@@ -22,17 +22,20 @@ object Jt {
     val colors: JavanColors
         @Composable @ReadOnlyComposable get() = LocalJavanColors.current
     val shapes = JtShapes
+    val brushes = JtBrushes
 }
 
-/** The site's radii: card 1.125rem, rounded-2xl 16, rounded-xl 12, rounded-lg 8, the hero 22. */
+/** Radii of the Javan Light Redesign: cards 20–22, hero / sheet 26, buttons and chips as pills. */
 object JtShapes {
-    val card = RoundedCornerShape(18.dp)
-    val xl2 = RoundedCornerShape(16.dp)
-    val xl = RoundedCornerShape(12.dp)
-    val lg = RoundedCornerShape(8.dp)
+    val card = RoundedCornerShape(20.dp)
+    val event = RoundedCornerShape(22.dp)
+    val xl2 = RoundedCornerShape(18.dp)
+    val xl = RoundedCornerShape(14.dp)
+    val lg = RoundedCornerShape(10.dp)
     val md = RoundedCornerShape(6.dp)
-    val hero = RoundedCornerShape(22.dp)
-    val header = RoundedCornerShape(20.dp)
+    val hero = RoundedCornerShape(26.dp)
+    val sheet = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
+    val header = RoundedCornerShape(22.dp)
     val pill = RoundedCornerShape(percent = 50)
 }
 
@@ -43,7 +46,7 @@ fun isDarkTheme(mode: ThemeMode): Boolean = when (mode) {
     ThemeMode.DARK -> true
 }
 
-/** The app theme: the site's tokens, IRANSans, and right-to-left layout everywhere (the site is fa / dir="rtl"). */
+/** The app theme: the site's tokens, Vazirmatn, and right-to-left layout everywhere (the site is fa / dir="rtl"). */
 @Composable
 fun JavanTheme(dark: Boolean, content: @Composable () -> Unit) {
     val c = if (dark) DarkJavanColors else LightJavanColors

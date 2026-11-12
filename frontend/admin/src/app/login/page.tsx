@@ -119,7 +119,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-5 flex h-[62px] w-full items-center justify-center gap-3 rounded-xl bg-brand-600 text-[18px] font-bold text-white shadow-cta transition hover:bg-brand-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-5 flex h-[62px] w-full items-center justify-center gap-3 rounded-full bg-grad-primary text-[18px] font-bold text-white glow-primary transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading ? (
                 <>

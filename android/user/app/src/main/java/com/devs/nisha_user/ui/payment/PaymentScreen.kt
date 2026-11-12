@@ -1,5 +1,7 @@
 package com.devs.nisha_user.ui.payment
 
+import androidx.compose.ui.graphics.Color
+import com.devs.nisha_user.core.designsystem.component.scrollingBand
 import com.devs.nisha_user.core.format.ltr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -83,7 +85,7 @@ fun PaymentScreen(security: PageBlock?, viewModel: PaymentViewModel = hiltViewMo
         when {
             order != null && !order.payable -> OrderUnavailable(order)
             order != null && !order.needsBuyer -> Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding(),
+                Modifier.fillMaxSize().let { m -> val sc = rememberScrollState(); m.scrollingBand(sc).verticalScroll(sc) }.padding(16.dp).navigationBarsPadding(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text("اطلاعات سفارش خود را بررسی کرده و پرداخت را تکمیل کنید.", style = text(14f), color = c.ink2)
@@ -119,7 +121,7 @@ fun PaymentScreen(security: PageBlock?, viewModel: PaymentViewModel = hiltViewMo
                 JtCard(Modifier.fillMaxWidth()) {
                     CardTitle("جزئیات پرداخت", Lucide.ReceiptText, iconSize = 24.dp)
                     Column(Modifier.padding(top = 8.dp)) {
-                        DetailRow("مبلغ نهایی سفارش:") { Text(Fa.price(order.totalAmount), style = text(19f, W.Black), color = c.brand600) }
+                        DetailRow("مبلغ قابل پرداخت:") { Text(Fa.price(order.totalAmount), style = text(20f, W.Black), color = c.success) }
                         HDivider()
                         DetailRow("روش پرداخت:") { Text(s.method?.title ?: "—", style = text(14.5f, W.Bold), color = c.ink) }
                         HDivider()
@@ -127,15 +129,15 @@ fun PaymentScreen(security: PageBlock?, viewModel: PaymentViewModel = hiltViewMo
                     }
                     s.startError?.let { InlineError(it, Modifier.padding(top = 12.dp)) }
                     JtButton(
-                        "اتصال به درگاه پرداخت",
+                        "پرداخت و تکمیل خرید",
                         viewModel::start,
                         Modifier.padding(top = 16.dp),
+                        variant = ButtonVariant.SUCCESS,
                         size = ButtonSize.XL,
                         block = true,
                         enabled = s.method != null,
                         loading = s.starting,
                         leading = Lucide.Lock,
-                        trailing = Lucide.ArrowLeft,
                     )
                     s.method?.let {
                         Text("با زدن دکمه بالا، به صفحه امن ${it.title} منتقل خواهید شد.", style = text(12.5f), color = c.muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
@@ -177,7 +179,8 @@ private fun MethodCard(method: PaymentMethod, checked: Boolean, onSelect: () -> 
             .fillMaxWidth()
             .clip(JtShapes.xl2)
             .background(if (checked) c.brand50.copy(alpha = 0.4f) else c.surface)
-            .border(2.dp, if (checked) c.brand600 else c.line, JtShapes.xl2)
+            .background(if (checked) c.purple.copy(alpha = 0.09f) else Color.Transparent)
+            .border(if (checked) 2.dp else 1.dp, if (checked) c.purple else c.line, JtShapes.xl2)
             .semantics { selected = checked }
             .clickable(role = Role.RadioButton, onClick = onSelect)
             .padding(16.dp),

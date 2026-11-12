@@ -113,6 +113,8 @@ interface FavoritesRepository {
 interface SettingsRepository {
     val themeMode: StateFlow<ThemeMode>
     val cityId: StateFlow<Long?>
+    val notificationPromptDismissed: StateFlow<Boolean>
     fun setTheme(mode: ThemeMode)
     fun setCity(id: Long?)
+    fun setNotificationPromptDismissed(dismissed: Boolean)
 }

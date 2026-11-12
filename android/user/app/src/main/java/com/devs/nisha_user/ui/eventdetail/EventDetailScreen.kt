@@ -1,5 +1,8 @@
 package com.devs.nisha_user.ui.eventdetail
 
+import com.devs.nisha_user.core.designsystem.icon.PackageIcons
+import com.devs.nisha_user.core.designsystem.component.GlassIconButton
+import com.devs.nisha_user.core.designsystem.component.scrollingBand
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -109,9 +112,9 @@ fun EventDetailScreen(viewModel: EventDetailViewModel = hiltViewModel()) {
     Column(Modifier.fillMaxSize()) {
         JtTopBar(event?.title ?: "رویداد", onBack = actions.back) {
             if (event != null) {
-                JtIconButton(Lucide.Share2, {
+                GlassIconButton(PackageIcons.Share, {
                     actions.share(event.title, "${event.title}\n${actions.siteUrl}${EventDetailRoute(event.slug).path()}")
-                }, "اشتراک‌گذاری", borderColor = null, tint = Jt.colors.brand600)
+                }, "اشتراک‌گذاری")
             }
         }
         when {
@@ -177,9 +180,9 @@ private fun EventDetailContent(event: EventDetail, selectedId: Long?, onSelect: 
     )
 
     Box(Modifier.fillMaxSize()) {
-        LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 110.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        LazyColumn(Modifier.fillMaxSize().scrollingBand(list), state = list, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 110.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item(key = "poster") {
-                RemoteImage(event.bannerUrl, Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(JtShapes.header), fallback = event.categoryCoverUrl, contentDescription = event.title, placeholder = c.navy950)
+                RemoteImage(event.bannerUrl, Modifier.fillMaxWidth().aspectRatio(16f / 10f).clip(JtShapes.hero).border(1.5.dp, Color(0xFF6EB8FF).copy(alpha = 0.7f), JtShapes.hero), fallback = event.categoryCoverUrl, contentDescription = event.title, placeholder = c.navy950)
             }
             item(key = "head") {
                 Column {
@@ -402,12 +405,13 @@ private fun EventDetailContent(event: EventDetail, selectedId: Long?, onSelect: 
             Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column {
                     Text("قیمت از", style = text(12f), color = c.muted)
-                    Text(if (minPrice > 0) Fa.price(minPrice) else "رایگان", style = text(16f, W.Black), color = c.brand600)
+                    Text(if (minPrice > 0) Fa.price(minPrice) else "رایگان", style = text(16f, W.Black), color = c.price)
                 }
                 JtButton(
                     if (selected?.hasSeatMap == false) "خرید بلیت" else "انتخاب صندلی",
                     ::buy,
                     Modifier.weight(1f),
+                    variant = ButtonVariant.PINK,
                     size = ButtonSize.LG,
                     enabled = selected != null && !event.cancelled,
                 )

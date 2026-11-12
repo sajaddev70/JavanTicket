@@ -1,5 +1,8 @@
 package com.devs.nisha_user.ui.events
 
+import androidx.compose.foundation.layout.Spacer
+import com.devs.nisha_user.core.designsystem.icon.PackageIcons
+import com.devs.nisha_user.core.designsystem.component.scrollingBand
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -97,63 +100,45 @@ fun EventsScreen(
     LaunchedEffect(nearEnd, s.items.size) { if (nearEnd) viewModel.loadMore() }
     val c = Jt.colors
 
-    LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 24.dp)) {
-        stickyHeader(key = "header") { header({ q -> viewModel.update { it.copy(q = q) } }, f.q) }
-        item(key = "hero") { EventsHero(hero) }
+    LazyColumn(Modifier.fillMaxSize().scrollingBand(list), state = list, contentPadding = PaddingValues(bottom = 24.dp)) {
+        item(key = "header") { header({ q -> viewModel.update { it.copy(q = q) } }, f.q) }
         item(key = "tabs") {
             CategoryTabs(categories, f.category) { slug -> viewModel.update { it.copy(category = slug) } }
         }
+        // Filter chips on the band (reference 02): sort, filters and clear, as glass pills.
         item(key = "controls") {
-            JtCard(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), padding = PaddingValues(12.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
+            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                item {
                     JtPicker(
                         value = f.sort,
                         options = EventSort.entries.map { PickerOption(it, it.label) },
                         onSelect = { v -> viewModel.update { it.copy(sort = v) } },
                         icon = Lucide.ArrowUpDown,
                         sheetTitle = "مرتب‌سازی",
-                        modifier = Modifier.weight(1f),
+                        height = 44.dp,
+                        compactText = true,
+                        glass = true,
                     )
-                    JtButtonBase({ filtersOpen = true }, Modifier.weight(1f), ButtonVariant.OUTLINE, ButtonSize.LG) {
-                        JtIcon(Lucide.SlidersHorizontal, size = 20.dp, tint = c.ink)
-                        Text("فیلترها", style = text(15f, W.Bold), color = c.ink)
+                }
+                item {
+                    JtButtonBase({ filtersOpen = true }, variant = ButtonVariant.GLASS, size = ButtonSize.MD) {
+                        JtIcon(PackageIcons.Filter, size = 18.dp, tint = Color.White)
+                        Text("فیلترها", style = text(13.5f, W.Bold), color = Color.White)
                         if (f.activeCount > 0) {
-                            Text(Fa.number(f.activeCount), style = text(12f, W.Bold), color = Color.White, modifier = Modifier.clip(JtShapes.pill).background(c.brand600).padding(horizontal = 8.dp))
+                            Text(Fa.number(f.activeCount), style = text(12f, W.Bold), color = Color.White, modifier = Modifier.clip(JtShapes.pill).background(Color.White.copy(alpha = 0.25f)).padding(horizontal = 8.dp))
                         }
                     }
                 }
-            }
-        }
-        item(key = "count") {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    if (s.loading) buildAnnotatedString { append("در حال جستجو ...") } else buildAnnotatedString {
-                        withStyle(SpanStyle(color = c.brand600, fontSize = 19.sp)) { append(Fa.number(s.total)) }
-                        append(" رویداد یافت شد")
-                    },
-                    style = text(16f, W.Black),
-                    color = c.ink,
-                    modifier = Modifier.weight(1f),
-                )
-                if (!f.isDefault || s.cityOverridden) {
-                    JtButton("حذف فیلترها", viewModel::clear, variant = ButtonVariant.DANGER_GHOST, size = ButtonSize.SM, leading = Lucide.X)
-                }
-                Row(Modifier.clip(JtShapes.xl).border(1.dp, c.line, JtShapes.xl).background(c.surface).padding(4.dp)) {
-                    listOf(true to Lucide.LayoutGrid, false to Lucide.List).forEach { (grid, icon) ->
-                        val on = s.grid == grid
-                        Box(
-                            Modifier.size(36.dp).clip(JtShapes.lg).background(if (on) c.brand50 else Color.Transparent)
-                                .clickable(role = Role.Button, onClickLabel = if (grid) "نمایش شبکه‌ای" else "نمایش فهرستی") { if (!on) viewModel.toggleView() },
-                            contentAlignment = Alignment.Center,
-                        ) { JtIcon(icon, size = 20.dp, tint = if (on) c.brand600 else c.muted) }
-                    }
+                if (!f.isDefault || s.cityOverridden) item {
+                    JtButton("حذف فیلترها", viewModel::clear, variant = ButtonVariant.GLASS, size = ButtonSize.MD, leading = Lucide.X)
                 }
             }
         }
+        item(key = "gap") { Spacer(Modifier.height(16.dp)) }
         when {
             s.error != null && s.items.isEmpty() -> item(key = "error") { ErrorState(s.error, Modifier.padding(horizontal = 16.dp), onRetry = viewModel::reload) }
             s.loading -> items(4, key = { "sk$it" }) {
-                EventCardSkeleton(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth(), if (s.grid) EventCardVariant.GRID else EventCardVariant.ROW)
+                EventCardSkeleton(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth(), EventCardVariant.ROW)
             }
             s.items.isEmpty() -> item(key = "empty") {
                 EmptyState(
@@ -165,7 +150,7 @@ fun EventsScreen(
             }
             else -> {
                 items(s.items, key = { it.id }) { e ->
-                    EventCard(e, Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth(), if (s.grid) EventCardVariant.GRID else EventCardVariant.ROW)
+                    EventCard(e, Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth(), EventCardVariant.ROW)
                 }
                 if (s.loadingMore) item(key = "more") {
                     Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(28.dp), color = c.brand600, strokeWidth = 3.dp) }
@@ -213,32 +198,27 @@ private fun EventsHero(block: PageBlock?) {
 
 @Composable
 private fun CategoryTabs(categories: List<Category>, active: String, onChange: (String) -> Unit) {
-    val c = Jt.colors
-    LazyRow(Modifier.padding(vertical = 16.dp), contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        item(key = "all") { CategoryTab("همه رویدادها", null, null, null, active.isEmpty()) { onChange("") } }
-        items(categories, key = { it.id }) { cat -> CategoryTab(cat.name, cat.slug, cat.iconUrl, cat.color, cat.slug == active) { onChange(cat.slug) } }
+    LazyRow(Modifier.padding(top = 4.dp, bottom = 10.dp), contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        item(key = "all") { CategoryTab("همه", active.isEmpty()) { onChange("") } }
+        items(categories, key = { it.id }) { cat -> CategoryTab(cat.name, cat.slug == active) { onChange(cat.slug) } }
     }
 }
 
+/** Category pill on the band: glass, or the violet gradient when selected (reference 02). */
 @Composable
-private fun CategoryTab(name: String, slug: String?, iconUrl: String?, color: String?, on: Boolean, onClick: () -> Unit) {
-    val c = Jt.colors
-    val tint = if (on) Color.White else parseHexColor(color, c.brand600)
-    Column(
-        Modifier
-            .width(112.dp)
-            .height(76.dp)
-            .clip(JtShapes.xl2)
-            .background(if (on) c.brand600 else c.surface)
-            .border(1.dp, if (on) c.brand600 else c.line, JtShapes.xl2)
+private fun CategoryTab(name: String, on: Boolean, onClick: () -> Unit) {
+    Text(
+        name,
+        style = text(13.5f, if (on) W.Black else W.Bold),
+        color = Color.White,
+        maxLines = 1,
+        modifier = Modifier
+            .clip(JtShapes.pill)
+            .then(if (on) Modifier.background(Jt.brushes.primary) else Modifier.background(Color.White.copy(alpha = 0.12f)).border(1.dp, Color.White.copy(alpha = 0.14f), JtShapes.pill))
             .semantics { selected = on }
-            .clickable(role = Role.Tab, onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
-    ) {
-        if (slug != null) CategoryIcon(slug, iconUrl, size = 28.dp, tint = tint) else JtIcon(Lucide.LayoutGrid, size = 28.dp, tint = tint)
-        Text(name, style = text(13f, W.Bold), color = if (on) Color.White else c.ink, maxLines = 1, modifier = Modifier.padding(horizontal = 4.dp))
-    }
+            .clickable(role = Role.Tab, onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 12.dp),
+    )
 }
 
 /** Starting-price range in Toman; applied when the keyboard's done button is pressed. */

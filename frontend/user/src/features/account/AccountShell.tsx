@@ -10,17 +10,30 @@ import { maskMobile } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
 /** Layout of the account pages: menu (side on desktop, tabs on phones) and the page body. */
-export function AccountShell({ title, description, actions, children }: { title: string; description?: string; actions?: React.ReactNode; children: React.ReactNode }) {
+export function AccountShell({
+  title,
+  description,
+  actions,
+  header,
+  children,
+}: {
+  title: string;
+  description?: string;
+  actions?: React.ReactNode;
+  /** Replaces the white title on the band (the profile screen draws its own avatar header). */
+  header?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
 
   return (
-    <div className="container-page grid gap-5 pb-10 pt-5 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
-      <aside className="card hidden p-4 lg:sticky lg:top-24 lg:block">
+    <div className="container-page grid gap-5 pb-10 pt-1 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:pt-6">
+      <aside className="card hidden p-4 lg:sticky lg:top-28 lg:block">
         <div className="flex items-center gap-3 border-b border-line pb-4">
-          <span className="flex size-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+          <span className="bg-grad-primary flex size-12 items-center justify-center rounded-full text-white">
             <UserRound className="size-6" />
           </span>
           <div className="min-w-0">
@@ -62,30 +75,16 @@ export function AccountShell({ title, description, actions, children }: { title:
       </aside>
 
       <div className="min-w-0 space-y-4">
-        <nav aria-label="حساب کاربری" className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 lg:hidden">
-          {ACCOUNT_LINKS.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={cn("flex min-h-11 shrink-0 items-center gap-2 rounded-xl border px-4 text-[13.5px] font-bold", active ? "border-brand-600 bg-brand-600 text-white" : "border-line bg-surface text-ink-2")}
-              >
-                <Icon className="size-[18px]" />
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <Breadcrumb items={[{ label: "خانه", href: "/" }, { label: "حساب کاربری", href: "/profile" }, { label: title }]} />
-            <h1 className="mt-1.5 text-[24px] font-black text-ink">{title}</h1>
-            {description && <p className="mt-1 text-[13.5px] text-ink-2">{description}</p>}
+        {header ?? (
+          <div className="flex flex-wrap items-end justify-between gap-3 text-white">
+            <div>
+              <Breadcrumb tone="light" className="hidden lg:block" items={[{ label: "خانه", href: "/" }, { label: "حساب کاربری", href: "/profile" }, { label: title }]} />
+              <h1 className="text-[24px] font-black leading-[1.5] lg:mt-1.5 lg:text-[28px]">{title}</h1>
+              {description && <p className="mt-0.5 text-[13.5px] leading-6 text-white/80">{description}</p>}
+            </div>
+            {actions}
           </div>
-          {actions}
-        </div>
+        )}
         {children}
       </div>
     </div>

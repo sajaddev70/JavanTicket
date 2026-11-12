@@ -106,6 +106,8 @@ docker compose logs -f backend
 
 > **مهم:** `PUBLIC_API_URL` و `PUBLIC_USER_SITE_URL` هنگام **ساخت** فرانت‌ها داخل آن‌ها قرار می‌گیرند. اگر IP یا دامنه را عوض کردید، دوباره `docker compose up -d --build` بزنید.
 
+برای راه‌اندازی روی دامنه `sakooticket.ir` با nginx و SSL، راهنمای [deploy/README.md](../deploy/README.md) را دنبال کنید.
+
 ### ۳-۲. اجرای محلی برای توسعه
 
 ```bash
@@ -452,6 +454,7 @@ docker compose up -d backend
 | `PUBLIC_USER_SITE_URL` | آدرس سایت کاربر؛ لینک «مشاهده در سایت» پنل و بازگشت از درگاه |
 | `CHECKOUT_HOLD_MINUTES` | مدت نگهداری صندلی (پیش‌فرض ۱۰ دقیقه)؛ سفارش پرداخت‌نشده پس از آن لغو می‌شود |
 | `DEMO_SEED_*` | داده نمایشی — بخش ۴ |
+| `BIND_ADDRESS` | آدرسی که پورت‌ها روی آن باز می‌شوند؛ پشت nginx مقدار `127.0.0.1` |
 | `BACKEND_PORT`، `ADMIN_PORT`، `USER_PORT` | پورت‌ها |
 
 **درگاه آزمایشی:** با `PAYMENT_MODE=dev` (فقط پروفایل توسعه) یک صفحه بانک شبیه‌سازی‌شده باز می‌شود که می‌توانید پرداخت را موفق یا ناموفق کنید. برای درگاه واقعی، کلاسی که `PaymentGateway` را پیاده‌سازی می‌کند در `service/payment` اضافه می‌شود.

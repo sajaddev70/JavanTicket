@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import AppProviders from "@/providers/AppProviders";
-import { iranSans } from "@/fonts/iranSans";
+import { vazirmatn } from "@/fonts/vazirmatn";
 import { themeInitScript } from "@/lib/theme";
 import { getSiteSettings } from "@/lib/serverSettings";
 import { CITY_COOKIE, parseCityId } from "@/lib/city";
@@ -15,8 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
     title: siteName ? { default: siteName, template: `%s | ${siteName}` } : "خرید بلیت",
     description: settings?.meta_description ?? undefined,
     applicationName: settings?.short_name ?? siteName,
-    appleWebApp: { capable: true, title: settings?.short_name ?? siteName, statusBarStyle: "default" },
-    icons: { apple: "/icons/apple-touch-icon.png" },
+    appleWebApp: { capable: true, title: settings?.short_name ?? siteName, statusBarStyle: "black-translucent" },
+    icons: { apple: "/assets/pwa/apple-touch-icon.png" },
     openGraph: { siteName, locale: "fa_IR", type: "website" },
   };
 }
@@ -26,8 +26,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a1424" },
+    { media: "(prefers-color-scheme: light)", color: "#102b67" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a1846" },
   ],
 };
 
@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   // The header city lives in a cookie so server-rendered event lists already match the visitor's choice.
   const initialCityId = parseCityId((await cookies()).get(CITY_COOKIE)?.value);
   return (
-    <html lang="fa" dir="rtl" className={iranSans.variable} suppressHydrationWarning>
+    <html lang="fa" dir="rtl" className={vazirmatn.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

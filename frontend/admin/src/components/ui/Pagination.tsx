@@ -39,7 +39,7 @@ export function Pagination({
               type="button"
               onClick={() => onPage(n)}
               aria-current={n === page ? "page" : undefined}
-              className={cn(btn, n === page && "border-brand-600 bg-brand-600 text-white hover:border-brand-600")}
+              className={cn(btn, n === page && "border-brand-600 bg-grad-primary text-white hover:border-brand-600")}
             >
               {faNumber(n)}
             </button>

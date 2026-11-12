@@ -2,6 +2,18 @@ package com.devs.nisha_user.ui.app
 
 import com.devs.nisha_user.core.format.ltr
 import androidx.compose.foundation.background
+import com.devs.nisha_user.core.designsystem.icon.PackageIcons
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -45,6 +58,7 @@ import com.devs.nisha_user.core.designsystem.component.HDivider
 import com.devs.nisha_user.core.designsystem.component.JtBottomSheet
 import com.devs.nisha_user.core.designsystem.component.JtButton
 import com.devs.nisha_user.core.designsystem.component.JtIconButton
+import com.devs.nisha_user.core.designsystem.component.GlassIconButton
 import com.devs.nisha_user.core.designsystem.component.JtPicker
 import com.devs.nisha_user.core.designsystem.component.JtTextField
 import com.devs.nisha_user.core.designsystem.component.LogoVariant
@@ -82,9 +96,70 @@ val ACCOUNT_LINKS: List<Triple<Route, String, LucidePaths>> = listOf(
     Triple(FavoritesRoute, "علاقه‌مندی‌ها", Lucide.Heart),
 )
 
+/** Stroke colors of the official mark variants (file/Javan_SVG_Assets/logos/svg). */
+enum class BrandTone(val a: Long, val b: Long, val c: Long, val dot: Boolean) {
+    /** javan_logo_icon.svg — for light surfaces */
+    COLOR(0xFF163C8C, 0xFF2F80FF, 0xFF6EB8FF, true),
+    /** light-cyan rendering on the navy band (references) */
+    LIGHT(0xFFFFFFFF, 0xFF9FD0FF, 0xFF6EB8FF, true),
+    /** javan_logo_icon_mono_light.svg */
+    WHITE(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, false),
+    /** javan_logo_icon_mono_dark.svg */
+    NAVY(0xFF163C8C, 0xFF163C8C, 0xFF163C8C, false),
+}
+
+/** The Javan mark (javan_logo_icon.svg) drawn natively: six strokes fanning out under the red dot. */
+@Composable
+fun BrandMark(modifier: Modifier = Modifier, tone: BrandTone = BrandTone.LIGHT) {
+    Canvas(modifier.semantics { invisibleToUser() }) {
+        // viewBox "40 36 176 162" of the icon, scaled into the canvas keeping the aspect ratio.
+        val k = minOf(size.width / 176f, size.height / 162f)
+        withTransform({ translate((size.width - 176f * k) / 2, (size.height - 162f * k) / 2); scale(k, k, pivot = Offset.Zero); translate(-40f, -36f) }) {
+            val colors = listOf(Color(tone.a), Color(tone.b), Color(tone.c))
+            listOf(
+                Triple(floatArrayOf(118f, 66.32f, 94f, 98.32f, 70f, 132.32f, 48f, 174.08f), 0, 1f),
+                Triple(floatArrayOf(128f, 72.32f, 114f, 102.32f, 110f, 142.32f, 110f, 189.44f), 1, 1f),
+                Triple(floatArrayOf(138f, 66.32f, 162f, 98.32f, 186f, 132.32f, 208f, 174.08f), 2, 1f),
+                Triple(floatArrayOf(128f, 72.32f, 142f, 102.32f, 146f, 142.32f, 146f, 189.44f), 1, 0.95f),
+                Triple(floatArrayOf(122f, 64.32f, 123f, 76.32f, 125f, 86.32f, 128f, 92.32f), 0, 0.95f),
+                Triple(floatArrayOf(134f, 64.32f, 133f, 76.32f, 131f, 86.32f, 128f, 92.32f), 2, 0.95f),
+            ).forEach { (p, ci, alpha) ->
+                drawPath(
+                    Path().apply { moveTo(p[0], p[1]); cubicTo(p[2], p[3], p[4], p[5], p[6], p[7]) },
+                    colors[ci].copy(alpha = alpha),
+                    style = Stroke(11.52f, cap = StrokeCap.Round),
+                )
+            }
+            if (tone.dot) drawCircle(Color(0xFFFF5A75), 15.36f, Offset(128f, 56.32f))
+        }
+    }
+}
+
 /**
- * Header of the main screens (layout/SiteHeader.tsx at phone width): logo, theme toggle, account and menu, then the
- * search box and the city picker. Every event list follows the city picked here.
+ * Horizontal lockup (javan_logo_horizontal_*): the mark on the start side, then the site name from the admin settings
+ * ("مرکز همایش و نمایش" / "جوان"). [onBand] = the white version used on the navy header band of the references.
+ */
+@Composable
+fun AppLogo(settings: SiteSettings?, modifier: Modifier = Modifier, onBand: Boolean = true) {
+    val ink = if (onBand || Jt.colors.isDark) Color.White else Jt.colors.navy800
+    val name = settings?.shortName?.trim()?.ifBlank { null } ?: settings?.siteName?.trim().orEmpty()
+    val full = settings?.siteName?.trim().orEmpty()
+    val kicker = if (name.isNotEmpty() && full.contains(name) && full != name) full.replace(name, "").trim() else null
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        BrandMark(Modifier.width(52.dp).height(48.dp), tone = if (onBand || Jt.colors.isDark) BrandTone.LIGHT else BrandTone.COLOR)
+        if (name.isNotEmpty()) {
+            Column {
+                kicker?.let { Text(it, style = text(10f, W.Bold, lineHeight = 1.3f), color = ink.copy(alpha = 0.92f), maxLines = 1) }
+                Text(name, style = text(24f, W.Black, lineHeight = 1.15f), color = ink)
+            }
+        }
+    }
+}
+
+/**
+ * Header on the navy band (references 01, 02): the white logo on the start side, a glass city pill, round glass
+ * account and menu buttons on the end side, then (on the events screen) the glass search field. Every event list
+ * follows the city picked here.
  */
 @Composable
 fun SiteHeader(
@@ -98,42 +173,39 @@ fun SiteHeader(
     modifier: Modifier = Modifier,
     initialQuery: String = "",
     onSearch: ((String) -> Unit)? = null,
+    showSearch: Boolean = true,
 ) {
-    val c = Jt.colors
     val actions = LocalAppActions.current
-    Column(modifier.fillMaxWidth().background(c.surface).statusBarsPadding()) {
-        Row(Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.clip(JtShapes.lg).clickable(role = Role.Button, onClickLabel = "صفحه اصلی") { actions.openLink("/") }) {
-                BrandLogo(Modifier.height(44.dp).width(76.dp))
+    val settings = com.devs.nisha_user.core.designsystem.component.LocalSiteSettings.current
+    Column(modifier.fillMaxWidth().statusBarsPadding()) {
+        Row(Modifier.fillMaxWidth().height(76.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.clip(JtShapes.lg).clickable(role = Role.Button, onClickLabel = "صفحه اصلی") { actions.openLink("/") }.heightIn(min = 44.dp), contentAlignment = Alignment.Center) {
+                AppLogo(settings)
             }
             Spacer(Modifier.weight(1f))
-            ThemeToggle(dark, onToggleTheme)
-            Spacer(Modifier.width(6.dp))
-            JtIconButton(
-                Lucide.UserRound,
-                onClick = { if (user != null) actions.navigate(ProfileRoute) else actions.navigate(LoginRoute()) },
-                contentDescription = if (user != null) "حساب کاربری" else "ورود / ثبت‌نام",
-                background = c.brand600,
-                tint = Color.White,
-                borderColor = null,
-            )
-            Spacer(Modifier.width(6.dp))
-            JtIconButton(Lucide.Menu, onMenu, "باز کردن منو")
-        }
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SearchBox(initialQuery, Modifier.weight(1f)) { q -> onSearch?.invoke(q) ?: actions.navigate(EventsRoute(q = q.ifBlank { null })) }
             JtPicker(
                 value = cityId,
                 options = listOf(PickerOption<Long?>(null, "همه شهرها")) + cities.map { PickerOption<Long?>(it.id, it.name) },
                 onSelect = onCity,
-                icon = Lucide.MapPin,
+                icon = PackageIcons.Location,
                 sheetTitle = "انتخاب شهر",
                 height = 44.dp,
                 compactText = true,
-                modifier = Modifier.width(142.dp),
+                glass = true,
+                modifier = Modifier.widthIn(min = 92.dp, max = 140.dp),
             )
+            Spacer(Modifier.width(8.dp))
+            if (!showSearch) {
+                GlassIconButton(PackageIcons.Search, { actions.navigate(EventsRoute()) }, "جستجو در رویدادها")
+                Spacer(Modifier.width(8.dp))
+            }
+            GlassIconButton(Lucide.Menu, onMenu, "باز کردن منو")
         }
-        HDivider(color = c.line.copy(alpha = 0.8f))
+        if (showSearch) {
+            Box(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp)) {
+                SearchBox(initialQuery, Modifier.fillMaxWidth()) { q -> onSearch?.invoke(q) ?: actions.navigate(EventsRoute(q = q.ifBlank { null })) }
+            }
+        }
     }
 }
 
@@ -145,11 +217,11 @@ fun SearchBox(initial: String, modifier: Modifier = Modifier, onSubmit: (String)
     JtTextField(
         value = q,
         onValueChange = { q = it },
-        placeholder = "جستجو در رویدادها ...",
-        leading = Lucide.Search,
-        height = 44.dp,
-        background = Jt.colors.field,
-        textStyle = text(13.5f),
+        placeholder = "جستجو در رویدادها و نمایشگاه‌ها...",
+        leading = PackageIcons.Search,
+        height = 50.dp,
+        glass = true,
+        textStyle = text(14f),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = {
             focus.clearFocus()
@@ -173,10 +245,19 @@ fun MenuSheet(
     user: AuthUser?,
     onSignOut: () -> Unit,
     onDismiss: () -> Unit,
+    dark: Boolean = false,
+    onToggleTheme: (() -> Unit)? = null,
 ) {
     val c = Jt.colors
     val actions = LocalAppActions.current
     JtBottomSheet(onDismiss = onDismiss, title = "منو") {
+        if (onToggleTheme != null) {
+            Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("حالت نمایش (روشن / تیره)", style = text(15f, W.Semibold), color = c.ink, modifier = Modifier.weight(1f))
+                ThemeToggle(dark, onToggleTheme)
+            }
+            HDivider(color = c.line.copy(alpha = 0.7f))
+        }
         navigation?.header?.forEach { link ->
             Row(
                 Modifier
@@ -295,7 +376,7 @@ fun SiteFooter(settings: SiteSettings?, navigation: Navigation?, onSubscribe: su
     var email by rememberSaveable { mutableStateOf("") }
     var status by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
     var sending by remember { mutableStateOf(false) }
-    Column(modifier.fillMaxWidth().background(c.navy950)) {
+    Column(modifier.fillMaxWidth().clip(JtShapes.sheet).background(Jt.brushes.bandSolid)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 32.dp), verticalArrangement = Arrangement.spacedBy(28.dp)) {
             Column {
                 Text(settings?.newsletterTitle ?: "خبرنامه", style = text(15f, W.Extrabold), color = Color.White)
@@ -376,28 +457,41 @@ fun SiteFooter(settings: SiteSettings?, navigation: Navigation?, onSubscribe: su
 
 enum class Tab { HOME, EVENTS, TICKETS, ACCOUNT }
 
-/** layout/MobileTabBar.tsx: خانه، رویدادها، بلیت‌های من، حساب من / ورود. */
+/** Bottom navigation of the references: خانه، رویدادها، بلیت‌های من، پروفایل; the active tab in violet on a soft pill. */
 @Composable
 fun BottomTabBar(current: Tab?, signedIn: Boolean, onSelect: (Tab) -> Unit) {
     val c = Jt.colors
     val tabs = listOf(
-        Triple(Tab.HOME, "خانه", Lucide.House),
-        Triple(Tab.EVENTS, "رویدادها", Lucide.CalendarDays),
-        Triple(Tab.TICKETS, "بلیت‌های من", Lucide.Ticket),
-        Triple(Tab.ACCOUNT, if (signedIn) "حساب من" else "ورود", Lucide.UserRound),
+        Triple(Tab.HOME, "خانه", PackageIcons.Home),
+        Triple(Tab.EVENTS, "رویدادها", PackageIcons.Events),
+        Triple(Tab.TICKETS, "بلیت‌های من", PackageIcons.MyTickets),
+        Triple(Tab.ACCOUNT, "پروفایل", PackageIcons.Profile),
     )
-    Column(Modifier.fillMaxWidth().background(c.surface.copy(alpha = 0.97f))) {
-        HDivider()
-        Row(Modifier.fillMaxWidth().navigationBarsPadding().height(64.dp)) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .shadow(16.dp, JtShapes.sheet, ambientColor = c.shadow.copy(alpha = 0.08f), spotColor = c.shadow.copy(alpha = 0.08f))
+            .clip(JtShapes.sheet)
+            .background(c.surface)
+            .border(1.dp, c.line, JtShapes.sheet),
+    ) {
+        Row(Modifier.fillMaxWidth().navigationBarsPadding().height(66.dp)) {
             tabs.forEach { (tab, label, icon) ->
                 val active = tab == current
-                Column(
-                    Modifier.weight(1f).fillMaxWidth().clickable(role = Role.Tab, onClickLabel = label) { onSelect(tab) }.padding(top = 10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                Box(
+                    Modifier.weight(1f).fillMaxHeight().clickable(role = Role.Tab, onClickLabel = label) { onSelect(tab) }
+                        .semantics { selected = active },
+                    contentAlignment = Alignment.Center,
                 ) {
-                    JtIcon(icon, size = 22.dp, tint = if (active) c.brand600 else c.muted, strokeWidth = if (active) 2.2f else 1.8f)
-                    Text(label, style = text(11.5f, W.Semibold), color = if (active) c.brand600 else c.muted)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Box(
+                            Modifier.width(48.dp).height(32.dp).clip(CircleShape).background(if (active) c.purpleBg else Color.Transparent),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            JtIcon(icon, size = 23.dp, tint = if (active) c.purple else c.ink2, strokeWidth = if (active) 2.1f else 1.8f)
+                        }
+                        Text(label, style = text(11.5f, if (active) W.Black else W.Bold), color = if (active) c.purple else c.ink2)
+                    }
                 }
             }
         }

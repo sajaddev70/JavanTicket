@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -38,6 +39,9 @@ class PreferencesStore @Inject constructor(@ApplicationContext context: Context)
     /** City of the header; every event list follows it (null = all cities). */
     val cityId: StateFlow<Long?> = city.asStateFlow()
 
+    private val notificationDismissed = MutableStateFlow(initial[NOTIFICATION_DISMISSED] ?: false)
+    val notificationPromptDismissed: StateFlow<Boolean> = notificationDismissed.asStateFlow()
+
     /**
      * Random id of this device's seat selection (sent as X-Hold-Token). Seats are locked on the server for this id
      * before the buyer signs in; checkout turns them into the signed-in user's order.
@@ -56,7 +60,13 @@ class PreferencesStore @Inject constructor(@ApplicationContext context: Context)
         scope.launch { store.edit { if (id == null) it.remove(CITY) else it[CITY] = id } }
     }
 
+    fun setNotificationPromptDismissed(dismissed: Boolean) {
+        notificationDismissed.value = dismissed
+        scope.launch { store.edit { it[NOTIFICATION_DISMISSED] = dismissed } }
+    }
+
     private companion object {
+        val NOTIFICATION_DISMISSED = booleanPreferencesKey("notification_prompt_dismissed")
         val THEME = stringPreferencesKey("theme")
         val CITY = longPreferencesKey("city_id")
         val HOLD_TOKEN = stringPreferencesKey("seat_hold_token")

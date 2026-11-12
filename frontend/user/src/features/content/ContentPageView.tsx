@@ -36,7 +36,7 @@ export function ContentPageView({ slug }: { slug: string }) {
 
   return (
     <div className="container-page max-w-[960px] py-6 lg:py-8">
-      <Breadcrumb items={[{ label: "خانه", href: "/" }, { label: page.title }]} />
+      <Breadcrumb tone="light" items={[{ label: "خانه", href: "/" }, { label: page.title }]} />
       <article className="card mt-3 p-5 sm:p-8">
         <h1 className="text-[26px] font-black text-ink sm:text-[30px]">{page.title}</h1>
         {page.updated_at && <p className="mt-2 text-[12.5px] text-muted">آخرین به‌روزرسانی: {faDate(page.updated_at)}</p>}

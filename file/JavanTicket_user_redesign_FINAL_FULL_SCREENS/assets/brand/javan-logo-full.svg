@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 240">
+  <circle cx="260" cy="34" r="18" fill="#F43F5E"/>
+  <g fill="none" stroke="#0B2B5B" stroke-width="10" stroke-linecap="round">
+    <path d="M260 54C235 79 208 105 145 134"/>
+    <path d="M260 54C245 84 226 111 188 145"/>
+    <path d="M260 54C275 84 294 111 332 145"/>
+    <path d="M260 54C285 79 312 105 375 134"/>
+  </g>
+  <text x="260" y="186" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="34" fill="#0B2B5B">مرکز همایش و نمایش جوان</text>
+  <text x="260" y="221" text-anchor="middle" font-family="Arial, sans-serif" font-weight="800" font-size="42" fill="#0B2B5B">جوان</text>
+</svg>

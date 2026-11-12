@@ -2,6 +2,7 @@ package com.devs.nisha_user.core.designsystem.component
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -106,15 +107,20 @@ fun JtTextField(
     textAlign: TextAlign? = null,
     background: Color = Jt.colors.surface,
     height: Dp = 48.dp,
+    /** Translucent pill on the navy band (search field of reference 02). */
+    glass: Boolean = false,
 ) {
     val c = Jt.colors
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val borderColor = when {
         error != null -> c.danger.copy(alpha = 0.6f)
+        glass -> Color.White.copy(alpha = if (focused) 0.3f else 0.14f)
         focused -> c.brand500.copy(alpha = 0.6f)
         else -> c.lineStrong
     }
+    val fieldShape = if (glass) JtShapes.pill else JtShapes.xl
+    val ink = if (glass) Color.White else c.ink
     FieldFrame(label, modifier, required, error, hint) {
         val field: @Composable () -> Unit = {
             BasicTextField(
@@ -126,9 +132,9 @@ fun JtTextField(
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
                 interactionSource = interaction,
-                cursorBrush = SolidColor(c.brand600),
+                cursorBrush = SolidColor(if (glass) Color.White else c.brand600),
                 textStyle = textStyle.copy(
-                    color = if (enabled) c.ink else c.muted,
+                    color = if (enabled) ink else c.muted,
                     textAlign = textAlign ?: (if (ltr) TextAlign.Left else TextAlign.Right),
                     textDirection = if (ltr) TextDirection.Ltr else TextDirection.ContentOrRtl,
                 ),
@@ -143,21 +149,21 @@ fun JtTextField(
                         Modifier
                             .fillMaxWidth()
                             .defaultMinSize(minHeight = height)
-                            .then(if (focused) Modifier.border(BorderStroke(4.dp, (if (error != null) c.danger else c.brand500).copy(alpha = 0.10f)), JtShapes.xl) else Modifier)
-                            .clip(JtShapes.xl)
-                            .background(if (enabled) background else c.field)
-                            .border(1.dp, borderColor, JtShapes.xl)
-                            .padding(horizontal = 14.dp, vertical = if (singleLine) 0.dp else 12.dp),
+                            .then(if (focused && !glass) Modifier.border(BorderStroke(4.dp, (if (error != null) c.danger else c.brand500).copy(alpha = 0.10f)), fieldShape) else Modifier)
+                            .clip(fieldShape)
+                            .background(if (glass) Color.White.copy(alpha = if (focused) 0.2f else 0.12f) else if (enabled) background else c.field)
+                            .border(1.dp, borderColor, fieldShape)
+                            .padding(horizontal = if (glass) 18.dp else 14.dp, vertical = if (singleLine) 0.dp else 12.dp),
                         verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        if (leading != null) JtIcon(leading, size = 18.dp, tint = c.ink2)
+                        if (leading != null) JtIcon(leading, size = if (glass) 21.dp else 18.dp, tint = if (glass) Color.White else c.ink2)
                         Box(Modifier.weight(1f), contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart) {
                             if (value.isEmpty() && placeholder != null) {
                                 Text(
                                     placeholder,
                                     style = textStyle.copy(textAlign = textAlign ?: (if (ltr) TextAlign.Left else TextAlign.Right)),
-                                    color = c.muted.copy(alpha = 0.8f),
+                                    color = if (glass) Color.White.copy(alpha = 0.75f) else c.muted.copy(alpha = 0.8f),
                                     maxLines = if (singleLine) 1 else Int.MAX_VALUE,
                                     overflow = TextOverflow.Ellipsis,
                                     modifier = Modifier.fillMaxWidth(),
@@ -218,26 +224,32 @@ fun <T> JtPicker(
     sheetTitle: String = label ?: "انتخاب کنید",
     height: Dp = 48.dp,
     compactText: Boolean = false,
+    /** Soft field-colored pill without a border. */
+    filled: Boolean = false,
+    /** Translucent pill on the navy band (header city selector of the references). */
+    glass: Boolean = false,
 ) {
     val c = Jt.colors
     var open by remember { mutableStateOf(false) }
+    val shape = if (filled || glass) JtShapes.pill else JtShapes.xl
+    val ink = if (glass) Color.White else c.ink
     val current = options.firstOrNull { it.value == value }?.label ?: options.firstOrNull()?.label.orEmpty()
     FieldFrame(label, modifier) {
         Row(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = height)
-                .clip(JtShapes.xl)
-                .background(c.surface)
-                .border(1.dp, c.lineStrong, JtShapes.xl)
+                .clip(shape)
+                .background(if (glass) Color.White.copy(alpha = 0.12f) else if (filled) c.field else c.surface)
+                .then(if (filled) Modifier else Modifier.border(1.dp, if (glass) Color.White.copy(alpha = 0.14f) else c.lineStrong, shape))
                 .clickable(role = Role.DropdownList, onClickLabel = sheetTitle) { open = true }
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            if (icon != null) JtIcon(icon, size = 18.dp, tint = c.ink2)
-            Text(current, style = text(if (compactText) 13.5f else 14f, W.Bold), color = c.ink, maxLines = 1, modifier = Modifier.weight(1f))
-            JtIcon(Lucide.ChevronDown, size = 16.dp, tint = c.muted)
+            if (icon != null) JtIcon(icon, size = 18.dp, tint = if (filled || glass) ink else c.ink2)
+            Text(current, style = text(if (compactText) 13.5f else 14f, W.Bold), color = ink, maxLines = 1, modifier = Modifier.weight(1f, fill = !glass))
+            JtIcon(Lucide.ChevronDown, size = 16.dp, tint = if (glass) Color.White.copy(alpha = 0.8f) else c.muted)
         }
     }
     if (open) {

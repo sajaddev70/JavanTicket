@@ -89,14 +89,16 @@ fun SectionCard(
     onMore: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(16.dp),
+    /** No white panel: the title and content sit straight on the page (home rows of reference 01). */
+    plain: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    JtCard(modifier.fillMaxWidth(), padding = contentPadding) {
-        Row(Modifier.fillMaxWidth().padding(bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+    val body: @Composable ColumnScope.() -> Unit = {
+        Row(Modifier.fillMaxWidth().padding(bottom = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (icon != null) JtIcon(icon, size = 24.dp, tint = Jt.colors.brand600)
-                    Text(title, style = text(18f, W.Black), color = Jt.colors.ink, modifier = Modifier.semantics { heading() })
+                    Text(title, style = text(if (plain) 20f else 18f, W.Black), color = Jt.colors.ink, modifier = Modifier.semantics { heading() })
                 }
                 if (subtitle != null) Text(subtitle, style = text(13f), color = Jt.colors.muted, modifier = Modifier.padding(top = 4.dp))
             }
@@ -105,6 +107,7 @@ fun SectionCard(
         }
         content()
     }
+    if (plain) Column(modifier.fillMaxWidth()) { body() } else JtCard(modifier.fillMaxWidth(), padding = contentPadding) { body() }
 }
 
 /** Title with an icon in brand blue, the heading style of the site's cards ("انتخاب سانس و خرید بلیت"). */

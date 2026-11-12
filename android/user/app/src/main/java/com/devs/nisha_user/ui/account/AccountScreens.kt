@@ -1,5 +1,6 @@
 package com.devs.nisha_user.ui.account
 
+import com.devs.nisha_user.core.designsystem.component.scrollingBand
 import com.devs.nisha_user.core.format.ltr
 import com.devs.nisha_user.core.designsystem.component.CodeText
 import androidx.compose.foundation.background
@@ -117,7 +118,7 @@ fun OrdersScreen(viewModel: OrdersViewModel = hiltViewModel()) {
     Column(Modifier.fillMaxSize()) {
         JtTopBar("سفارش‌های من", onBack = actions.back)
         PullToRefreshBox(isRefreshing = s.refreshing, onRefresh = { viewModel.reload(refresh = true) }, modifier = Modifier.fillMaxSize()) {
-            LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyColumn(Modifier.fillMaxSize().scrollingBand(list), state = list, contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item(key = "account") { AccountTabs(OrdersRoute, Modifier.padding(top = 12.dp)) }
                 item(key = "intro") { Text("همه خریدهای شما، با وضعیت پرداخت و بلیت‌های هر سفارش.", style = text(13.5f), color = c.ink2, modifier = Modifier.padding(horizontal = 16.dp)) }
                 item(key = "filters") { JtPillTabs(ORDER_FILTERS, s.status, viewModel::select, Modifier.padding(horizontal = 16.dp)) }
@@ -195,7 +196,7 @@ fun OrderScreen(viewModel: OrderViewModel = hiltViewModel()) {
 private fun OrderContent(o: Order, receivedAt: Long, reload: () -> Unit) {
     val actions = LocalAppActions.current
     val c = Jt.colors
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxSize().let { m -> val sc = rememberScrollState(); m.scrollingBand(sc).verticalScroll(sc) }.padding(16.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (o.status == OrderStatus.PENDING) {
             JtCard(Modifier.fillMaxWidth(), background = c.warningBg, borderColor = c.warning.copy(alpha = 0.4f)) {
                 if (o.payable) {
@@ -296,7 +297,7 @@ fun ProfileScreen(cities: List<City>, onSignOut: () -> Unit, viewModel: ProfileV
     Column(Modifier.fillMaxSize()) {
         JtTopBar("حساب کاربری", onBack = null)
         val p = s.profile
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(Modifier.fillMaxSize().let { m -> val sc = rememberScrollState(); m.scrollingBand(sc).verticalScroll(sc) }.imePadding().padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             AccountTabs(ProfileRoute, Modifier.padding(top = 12.dp))
             Text("اطلاعات شخصی شما برای خرید و دریافت بلیت.", style = text(13.5f), color = c.ink2, modifier = Modifier.padding(horizontal = 16.dp))
             when {
@@ -356,7 +357,8 @@ fun FavoritesScreen(viewModel: FavoritesViewModel = hiltViewModel()) {
     Column(Modifier.fillMaxSize()) {
         JtTopBar("علاقه‌مندی‌ها", onBack = actions.back)
         PullToRefreshBox(isRefreshing = s.refreshing, onRefresh = { viewModel.load(refresh = true) }, modifier = Modifier.fillMaxSize()) {
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            val favList = rememberLazyListState()
+            LazyColumn(Modifier.fillMaxSize().scrollingBand(favList), state = favList, contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item(key = "account") { AccountTabs(FavoritesRoute, Modifier.padding(top = 12.dp)) }
                 item(key = "intro") { Text("رویدادهایی که نشان کرده‌اید.", style = text(13.5f), color = c.ink2, modifier = Modifier.padding(horizontal = 16.dp)) }
                 val events = s.events
@@ -390,7 +392,7 @@ fun ContentScreen(viewModel: ContentViewModel = hiltViewModel()) {
         JtTopBar(s.page?.title ?: "", onBack = actions.back)
         val page = s.page
         when {
-            page != null -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding()) {
+            page != null -> Column(Modifier.fillMaxSize().let { m -> val sc = rememberScrollState(); m.scrollingBand(sc).verticalScroll(sc) }.padding(16.dp).navigationBarsPadding()) {
                 JtCard(Modifier.fillMaxWidth(), padding = PaddingValues(20.dp)) {
                     Text(page.title, style = text(26f, W.Black), color = c.ink)
                     page.updatedAt?.let { Text("آخرین به‌روزرسانی: ${Fa.date(it)}", style = text(12.5f), color = c.muted, modifier = Modifier.padding(top = 8.dp)) }

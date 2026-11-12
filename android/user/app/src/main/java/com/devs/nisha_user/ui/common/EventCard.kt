@@ -37,8 +37,9 @@ import com.devs.nisha_user.core.designsystem.component.Skeleton
 import com.devs.nisha_user.core.designsystem.component.cardShadow
 import com.devs.nisha_user.core.designsystem.icon.JtIcon
 import com.devs.nisha_user.core.designsystem.icon.Lucide
+import com.devs.nisha_user.core.designsystem.icon.PackageIcons
 import com.devs.nisha_user.core.designsystem.icon.LucidePaths
-import com.devs.nisha_user.core.designsystem.theme.IranSans
+import com.devs.nisha_user.core.designsystem.theme.Vazirmatn
 import com.devs.nisha_user.core.designsystem.theme.Jt
 import com.devs.nisha_user.core.designsystem.theme.JtShapes
 import com.devs.nisha_user.core.designsystem.theme.W
@@ -69,7 +70,7 @@ fun eventWhen(e: PublicEvent): EventWhen {
 fun eventPlace(e: PublicEvent, separator: String = " - "): String = listOfNotNull(e.cityName, e.hallName ?: e.venueName).joinToString(separator)
 
 @Composable
-fun FavoriteButton(eventId: Long, title: String, modifier: Modifier = Modifier, size: Dp = 36.dp) {
+fun FavoriteButton(eventId: Long, title: String, modifier: Modifier = Modifier, size: Dp = 36.dp, plain: Boolean = false) {
     val actions = LocalAppActions.current
     val on = actions.isFavorite(eventId)
     val c = Jt.colors
@@ -77,12 +78,24 @@ fun FavoriteButton(eventId: Long, title: String, modifier: Modifier = Modifier, 
         modifier
             .size(size)
             .clip(CircleShape)
-            .background(c.surface.copy(alpha = 0.95f))
-            .border(1.dp, c.line, CircleShape)
+            .background(if (plain) Color.Transparent else Color.Black.copy(alpha = 0.22f))
             .clickable(role = Role.Button, onClickLabel = if (on) "حذف $title از علاقه‌مندی‌ها" else "افزودن $title به علاقه‌مندی‌ها") { actions.toggleFavorite(eventId) },
         contentAlignment = Alignment.Center,
     ) {
-        JtIcon(Lucide.Heart, size = 18.dp, tint = if (on) c.ticket else c.ink2, filled = on)
+        JtIcon(Lucide.Heart, size = if (plain) 24.dp else 20.dp, tint = if (on || plain) c.ticket else Color.White, filled = on, strokeWidth = 2.1f)
+    }
+}
+
+/** White date tile on the poster corner: "۲۸ / اردیبهشت" (next session, else the start date). */
+@Composable
+fun DateBadge(iso: String, modifier: Modifier = Modifier) {
+    val c = Jt.colors
+    Column(
+        modifier.clip(JtShapes.xl).background(c.surface.copy(alpha = 0.95f)).padding(horizontal = 9.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(Fa.day(iso), style = text(17f, W.Black, lineHeight = 1.3f), color = c.ink)
+        Text(Fa.month(iso), style = text(10.5f, W.Medium, lineHeight = 1.3f), color = c.ink2)
     }
 }
 
@@ -95,16 +108,18 @@ fun PriceText(price: Double?, modifier: Modifier = Modifier) {
         Text(if (price == 0.0) "رایگان" else "", style = text(13f, W.Bold), color = c.successFg, modifier = modifier)
         return
     }
-    Text(
-        buildAnnotatedString {
-            withStyle(SpanStyle(color = c.ink2)) { append("از ") }
-            withStyle(SpanStyle(color = c.brand600, fontWeight = W.Black, fontSize = 14.sp)) { append(Fa.number(p)) }
-            withStyle(SpanStyle(color = c.brand600, fontWeight = W.Bold)) { append(" تومان") }
-        },
-        style = text(13f).copy(fontFamily = IranSans),
-        maxLines = 1,
-        modifier = modifier,
-    )
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        // Blue starting price of the references ("از ۱۵۰,۰۰۰ تومان").
+        Text(
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = c.price, fontWeight = W.Black)) { append("از ") }
+                withStyle(SpanStyle(color = c.price, fontWeight = W.Black, fontSize = 16.sp)) { append(Fa.number(p)) }
+                withStyle(SpanStyle(color = c.price, fontWeight = W.Black)) { append(" تومان") }
+            },
+            style = text(13f).copy(fontFamily = Vazirmatn),
+            maxLines = 1,
+        )
+    }
 }
 
 @Composable
@@ -122,11 +137,11 @@ private fun SmallButton(label: String, onClick: () -> Unit) {
         style = text(13f, W.Bold),
         color = Color.White,
         modifier = Modifier
-            .clip(JtShapes.lg)
+            .clip(JtShapes.xl)
             .background(Jt.colors.brand600)
             .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = 40.dp)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
+            .heightIn(min = 44.dp)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
     )
 }
 
@@ -137,7 +152,8 @@ fun EventCard(event: PublicEvent, modifier: Modifier = Modifier, variant: EventC
     val open = { actions.navigate(EventDetailRoute(event.slug)) }
     val whenText = eventWhen(event)
     val place = eventPlace(event)
-    val shape = JtShapes.xl2
+    val shape = JtShapes.event
+    val badge = event.nextSessionAt ?: event.startDate
     val frame = modifier
         .cardShadow(shape, c.shadow)
         .clip(shape)
@@ -146,68 +162,69 @@ fun EventCard(event: PublicEvent, modifier: Modifier = Modifier, variant: EventC
         .clickable(onClickLabel = event.title, onClick = open)
 
     when (variant) {
-        EventCardVariant.COMPACT -> Row(frame.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            RemoteImage(event.bannerUrl, Modifier.width(104.dp).height(86.dp).clip(JtShapes.xl), fallback = event.categoryCoverUrl, contentDescription = event.title)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(event.title, style = text(14f, W.Black, lineHeight = 1.7f), color = c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                if (place.isNotEmpty()) MetaLine(Lucide.MapPin, place, 14.dp, 12f)
-                MetaLine(Lucide.CalendarDays, whenText.date, 14.dp, 12f)
+        // Text on the start side, the portrait poster on the end side (reference 01, "پیشنهادهای این هفته").
+        EventCardVariant.COMPACT -> Row(frame.padding(8.dp).heightIn(min = 140.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f).padding(vertical = 6.dp, horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(event.title, style = text(14.5f, W.Black, lineHeight = 1.6f), color = c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                (event.hallName ?: event.venueName ?: event.cityName)?.let { MetaLine(PackageIcons.Location, it, 15.dp, 12.5f) }
+                MetaLine(PackageIcons.Calendar, whenText.date, 15.dp, 12.5f)
+                Spacer(Modifier.weight(1f))
+                PriceText(event.minPrice)
+            }
+            Box(Modifier.width(120.dp).fillMaxHeight()) {
+                RemoteImage(event.bannerUrl, Modifier.matchParentSize().clip(JtShapes.xl2), fallback = event.categoryCoverUrl, contentDescription = event.title)
+                FavoriteButton(event.id, event.title, Modifier.align(Alignment.TopEnd).padding(6.dp), size = 36.dp)
             }
         }
 
-        EventCardVariant.FEATURED, EventCardVariant.ROW -> Row(frame.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            RemoteImage(
-                event.bannerUrl,
-                Modifier.width(if (variant == EventCardVariant.ROW) 128.dp else 118.dp).then(if (variant == EventCardVariant.ROW) Modifier.aspectRatio(0.78f) else Modifier.height(168.dp)).clip(JtShapes.xl),
-                fallback = event.categoryCoverUrl,
-                contentDescription = event.title,
-            )
-            Column(Modifier.weight(1f).padding(vertical = 4.dp)) {
-                Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        event.title,
-                        style = text(15f, W.Black, lineHeight = 1.6f),
-                        color = c.ink,
-                        maxLines = 2,
-                        minLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    FavoriteButton(event.id, event.title)
+        // Poster on top with the date badge, then title, venue and the starting price (reference 01, "رویدادهای ویژه").
+        EventCardVariant.FEATURED -> Column(frame) {
+            Box {
+                RemoteImage(event.bannerUrl, Modifier.fillMaxWidth().aspectRatio(1.08f), fallback = event.categoryCoverUrl, contentDescription = event.title)
+                FavoriteButton(event.id, event.title, Modifier.align(Alignment.TopEnd).padding(8.dp), size = 40.dp)
+                badge?.let { DateBadge(it, Modifier.align(Alignment.BottomStart).padding(8.dp)) }
+            }
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(event.title, style = text(15f, W.Black), color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                (event.hallName ?: event.venueName ?: event.cityName)?.let { MetaLine(PackageIcons.Location, it) }
+                PriceText(event.minPrice)
+            }
+        }
+
+        // Reference 02: poster on the start side, title with an outline heart, date / place and the blue price.
+        EventCardVariant.ROW -> Row(frame.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            RemoteImage(event.bannerUrl, Modifier.width(104.dp).aspectRatio(0.75f).clip(JtShapes.xl2), fallback = event.categoryCoverUrl, contentDescription = event.title)
+            Column(Modifier.weight(1f).padding(vertical = 2.dp)) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Text(event.title, style = text(16f, W.Black, lineHeight = 1.6f), color = c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    FavoriteButton(event.id, event.title, Modifier.padding(start = 4.dp), size = 36.dp, plain = true)
                 }
                 Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if (place.isNotEmpty()) MetaLine(Lucide.MapPin, place)
-                    MetaLine(Lucide.CalendarDays, whenText.date)
-                    whenText.time?.let { MetaLine(Lucide.Clock, it) }
+                    MetaLine(PackageIcons.Calendar, whenText.time?.let { "${whenText.date}، ساعت $it" } ?: whenText.date)
+                    if (place.isNotEmpty()) MetaLine(PackageIcons.Location, place)
                 }
                 Spacer(Modifier.weight(1f).heightIn(min = 12.dp))
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    PriceText(event.minPrice, Modifier.weight(1f))
-                    SmallButton("خرید بلیت", open)
-                }
+                PriceText(event.minPrice)
             }
         }
 
         EventCardVariant.GRID -> Column(frame) {
             Box {
-                RemoteImage(
-                    event.bannerUrl,
-                    Modifier.fillMaxWidth().aspectRatio(16f / 10f).clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                    fallback = event.categoryCoverUrl,
-                    contentDescription = event.title,
-                )
-                FavoriteButton(event.id, event.title, Modifier.align(Alignment.TopEnd).padding(10.dp))
+                RemoteImage(event.bannerUrl, Modifier.fillMaxWidth().aspectRatio(16f / 9f), fallback = event.categoryCoverUrl, contentDescription = event.title)
+                FavoriteButton(event.id, event.title, Modifier.align(Alignment.TopEnd).padding(10.dp), size = 40.dp)
+                badge?.let { DateBadge(it, Modifier.align(Alignment.BottomStart).padding(10.dp)) }
             }
-            Column(Modifier.padding(12.dp)) {
-                Text(event.title, style = text(15f, W.Black), color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (place.isNotEmpty()) Box(Modifier.padding(top = 4.dp)) { MetaLine(Lucide.MapPin, eventPlace(event, "  |  ")) }
-                Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.weight(1f)) { MetaLine(Lucide.CalendarDays, whenText.date, size = 12f) }
-                    whenText.time?.let { MetaLine(Lucide.Clock, it, size = 12f) }
+            Column(Modifier.padding(14.dp)) {
+                Text(event.title, style = text(16f, W.Black), color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                event.subtitle?.let { Text(it, style = text(12.5f), color = c.muted, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    MetaLine(PackageIcons.Calendar, whenText.time?.let { "${whenText.date}، ساعت $it" } ?: whenText.date)
+                    if (place.isNotEmpty()) MetaLine(PackageIcons.Location, eventPlace(event, "، "))
                 }
-                Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    PriceText(event.minPrice, Modifier.weight(1f))
-                    SmallButton("مشاهده و خرید", open)
+                Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SmallButton("خرید بلیت ←", open)
+                    Spacer(Modifier.weight(1f))
+                    Box(Modifier.clip(JtShapes.pill).background(c.blueBg).padding(horizontal = 12.dp, vertical = 8.dp)) { PriceText(event.minPrice) }
                 }
             }
         }

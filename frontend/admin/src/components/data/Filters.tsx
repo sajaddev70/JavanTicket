@@ -63,7 +63,7 @@ export function FilterChips({
       aria-pressed={value === v}
       className={cn(
         "inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-[13.5px] font-bold transition",
-        value === v ? "border-brand-600 bg-brand-600 text-white" : "border-line bg-surface text-ink hover:border-brand-500/40",
+        value === v ? "border-brand-600 bg-grad-primary text-white" : "border-line bg-surface text-ink hover:border-brand-500/40",
       )}
     >
       {label}
@@ -123,7 +123,7 @@ export function DateRangePicker({ value, onChange, allowAll }: { value: DateRang
           <button
             type="button"
             onClick={() => onChange({ from: "", to: "" })}
-            className={cn("h-8 rounded-lg px-3 text-[13px] font-bold", !value.from && !value.to ? "bg-brand-600 text-white" : "text-ink hover:bg-field")}
+            className={cn("h-8 rounded-lg px-3 text-[13px] font-bold", !value.from && !value.to ? "bg-grad-primary text-white" : "text-ink hover:bg-field")}
           >
             همه
           </button>
@@ -133,7 +133,7 @@ export function DateRangePicker({ value, onChange, allowAll }: { value: DateRang
             key={p.days}
             type="button"
             onClick={() => onChange(lastDays(p.days))}
-            className={cn("h-8 rounded-lg px-3 text-[13px] font-bold", active?.days === p.days ? "bg-brand-600 text-white" : "text-ink hover:bg-field")}
+            className={cn("h-8 rounded-lg px-3 text-[13px] font-bold", active?.days === p.days ? "bg-grad-primary text-white" : "text-ink hover:bg-field")}
           >
             {p.label}
           </button>

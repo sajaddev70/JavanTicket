@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="280" viewBox="0 0 900 280">
+<rect width="100%" height="100%" fill="none"/>
+<g transform="translate(40,10)">
+    <rect width="100%" height="100%" fill="none"/>
+    <g fill="none" stroke-linecap="round" stroke-width="9.9">
+      <path d="M 100.0 58.4 C 76.0 90.4, 52.0 124.4, 30.0 149.60000000000002" stroke="#163C8C"/>
+      <path d="M 110.0 64.4 C 96.0 94.4, 92.0 134.4, 92.0 162.8" stroke="#2F80FF"/>
+      <path d="M 120.0 58.4 C 144.0 90.4, 168.0 124.4, 190.0 149.60000000000002" stroke="#6EB8FF"/>
+      <path d="M 110.0 64.4 C 124.0 94.4, 128.0 134.4, 128.0 162.8" stroke="#2F80FF" opacity="0.95"/>
+      <path d="M 104.0 56.4 C 105.0 68.4, 107.0 78.4, 110.0 84.4" stroke="#163C8C" opacity="0.95"/>
+      <path d="M 116.0 56.4 C 115.0 68.4, 113.0 78.4, 110.0 84.4" stroke="#6EB8FF" opacity="0.95"/>
+    </g>
+    <circle cx="110.0" cy="48.4" r="13.2" fill="#FF5A75"/></g>
+<text x="310" y="112" fill="#163C8C" font-size="34" font-family="Vazirmatn, IRANYekan, sans-serif" direction="rtl">مرکز همایش و نمایش</text>
+<text x="310" y="196" fill="#163C8C" font-size="90" font-weight="700" font-family="Vazirmatn, IRANYekan, sans-serif" direction="rtl">جوان</text>
+</svg>
