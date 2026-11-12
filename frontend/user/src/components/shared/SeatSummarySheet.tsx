@@ -42,7 +42,7 @@ export function SeatSummarySheet({
       </button>
       <div className="mx-auto flex max-w-[1216px] flex-col gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
             <Icon name="common/seat-map" className="size-6" />
           </span>
           <div className="min-w-0 flex-1">
@@ -53,7 +53,7 @@ export function SeatSummarySheet({
           </div>
           <div className="shrink-0 border-r border-line pr-3 text-left">
             <p className="text-[11.5px] text-muted">مجموع مبلغ</p>
-            <p className="whitespace-nowrap text-[20px] font-black text-brand-600">
+            <p className="whitespace-nowrap text-[20px] font-black text-ink">
               {faNumber(total)} <span className="text-[13px] font-bold">تومان</span>
             </p>
           </div>

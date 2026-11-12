@@ -104,12 +104,15 @@ export function VerifyView() {
   const error = verify.isError ? errorMessage(verify.error) : "";
 
   return (
-    <div className="relative flex min-h-[100dvh] flex-col overflow-hidden bg-surface lg:min-h-[calc(100vh-77px)] lg:bg-page">
+    <div
+      className="relative isolate flex min-h-[100dvh] flex-col overflow-hidden lg:min-h-[calc(100vh-78px)]"
+      style={{ background: "linear-gradient(180deg, #0f2a68 0%, #1d47a6 32%, #4a63c7 58%, #8a6fd6 78%, #e58fbf 100%)" }}
+    >
       <PageTopBar fallbackHref="/login" />
-      <Image src="/assets/auth/login-wave.svg" alt="" aria-hidden width={1200} height={320} loading="eager" className="pointer-events-none absolute inset-x-0 bottom-0 h-auto w-full opacity-80 dark:opacity-20" />
+      <div aria-hidden className="absolute -left-20 top-24 -z-10 size-72 rounded-full bg-[#6eb8ff]/25 blur-3xl" />
 
-      <div className="relative flex flex-1 items-start justify-center px-5 pb-16 pt-2 lg:items-center lg:py-12">
-        <div className="w-full max-w-[440px] text-center lg:card lg:max-w-[520px] lg:px-10 lg:py-10">
+      <div className="relative flex flex-1 items-start justify-center px-4 pb-16 pt-2 lg:items-center lg:py-12">
+        <div className="w-full max-w-[460px] rounded-[26px] bg-surface px-5 py-7 text-center shadow-float sm:px-8 lg:max-w-[520px] lg:px-10 lg:py-10">
           <Image src="/assets/illustrations/otp-message.svg" alt="" aria-hidden width={240} height={165} preload className="mx-auto h-auto w-[200px] sm:w-[230px]" />
           <h1 className="mt-4 text-[28px] font-black text-ink">تایید کد</h1>
           <p className="mx-auto mt-2 max-w-[340px] text-[15px] leading-8 text-ink-2">
@@ -152,6 +155,7 @@ export function VerifyView() {
             className={cn(
               "mx-auto mt-3 flex h-12 w-full max-w-[300px] items-center justify-center gap-2 rounded-2xl text-[14.5px] font-bold transition",
               left > 0 ? "cursor-not-allowed bg-field text-muted" : "bg-brand-50 text-brand-600 hover:bg-brand-100",
+              "rounded-full",
             )}
           >
             {left > 0 ? <Clock className="size-5" /> : <RefreshCw className={cn("size-5", resend.isPending && "animate-spin")} />}
@@ -165,7 +169,7 @@ export function VerifyView() {
           <Button
             size="xl"
             block
-            className="mt-5 h-[60px] rounded-2xl text-[17px]"
+            className="mt-5 h-[58px] text-[17px]"
             onClick={() => submit(otp.join(""))}
             disabled={otp.some((d) => !d) && !verify.isPending}
             loading={verify.isPending}

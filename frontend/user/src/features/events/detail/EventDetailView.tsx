@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState, ErrorState } from "@/components/feedback/States";
 import { errorMessage } from "@/services/api";
 import { toast } from "@/stores/useToastStore";
-import { faDateRange, faFullDate, faNumber } from "@/lib/format";
+import { faDateRange, faFullDate, faNumber, faTime } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { cn } from "@/lib/cn";
 import type { EventDetail, EventSession } from "@/types/event";
@@ -68,6 +68,14 @@ function EventDetailContent({ event }: { event: EventDetail }) {
   const venue = [event.venue_name, event.hall_name].filter(Boolean).join("، ");
   const mapQuery = [event.hall_address, event.venue_name, event.city_name].filter(Boolean).join("، ");
   const shownSessions = allSessions ? event.sessions : event.sessions.slice(0, 8);
+  const sections = [
+    about.length > 0 && { id: "about", label: "معرفی" },
+    { id: "sessions", label: "سانس‌ها" },
+    event.speakers.length > 0 && { id: "speakers", label: "سخنرانان" },
+    (venue || event.hall_address) && { id: "venue", label: "نقشه" },
+    event.gallery.length > 0 && { id: "gallery", label: "گالری" },
+  ].filter(Boolean) as { id: string; label: string }[];
+  const [tab, setTab] = useState(sections[0].id);
 
   /** Sticky CTA: without a chosen session it scrolls to the sessions; with one it continues to seats / quantity. */
   function proceed() {
@@ -93,7 +101,7 @@ function EventDetailContent({ event }: { event: EventDetail }) {
   }
 
   const quick: { icon: React.ReactNode; tone: string; top?: string; value: string }[] = [
-    { icon: <Icon name="common/ticket" className="size-5" />, tone: "bg-brand-50 text-brand-600", top: "قیمت از", value: minPrice > 0 ? `${faNumber(minPrice)} تومان` : "رایگان" },
+    { icon: <Icon name="common/ticket" className="size-5" />, tone: "bg-blue-bg text-blue", top: "قیمت از", value: minPrice > 0 ? `${faNumber(minPrice)} تومان` : "رایگان" },
     minutes && { icon: <Icon name="common/clock" className="size-5" />, tone: "bg-warning-bg text-warning", value: `حدود ${faNumber(minutes)} دقیقه` },
     event.sessions.length > 0 && { icon: <Icon name="common/sessions" className="size-5" />, tone: "bg-success-bg text-success-fg", value: `${faNumber(event.sessions.length)} سانس` },
     event.category_name && {
@@ -111,53 +119,77 @@ function EventDetailContent({ event }: { event: EventDetail }) {
       <PageTopBar
         fallbackHref="/events"
         actions={
-          <TopBarButton label={favorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"} pressed={favorite} onClick={() => toggle(event.id)}>
-            <Heart className={cn("size-[22px]", favorite && "fill-ticket text-ticket")} />
-          </TopBarButton>
+          <>
+            <TopBarButton label={favorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"} pressed={favorite} onClick={() => toggle(event.id)}>
+              <Heart className={cn("size-[22px]", favorite && "fill-ticket text-ticket")} />
+            </TopBarButton>
+            <TopBarButton label="اشتراک‌گذاری" onClick={share}>
+              <Icon name="common/share" className="size-[21px]" />
+            </TopBarButton>
+          </>
         }
       />
 
       <div className="container-page space-y-3.5 pb-6 pt-1 lg:pt-6">
-        {/* Hero: the event photo with the title on the start side */}
-        <section className="relative overflow-hidden rounded-[24px] bg-navy-950 text-white">
-          <SmartImage src={mediaUrl(event.banner_url)} fallback={mediaUrl(event.category_cover_url)} alt={event.title} fill preload sizes="(min-width: 1280px) 1216px, 100vw" className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-l from-[#0b2b5b]/95 via-[#0b2b5b]/70 via-50% to-transparent" />
-          <div className="relative flex min-h-[280px] flex-col justify-center p-5 sm:min-h-[320px] sm:p-8 lg:min-h-[380px] lg:px-12">
-            <div className="max-w-[72%] sm:max-w-[560px]">
-              <h1 className="text-[26px] font-black leading-[1.45] sm:text-[34px] lg:text-[40px]">{event.title}</h1>
-              {event.subtitle && <p className="mt-1 text-[14px] text-white/85 sm:text-[16px]">{event.subtitle}</p>}
-              <ul className="mt-4 space-y-2 text-[14px] text-white/95">
-                {event.city_name && (
-                  <li className="flex items-center gap-2">
-                    <Icon name="common/location" className="size-5 shrink-0" />
-                    {event.city_name}
-                  </li>
-                )}
-                {venue && (
-                  <li className="flex items-center gap-2">
-                    <Icon name="common/halls" className="size-5 shrink-0" />
-                    {venue}
-                  </li>
-                )}
-                {event.first_start && (
-                  <li className="flex items-center gap-2">
-                    <Icon name="common/calendar-simple" className="size-5 shrink-0" />
-                    {faDateRange(event.first_start, event.last_end)}
-                  </li>
-                )}
-              </ul>
-              {cancelled && <p className="mt-3 inline-block rounded-xl bg-danger px-3 py-1.5 text-[13px] font-bold">این رویداد لغو شده است.</p>}
+        {/* Hero on the navy band (reference 03): the photo in a neon frame, then the category, title and when / where in white */}
+        <section className="relative text-white lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center lg:gap-10">
+          <div className="relative aspect-[16/10] overflow-hidden rounded-[26px] bg-navy-950 shadow-[0_0_0_1.5px_rgb(110_184_255/0.7),0_16px_40px_rgb(47_128_255/0.3)] lg:order-2">
+            <SmartImage src={mediaUrl(event.banner_url)} fallback={mediaUrl(event.category_cover_url)} alt={event.title} fill preload sizes="(min-width: 1024px) 600px, 100vw" className="object-cover" />
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#16307e] to-transparent lg:hidden" />
+            <div className="absolute left-3 top-3 hidden gap-2 lg:flex">
+              <TopBarButton label={favorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"} pressed={favorite} onClick={() => toggle(event.id)}>
+                <Heart className={cn("size-[22px]", favorite && "fill-ticket text-ticket")} />
+              </TopBarButton>
+              <TopBarButton label="اشتراک‌گذاری" onClick={share}>
+                <Share2 className="size-5" />
+              </TopBarButton>
             </div>
           </div>
-          <div className="absolute left-4 top-4 hidden gap-2 lg:flex">
-            <TopBarButton label={favorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"} pressed={favorite} onClick={() => toggle(event.id)} className="bg-white/15 text-white backdrop-blur hover:bg-white/25 hover:text-white">
-              <Heart className={cn("size-[22px]", favorite && "fill-ticket text-ticket")} />
-            </TopBarButton>
-            <TopBarButton label="اشتراک‌گذاری" onClick={share} className="bg-white/15 text-white backdrop-blur hover:bg-white/25 hover:text-white">
-              <Share2 className="size-5" />
-            </TopBarButton>
+          <div className="relative -mt-5 px-1 [text-shadow:0_1px_12px_rgb(15_20_80/0.35)] sm:px-2 lg:order-1 lg:mt-0 lg:px-0">
+            {event.category_name && <span className="inline-block rounded-full bg-grad-primary px-3.5 py-1 text-[13px] font-black shadow-[0_6px_16px_rgb(110_50_245/0.4)]">{event.category_name}</span>}
+            <h1 className="mt-3 text-[24px] font-black leading-[1.55] sm:text-[30px] lg:text-[38px]">{event.title}</h1>
+            {event.subtitle && <p className="mt-0.5 text-[14px] text-white/80 sm:text-[16px]">{event.subtitle}</p>}
+            <ul className="mt-3 space-y-2 text-[14.5px] font-bold text-white/95">
+              {event.first_start && (
+                <li className="flex items-center gap-2.5">
+                  <Icon name="common/calendar-simple" className="size-[22px] shrink-0" />
+                  {faDateRange(event.first_start, event.last_end)}
+                </li>
+              )}
+              {event.sessions[0] && (
+                <li className="flex items-center gap-2.5">
+                  <Icon name="common/clock" className="size-[22px] shrink-0" />
+                  <span className="tabular">{faTime(event.sessions[0].start_time)}</span>
+                </li>
+              )}
+              {(venue || event.city_name) && (
+                <li className="flex items-center gap-2.5">
+                  <Icon name="common/location" className="size-[22px] shrink-0" />
+                  {[event.city_name, venue].filter(Boolean).join("، ")}
+                </li>
+              )}
+            </ul>
+            {cancelled && <p className="mt-3 inline-block rounded-full bg-danger px-3.5 py-1.5 text-[13px] font-bold">این رویداد لغو شده است.</p>}
           </div>
         </section>
+
+        {/* Section tabs (معرفی، سانس‌ها، سخنرانان، نقشه، گالری) */}
+        <nav aria-label="بخش‌های رویداد" className="card no-scrollbar flex gap-1 overflow-x-auto rounded-full p-1.5">
+          {sections.map((t) => (
+            <a
+              key={t.id}
+              href={`#${t.id}`}
+              onClick={() => setTab(t.id)}
+              aria-current={tab === t.id ? "true" : undefined}
+              className={cn(
+                "flex min-h-11 flex-1 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 text-[14px] font-bold transition",
+                tab === t.id ? "bg-grad-primary glow-primary text-white" : "text-ink-2 hover:text-ink",
+              )}
+            >
+              {t.label}
+            </a>
+          ))}
+        </nav>
 
         <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-5">
           <div className="min-w-0 space-y-3.5">
@@ -168,7 +200,7 @@ function EventDetailContent({ event }: { event: EventDetail }) {
                     <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-xl", q.tone)}>{q.icon}</span>
                     <span className="min-w-0 text-[13px] font-bold leading-5 text-ink">
                       {q.top && <span className="block text-[11.5px] font-medium text-muted">{q.top}</span>}
-                      <span className={cn("line-clamp-2", q.top && "text-brand-600")}>{q.value}</span>
+                      <span className={cn("line-clamp-2", q.top && "text-price")}>{q.value}</span>
                     </span>
                   </li>
                 ))}
@@ -176,9 +208,9 @@ function EventDetailContent({ event }: { event: EventDetail }) {
             )}
 
             {about.length > 0 && (
-              <section aria-labelledby="about-title" className="card p-4 sm:p-5">
+              <section id="about" aria-labelledby="about-title" className="card scroll-mt-24 p-4 sm:p-5">
                 <h2 id="about-title" className="text-[19px] font-black text-ink">
-                  درباره این رویداد
+                  درباره رویداد
                 </h2>
                 <div className={cn("mt-2.5 space-y-3 text-[14.5px] leading-8 text-ink-2", !aboutOpen && "line-clamp-3")}>
                   {about.map((p, i) => (
@@ -206,7 +238,7 @@ function EventDetailContent({ event }: { event: EventDetail }) {
               </section>
             )}
 
-            <section ref={sessionsRef} aria-labelledby="sessions-title" className="card scroll-mt-4 p-4 sm:p-5">
+            <section id="sessions" ref={sessionsRef} aria-labelledby="sessions-title" className="card scroll-mt-24 p-4 sm:p-5">
               <SectionHeader
                 title="سانس‌ها"
                 headingId="sessions-title"
@@ -219,7 +251,7 @@ function EventDetailContent({ event }: { event: EventDetail }) {
                 }
               />
               {event.sessions.length ? (
-                <ul className="grid grid-cols-2 gap-2.5 min-[520px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+                <ul className="grid gap-2.5 md:grid-cols-2">
                   {shownSessions.map((s) => (
                     <li key={s.id}>
                       <SessionCard session={s} selected={s.id === selectedId} onSelect={() => setSelectedId(s.id)} />
@@ -232,7 +264,7 @@ function EventDetailContent({ event }: { event: EventDetail }) {
             </section>
 
             {(venue || event.hall_address) && (
-              <section aria-labelledby="venue-title" className="card p-4 sm:p-5">
+              <section id="venue" aria-labelledby="venue-title" className="card scroll-mt-24 p-4 sm:p-5">
                 <h2 id="venue-title" className="flex items-center gap-2 text-[19px] font-black text-ink">
                   <Icon name="common/location" className="size-[22px] text-purple" />
                   محل برگزاری
@@ -277,9 +309,9 @@ function EventDetailContent({ event }: { event: EventDetail }) {
           {/* Desktop: price and the next step stay beside the content */}
           <aside className="card hidden p-5 lg:sticky lg:top-24 lg:block">
             <p className="text-[13.5px] text-muted">قیمت بلیت</p>
-            <p className="mt-1 text-[24px] font-black text-brand-600">{minPrice > 0 ? <>از {faNumber(minPrice)} <span className="text-[15px] font-bold">تومان</span></> : "رایگان"}</p>
+            <p className="mt-1 text-[24px] font-black text-price">{minPrice > 0 ? <>از {faNumber(minPrice)} <span className="text-[15px] font-bold">تومان</span></> : "رایگان"}</p>
             {selected && <p className="mt-3 rounded-xl bg-brand-50 px-3 py-2 text-[13px] font-bold text-brand-600">سانس انتخاب‌شده: {faFullDate(selected.start_time)}</p>}
-            <Button size="xl" block className="mt-4" disabled={ctaDisabled} onClick={proceed}>
+            <Button variant="pink" size="xl" block className="mt-4" disabled={ctaDisabled} onClick={proceed}>
               {ctaLabel}
               <ArrowLeft className="size-5" />
             </Button>
@@ -295,15 +327,15 @@ function EventDetailContent({ event }: { event: EventDetail }) {
 
       {/* Phones: price and the next step stay on screen, right above the bottom navigation */}
       <div className="h-[84px] lg:hidden" aria-hidden />
-      <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 border-t border-line bg-surface/95 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-30 border-t border-line bg-surface/90 backdrop-blur-xl lg:hidden">
         <div className="container-page flex h-[76px] items-center gap-3">
-          <Button size="lg" className="min-h-[52px] flex-1" disabled={ctaDisabled} onClick={proceed}>
+          <Button variant="pink" size="lg" className="min-h-[54px] flex-1" disabled={ctaDisabled} onClick={proceed}>
             {ctaLabel}
             <ArrowLeft className="size-5" />
           </Button>
           <div className="min-w-0 text-left">
             <p className="text-[12px] text-muted">قیمت بلیت</p>
-            <p className="text-[16px] font-black text-brand-600">{minPrice > 0 ? `از ${faNumber(minPrice)} تومان` : "رایگان"}</p>
+            <p className="text-[16px] font-black text-price">{minPrice > 0 ? `از ${faNumber(minPrice)} تومان` : "رایگان"}</p>
           </div>
         </div>
       </div>
@@ -325,7 +357,7 @@ function ExtraSections({ event }: { event: EventDetail }) {
   return (
     <>
       {event.speakers.length > 0 && (
-        <section aria-labelledby="speakers-title" className="card p-4 sm:p-5">
+        <section id="speakers" aria-labelledby="speakers-title" className="card scroll-mt-24 p-4 sm:p-5">
           <SectionHeader title="سخنرانان" headingId="speakers-title" icon={<Mic className="size-5 text-brand-600" />} />
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
             {event.speakers.map((s) => (
@@ -344,7 +376,7 @@ function ExtraSections({ event }: { event: EventDetail }) {
       )}
 
       {event.gallery.length > 0 && (
-        <section aria-labelledby="gallery-title" className="card p-4 sm:p-5">
+        <section id="gallery" aria-labelledby="gallery-title" className="card scroll-mt-24 p-4 sm:p-5">
           <SectionHeader title="گالری رویداد" headingId="gallery-title" icon={<Images className="size-5 text-brand-600" />} />
           <ul className="no-scrollbar -mx-1 flex snap-x gap-2.5 overflow-x-auto px-1 md:grid md:grid-cols-3">
             {event.gallery.map((g) => (
@@ -398,7 +430,7 @@ function EventDetailSkeleton() {
     <>
       <PageTopBar fallbackHref="/events" />
       <div className="container-page space-y-3.5 pt-1 lg:pt-6" aria-busy>
-        <Skeleton className="h-[280px] rounded-[24px] lg:h-[380px]" />
+        <Skeleton className="aspect-[16/10] rounded-[26px] bg-white/15 lg:aspect-auto lg:h-[380px]" />
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-[68px] rounded-2xl" />

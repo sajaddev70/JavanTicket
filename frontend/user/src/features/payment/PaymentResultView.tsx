@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Armchair, Hash, Home, Hourglass, RefreshCw, Star, Undo2, X } from "lucide-react";
+import { Armchair, ArrowLeft, Check, Hash, Home, Hourglass, RefreshCw, Star, Undo2, X } from "lucide-react";
 import { paymentService } from "@/services/payment.service";
 import { errorMessage, isStatus } from "@/services/api";
 import { queryKeys } from "@/constants/queryKeys";
@@ -56,28 +55,73 @@ function Result({ payment }: { payment: PaymentResult }) {
     { icon: "hash" as const, label: "شماره سفارش", value: o.order_number },
   ].filter(Boolean) as { icon: IconName | "hash"; label: string; value: string }[];
 
-  const heading = { success: "پرداخت با موفقیت انجام شد", pending: "در حال بررسی پرداخت ...", failed: "پرداخت ناموفق بود" }[tone];
   const lead = {
-    success: "از همراهی شما سپاسگزاریم. بلیت شما صادر شد و در بخش بلیت‌های من در دسترس است.",
+    success: "بلیت(ها)ی شما صادر و به بلیت‌های من اضافه شد.",
     pending: "نتیجه پرداخت هنوز از بانک دریافت نشده است؛ این صفحه خودکار به‌روز می‌شود.",
     failed: payment.failure_reason ?? "پرداخت انجام نشد. در صورت کسر مبلغ، طی ۷۲ ساعت به حساب شما بازمی‌گردد.",
   }[tone];
 
+  const heading = { success: "پرداخت با موفقیت انجام شد!", pending: "در حال بررسی پرداخت ...", failed: "پرداخت ناموفق بود" }[tone];
+
   return (
-    <div className="mx-auto w-full max-w-[792px] px-4 sm:px-6 pb-8 pt-2 lg:pt-8" aria-live="polite">
-      <div className="rounded-[24px] bg-surface-2 px-4 pb-6 pt-4 text-center">
+    <ResultScreen tone={tone}>
+      <div className="text-center text-white">
         <Illustration tone={tone} />
-        <h1 className={cn("mt-2 text-[24px] font-black sm:text-[28px]", tone === "failed" ? "text-danger-fg" : "text-ink")}>{heading}</h1>
-        <p className="mx-auto mt-2 max-w-[440px] text-[14.5px] leading-7 text-ink-2">{lead}</p>
+        <h1 className="mx-auto mt-3 max-w-[340px] text-[28px] font-black leading-[1.5] sm:max-w-none sm:text-[32px]">{heading}</h1>
+        <p className="mx-auto mt-2 max-w-[420px] text-[15px] leading-8 text-white/85">{lead}</p>
       </div>
 
-      <section aria-labelledby="details-title" className="card mt-3.5 p-4 sm:p-5">
+      {/* Order number card with the green check (reference 07) */}
+      <div className="mt-6 flex items-center gap-3 rounded-[22px] bg-surface/95 px-5 py-4 shadow-float">
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] text-muted">شماره سفارش</p>
+          <p dir="ltr" className="font-code truncate text-right text-[22px] font-black text-ink">
+            {o.order_number}
+          </p>
+        </div>
+        <CopyButton value={o.order_number} label="شماره سفارش" />
+        {tone === "success" && (
+          <span className="bg-grad-success flex size-10 shrink-0 items-center justify-center rounded-full text-white">
+            <Check className="size-6" strokeWidth={3} />
+          </span>
+        )}
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {tone === "success" ? (
+          <>
+            <ButtonLink href={firstTicket ? `/tickets/${firstTicket.id}` : "/tickets"} size="xl" block>
+              مشاهده بلیت‌ها
+              <ArrowLeft className="size-5" />
+            </ButtonLink>
+            <ButtonLink href="/" variant="glass" size="xl" block>
+              <Home className="size-5" />
+              بازگشت به صفحه اصلی
+            </ButtonLink>
+          </>
+        ) : tone === "failed" ? (
+          <>
+            {o.payable && (
+              <ButtonLink href={`/payment?order=${encodeURIComponent(o.order_number)}`} size="xl" block>
+                <RefreshCw className="size-5" />
+                تلاش مجدد برای پرداخت
+              </ButtonLink>
+            )}
+            <ButtonLink href={`/orders/${encodeURIComponent(o.order_number)}`} variant="glass" size="xl" block>
+              <Undo2 className="size-5" />
+              مشاهده سفارش
+            </ButtonLink>
+          </>
+        ) : null}
+      </div>
+
+      <section aria-labelledby="details-title" className="card mt-6 p-4 sm:p-5">
         <h2 id="details-title" className="mb-2 flex items-center gap-2 text-[18px] font-black text-ink">
           <Icon name="common/invoice" className="size-[22px] text-brand-600" />
           جزئیات پرداخت
         </h2>
         <dl className="divide-y divide-line text-[14px]">
-          {codes.map((c) => (
+          {codes.filter((c) => c.label !== "شماره سفارش").map((c) => (
             <div key={c.label} className="flex min-h-14 items-center justify-between gap-3 py-2">
               <dt className="flex items-center gap-2 text-ink-2">
                 {c.icon === "hash" ? <Hash className="size-5" /> : <Icon name={c.icon} className="size-5" />}
@@ -120,43 +164,33 @@ function Result({ payment }: { payment: PaymentResult }) {
           <Row icon={<Icon name="common/credit-card" className="size-5" />} label="روش پرداخت" value={payment.gateway_title} />
         </dl>
 
-        <div className="mt-4 space-y-2.5">
-          {tone === "success" ? (
-            <>
-              <ButtonLink href={firstTicket ? `/tickets/${firstTicket.id}` : "/tickets"} size="xl" block>
-                <Icon name="common/ticket" className="size-[22px]" />
-                مشاهده بلیت
-              </ButtonLink>
-              <ButtonLink href="/" variant="outline" size="lg" block className="border-brand-100 bg-brand-50/50 text-brand-600">
-                <Home className="size-5" />
-                بازگشت به خانه
-              </ButtonLink>
-            </>
-          ) : tone === "failed" ? (
-            <>
-              {o.payable && (
-                <ButtonLink href={`/payment?order=${encodeURIComponent(o.order_number)}`} size="xl" block>
-                  <RefreshCw className="size-5" />
-                  تلاش مجدد برای پرداخت
-                </ButtonLink>
-              )}
-              <ButtonLink href={`/orders/${encodeURIComponent(o.order_number)}`} variant="outline" size="lg" block>
-                <Undo2 className="size-5" />
-                مشاهده سفارش
-              </ButtonLink>
-            </>
-          ) : null}
-        </div>
       </section>
 
       {tone === "success" && (
-        <p className="mt-3.5 flex items-center gap-3 rounded-2xl bg-surface-2 px-4 py-3.5 text-[13px] leading-6 text-ink-2">
+        <p className="mt-3.5 flex items-center gap-3 rounded-[22px] bg-surface px-4 py-3.5 text-[13px] leading-6 text-ink-2 shadow-card">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
             <Icon name="common/shield-check" className="size-6" />
           </span>
           بلیت‌ها همیشه در «بلیت‌های من» در دسترس هستند و از صفحه هر بلیت می‌توانید آن را به موبایل خود پیامک کنید.
         </p>
       )}
+    </ResultScreen>
+  );
+}
+
+const SCREEN_BG: Record<Tone, string> = {
+  success: "linear-gradient(180deg, #005846 0%, #0b5a5c 30%, #115465 50%, #0b3367 78%, #102b67 100%)",
+  pending: "linear-gradient(180deg, #6b3e05 0%, #4a3a52 40%, #1d3470 75%, #102b67 100%)",
+  failed: "linear-gradient(180deg, #7a1230 0%, #5a1d55 40%, #23306f 75%, #102b67 100%)",
+};
+
+/** Full-screen colored background of the result (reference 07: green → navy for a successful payment). */
+function ResultScreen({ tone, children }: { tone: Tone; children: React.ReactNode }) {
+  return (
+    <div className="relative isolate -mb-px min-h-[calc(100dvh-64px)] overflow-hidden lg:min-h-0" aria-live="polite">
+      <div aria-hidden className="absolute inset-0 -z-10" style={{ background: SCREEN_BG[tone] }} />
+      <div aria-hidden className="absolute -right-24 -top-24 -z-10 size-72 rounded-full bg-white/10 blur-3xl" />
+      <div className="mx-auto w-full max-w-[560px] px-4 pb-10 pt-[calc(24px+env(safe-area-inset-top))] sm:px-6 lg:pt-12">{children}</div>
     </div>
   );
 }
@@ -173,57 +207,67 @@ function Row({ icon, label, value }: { icon: React.ReactNode; label: string; val
   );
 }
 
-/** Success: the package's success-payment.svg with confetti; failure / pending: the same composition in their colors. */
+/** Glowing status disc with the confetti bars of reference 07 (success); failure / pending in their colors. */
 function Illustration({ tone }: { tone: Tone }) {
-  const confetti = ["#1268E8", "#F59E0B", "#16A34A", "#F43F5E", "#38BDF8", "#7C3AED"];
+  const bars = [
+    { c: "#FDB124", x: 78, y: 6, r: -35, w: 34 },
+    { c: "#86EFAC", x: 64, y: 2, r: -20, w: 16 },
+    { c: "#38BDF8", x: 18, y: 26, r: 25, w: 22 },
+    { c: "#FF5A75", x: 12, y: 60, r: -15, w: 28 },
+    { c: "#8E45FF", x: 84, y: 40, r: -15, w: 22 },
+    { c: "#FDE047", x: 86, y: 70, r: 25, w: 20 },
+    { c: "#2F80FF", x: 22, y: 84, r: -40, w: 16 },
+    { c: "#FF5EC8", x: 74, y: 88, r: 30, w: 12 },
+  ];
+  const disc = { success: "from-[#2ee05a] to-[#0ca52d]", failed: "from-[#ff6b81] to-[#e0243f]", pending: "from-[#ffc14d] to-[#f08a1c]" }[tone];
   return (
-    <div className="relative mx-auto flex h-[150px] w-full max-w-[300px] items-center justify-center" aria-hidden>
+    <div className="relative mx-auto flex h-[190px] w-full max-w-[300px] items-center justify-center" aria-hidden>
       {tone === "success" &&
-        Array.from({ length: 14 }, (_, i) => (
+        bars.map((b, i) => (
           <span
             key={i}
-            className="absolute h-2.5 w-1.5 animate-[confetti-fall_2.6s_ease-in-out_infinite] rounded-full"
-            style={{ background: confetti[i % confetti.length], left: `${6 + ((i * 47) % 88)}%`, top: `${(i * 29) % 55}%`, animationDelay: `${(i % 6) * 0.35}s` }}
+            className="absolute h-2.5 animate-[confetti-fall_2.8s_ease-in-out_infinite] rounded-full"
+            style={{ background: b.c, left: `${b.x}%`, top: `${b.y}%`, width: b.w, transform: `rotate(${b.r}deg)`, animationDelay: `${(i % 4) * 0.4}s` }}
           />
         ))}
-      {tone === "success" ? (
-        <Image src="/assets/illustrations/success-payment.svg" alt="" width={140} height={140} preload className="relative size-[140px]" />
-      ) : (
-        <span className={cn("relative flex size-[140px] items-center justify-center rounded-full", tone === "failed" ? "bg-danger-bg" : "bg-warning-bg")}>
-          <span className={cn("flex size-[90px] items-center justify-center rounded-full text-white", tone === "failed" ? "bg-danger" : "bg-warning")}>
-            {tone === "failed" ? <X className="size-12" strokeWidth={3} /> : <Hourglass className="size-11" />}
-          </span>
+      <span className="absolute size-[170px] rounded-full bg-white/10 blur-2xl" />
+      <span className="relative flex size-[132px] items-center justify-center rounded-full bg-white/95 p-2 shadow-[0_0_60px_rgb(120_255_150/0.45)]">
+        <span className={cn("flex size-full items-center justify-center rounded-full bg-gradient-to-b text-white", disc)}>
+          {tone === "success" ? <Check className="size-16" strokeWidth={3.2} /> : tone === "failed" ? <X className="size-14" strokeWidth={3} /> : <Hourglass className="size-12" />}
         </span>
-      )}
+      </span>
     </div>
   );
 }
 
 function Unverified() {
   return (
-    <div className="mx-auto w-full max-w-[792px] px-4 sm:px-6 py-6">
-      <div className="rounded-[24px] bg-surface-2 px-4 pb-6 pt-4 text-center">
+    <ResultScreen tone="failed">
+      <div className="text-center text-white">
         <Illustration tone="failed" />
-        <h1 className="mt-2 text-[22px] font-black text-danger-fg">پرداخت ناموفق بود</h1>
-        <p className="mx-auto mt-2 max-w-[420px] text-[14.5px] leading-7 text-ink-2">اطلاعات این پرداخت پیدا نشد. اگر مبلغی از حساب شما کسر شده است، طی ۷۲ ساعت بازمی‌گردد.</p>
+        <h1 className="mt-3 text-[26px] font-black">پرداخت ناموفق بود</h1>
+        <p className="mx-auto mt-2 max-w-[420px] text-[14.5px] leading-7 text-white/85">اطلاعات این پرداخت پیدا نشد. اگر مبلغی از حساب شما کسر شده است، طی ۷۲ ساعت بازمی‌گردد.</p>
         <div className="mx-auto mt-5 flex max-w-[380px] flex-col gap-2.5">
           <ButtonLink href="/orders" size="lg" block>
             سفارش‌های من
           </ButtonLink>
-          <ButtonLink href="/" variant="outline" size="lg" block>
+          <ButtonLink href="/" variant="glass" size="lg" block>
             بازگشت به خانه
           </ButtonLink>
         </div>
       </div>
-    </div>
+    </ResultScreen>
   );
 }
 
 function ResultSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-[792px] px-4 sm:px-6 space-y-3.5 pt-2 lg:pt-8" aria-busy>
-      <Skeleton className="h-[260px] rounded-[24px]" />
-      <Skeleton className="h-[520px] rounded-2xl" />
-    </div>
+    <ResultScreen tone="pending">
+      <div className="space-y-3.5" aria-busy>
+        <Skeleton className="mx-auto h-[190px] w-[190px] rounded-full bg-white/15" />
+        <Skeleton className="h-[80px] rounded-[22px] bg-white/15" />
+        <Skeleton className="h-[320px] rounded-[22px] bg-white/15" />
+      </div>
+    </ResultScreen>
   );
 }

@@ -19,7 +19,7 @@ import type { TicketDetail } from "@/types/order";
 
 export function TicketView({ id }: { id: number }) {
   const ticket = useTicket(id);
-  const bar = <PageTopBar title="بلیت من" fallbackHref="/tickets" />;
+  const bar = <PageTopBar title="بلیت الکترونیکی" fallbackHref="/tickets" />;
   if (isStatus(ticket.error, 404)) return <>{bar}<ErrorState className="container-page my-8" message="بلیت موردنظر پیدا نشد." /></>;
   if (ticket.isError && !ticket.data) return <>{bar}<ErrorState className="container-page my-8" message={errorMessage(ticket.error)} onRetry={() => ticket.refetch()} /></>;
   if (!ticket.data) return <>{bar}<TicketSkeleton /></>;
@@ -58,8 +58,8 @@ function Ticket({ t }: { t: TicketDetail }) {
   return (
     <div className="mx-auto w-full max-w-[752px] space-y-3.5 px-4 pb-10 pt-1 sm:px-6 lg:pt-8">
       <div className="hidden items-center justify-between lg:flex" data-print-hidden>
-        <p className="text-[26px] font-black text-ink">بلیت من</p>
-        <ButtonLink href="/tickets" variant="outline" size="sm">
+        <p className="text-[28px] font-black text-white">بلیت الکترونیکی</p>
+        <ButtonLink href="/tickets" variant="glass" size="sm">
           بلیت‌های من
           <ArrowLeft className="size-[18px]" />
         </ButtonLink>
@@ -67,11 +67,11 @@ function Ticket({ t }: { t: TicketDetail }) {
 
       <TicketCard t={t}>
         <div className="grid grid-cols-2 gap-2.5">
-          <Button size="lg" onClick={() => window.print()} disabled={cancelled} className="h-14 rounded-2xl">
+          <Button size="lg" onClick={() => window.print()} disabled={cancelled}>
             <Icon name="common/download" className="size-[22px]" />
             دانلود بلیت
           </Button>
-          <Button size="lg" variant="outline" onClick={share} className="h-14 rounded-2xl border-brand-100 text-brand-600">
+          <Button size="lg" variant="soft" onClick={share}>
             <Icon name="common/share" className="size-[22px]" />
             اشتراک‌گذاری
           </Button>
@@ -87,7 +87,7 @@ function Ticket({ t }: { t: TicketDetail }) {
       </TicketCard>
 
       {tips.length > 0 && (
-        <section aria-labelledby="guide-title" className="flex gap-3 rounded-2xl bg-brand-50/70 p-4" data-print-hidden>
+        <section aria-labelledby="guide-title" className="card flex gap-3 p-4" data-print-hidden>
           <Info className="mt-0.5 size-7 shrink-0 text-brand-600" />
           <div>
             <h2 id="guide-title" className="text-[15px] font-black text-brand-600">
@@ -113,7 +113,7 @@ function Ticket({ t }: { t: TicketDetail }) {
 function TicketSkeleton() {
   return (
     <div className="mx-auto w-full max-w-[752px] space-y-3.5 px-4 pt-1 sm:px-6 lg:pt-8" aria-busy>
-      <Skeleton className="h-[760px] rounded-[24px]" />
+      <Skeleton className="h-[760px] rounded-[26px]" />
     </div>
   );
 }

@@ -22,19 +22,20 @@ object Jt {
     val colors: JavanColors
         @Composable @ReadOnlyComposable get() = LocalJavanColors.current
     val shapes = JtShapes
+    val brushes = JtBrushes
 }
 
-/** Radii of the design tokens: button / input 12, card 16, event card 18, hero / sheet 24 (rounded-lg 8, md 6). */
+/** Radii of the Javan Light Redesign: cards 20–22, hero / sheet 26, buttons and chips as pills. */
 object JtShapes {
-    val card = RoundedCornerShape(16.dp)
-    val event = RoundedCornerShape(18.dp)
-    val xl2 = RoundedCornerShape(16.dp)
-    val xl = RoundedCornerShape(12.dp)
-    val lg = RoundedCornerShape(8.dp)
+    val card = RoundedCornerShape(20.dp)
+    val event = RoundedCornerShape(22.dp)
+    val xl2 = RoundedCornerShape(18.dp)
+    val xl = RoundedCornerShape(14.dp)
+    val lg = RoundedCornerShape(10.dp)
     val md = RoundedCornerShape(6.dp)
-    val hero = RoundedCornerShape(24.dp)
-    val sheet = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    val header = RoundedCornerShape(20.dp)
+    val hero = RoundedCornerShape(26.dp)
+    val sheet = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
+    val header = RoundedCornerShape(22.dp)
     val pill = RoundedCornerShape(percent = 50)
 }
 

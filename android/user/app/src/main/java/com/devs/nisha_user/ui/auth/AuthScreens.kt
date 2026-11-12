@@ -1,5 +1,12 @@
 package com.devs.nisha_user.ui.auth
 
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.statusBarsPadding
+import com.devs.nisha_user.core.designsystem.component.GlassIconButton
 import com.devs.nisha_user.core.format.ltr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -90,16 +97,20 @@ import com.devs.nisha_user.ui.navigation.VerifyRoute
 /** Decorative background of the auth screens: the AUTH_HERO image faded towards the page, and the site's wave. */
 @Composable
 private fun AuthBackground(hero: PageBlock?) {
-    val c = Jt.colors
-    val context = LocalContext.current
-    Box(Modifier.fillMaxSize()) {
-        RemoteImage(hero?.imageUrl, Modifier.fillMaxSize(), alpha = if (c.isDark) 0.2f else 0.35f, placeholder = c.page)
-        Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(c.page, c.page.copy(alpha = 0.7f)), radius = 1400f)))
-        AsyncImage(
-            model = remember { ImageRequest.Builder(context).data(assetUrl("auth/login-wave.svg")).decoderFactory(SvgDecoder.Factory()).build() },
-            contentDescription = null,
-            alpha = if (c.isDark) 0.2f else 0.7f,
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().aspectRatio(1200f / 320f),
+    // Reference 13: navy → blue → violet → sunset gradient, with the AUTH_HERO photo rising from the bottom.
+    Box(Modifier.fillMaxSize().background(Jt.brushes.login13)) {
+        RemoteImage(
+            hero?.imageUrl,
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .fillMaxHeight(0.42f)
+                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                .drawWithContent {
+                    drawContent()
+                    drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black), endY = size.height * 0.45f), blendMode = BlendMode.DstIn)
+                },
+            placeholder = Color.Transparent,
         )
     }
 }
@@ -117,7 +128,7 @@ fun LoginScreen(hero: PageBlock?, features: List<Feature>, viewModel: LoginViewM
     Box(Modifier.fillMaxSize()) {
         AuthBackground(hero)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding()) {
-            Row(Modifier.fillMaxWidth().padding(top = 40.dp, start = 8.dp)) { JtIconButton(Lucide.ArrowRight, actions.back, "بازگشت", borderColor = null) }
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 8.dp, start = 16.dp, end = 16.dp), horizontalArrangement = Arrangement.End) { GlassIconButton(Lucide.ArrowLeft, actions.back, "بازگشت") }
             JtCard(Modifier.padding(16.dp).fillMaxWidth(), padding = PaddingValues(horizontal = 20.dp, vertical = 32.dp)) {
                 BrandLogo(Modifier.align(Alignment.CenterHorizontally).width(112.dp).height(96.dp))
                 Text("ورود / ثبت‌نام", style = text(26f, W.Black), color = c.ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 20.dp))
@@ -158,7 +169,7 @@ fun LoginScreen(hero: PageBlock?, features: List<Feature>, viewModel: LoginViewM
                     }
                 }
                 Text(s.error ?: "کد تأیید به این شماره ارسال خواهد شد.", style = text(13f, if (s.error != null) W.Semibold else W.Normal), color = if (s.error != null) c.dangerFg else c.muted, modifier = Modifier.padding(top = 8.dp))
-                JtButton(if (s.sending) "در حال ارسال کد ..." else "دریافت کد تأیید", viewModel::submit, Modifier.padding(top = 20.dp), size = ButtonSize.XL, block = true, loading = s.sending, trailing = if (s.sending) null else Lucide.ArrowLeft)
+                JtButton(if (s.sending) "در حال ارسال کد ..." else "دریافت کد تأیید", viewModel::submit, Modifier.padding(top = 20.dp), size = ButtonSize.XL, block = true, loading = s.sending)
 
                 val shown = features.take(3)
                 if (shown.isNotEmpty()) {
@@ -206,7 +217,7 @@ fun VerifyScreen(hero: PageBlock?, viewModel: VerifyViewModel = hiltViewModel())
     Box(Modifier.fillMaxSize()) {
         AuthBackground(hero)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding(), verticalArrangement = Arrangement.Center) {
-            Row(Modifier.fillMaxWidth().padding(top = 40.dp, start = 8.dp)) { JtIconButton(Lucide.ArrowRight, actions.back, "بازگشت", borderColor = null) }
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 8.dp, start = 16.dp, end = 16.dp), horizontalArrangement = Arrangement.End) { GlassIconButton(Lucide.ArrowLeft, actions.back, "بازگشت") }
             JtCard(Modifier.padding(16.dp).fillMaxWidth(), padding = PaddingValues(horizontal = 20.dp, vertical = 36.dp)) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     BrandLogo(Modifier.width(110.dp).height(92.dp))

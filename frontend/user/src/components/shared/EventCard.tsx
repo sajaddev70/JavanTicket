@@ -35,7 +35,7 @@ export function eventPlace(e: PublicEvent, separator = "، "): string {
 /** Next performance date of the card's badge: the next session, else the start date. */
 const badgeDate = (e: PublicEvent) => e.next_session_at ?? e.start_date ?? null;
 
-export function FavoriteButton({ event, className }: { event: PublicEvent; className?: string }) {
+export function FavoriteButton({ event, className, plain }: { event: PublicEvent; className?: string; plain?: boolean }) {
   const { isFavorite, toggle } = useFavoriteToggle();
   const on = isFavorite(event.id);
   return (
@@ -48,9 +48,13 @@ export function FavoriteButton({ event, className }: { event: PublicEvent; class
       }}
       aria-pressed={on}
       aria-label={on ? `حذف ${event.title} از علاقه‌مندی‌ها` : `افزودن ${event.title} به علاقه‌مندی‌ها`}
-      className={cn("flex size-11 shrink-0 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-[2px] transition hover:bg-black/35", className)}
+      className={cn(
+        "flex size-11 shrink-0 items-center justify-center rounded-full transition",
+        plain ? "text-ticket hover:bg-magenta-bg" : "bg-black/25 text-white backdrop-blur-[2px] hover:bg-black/40",
+        className,
+      )}
     >
-      <Heart className={cn("size-[21px]", on && "fill-ticket text-ticket")} strokeWidth={2} />
+      <Heart className={cn("size-[23px]", on && "fill-ticket text-ticket")} strokeWidth={2.1} />
     </button>
   );
 }
@@ -58,7 +62,7 @@ export function FavoriteButton({ event, className }: { event: PublicEvent; class
 /** White date tile on the poster corner: "۲۸ / اردیبهشت". */
 function DateBadge({ iso, className }: { iso: string; className?: string }) {
   return (
-    <span className={cn("flex min-w-[52px] flex-col items-center rounded-xl bg-surface/95 px-2 py-1.5 text-ink shadow-card", className)}>
+    <span className={cn("flex min-w-[52px] flex-col items-center rounded-2xl bg-surface/95 px-2 py-1.5 text-ink shadow-card", className)}>
       <b className="text-[18px] font-black leading-6">{faDay(iso)}</b>
       <span className="text-[10.5px] font-medium leading-4 text-ink-2">{faMonth(iso)}</span>
     </span>
@@ -69,9 +73,8 @@ export function Price({ event, className, chip }: { event: PublicEvent; classNam
   const price = Number(event.min_price ?? 0);
   if (!price) return <span className={cn("text-[13.5px] font-black text-success-fg", className)}>{event.min_price === 0 ? "رایگان" : ""}</span>;
   return (
-    <span className={cn("inline-flex items-center gap-1 whitespace-nowrap text-[13px] font-medium text-brand-600", chip && "justify-center rounded-xl bg-brand-50 px-3 py-2", className)}>
-      {!chip && <Icon name="common/ticket" className="size-[18px]" />}
-      از <b className="text-[14.5px] font-black">{faNumber(price)}</b> <b className="font-bold">تومان</b>
+    <span className={cn("inline-flex items-baseline gap-1 whitespace-nowrap text-[14px] font-black text-price", chip && "justify-center rounded-full bg-blue-bg px-3 py-2", className)}>
+      از <b className="text-[16px] font-black">{faNumber(price)}</b> تومان
     </span>
   );
 }
@@ -100,14 +103,14 @@ export function EventCard({ event, variant = "grid", priority }: { event: Public
   const date = badgeDate(event);
   // The whole card is one link target; the heart and the buy button sit above the stretched link.
   const titleLink = (
-    <Link href={href} className="after:absolute after:inset-0 after:z-[1] hover:text-brand-600">
+    <Link href={href} className="after:absolute after:inset-0 after:z-[1] hover:text-purple">
       {event.title}
     </Link>
   );
 
   if (variant === "compact") {
     return (
-      <article className="group relative flex h-full min-h-[156px] gap-3 overflow-hidden rounded-[18px] border border-line bg-surface p-2 shadow-card transition hover:shadow-float">
+      <article className="group relative flex h-full min-h-[156px] gap-3 overflow-hidden rounded-[22px] border border-line bg-surface p-2 shadow-card transition hover:shadow-float">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5 py-1.5 pr-1.5">
           <h3 className="line-clamp-2 text-[14.5px] font-black leading-6 text-ink">{titleLink}</h3>
           {place && (
@@ -130,19 +133,18 @@ export function EventCard({ event, variant = "grid", priority }: { event: Public
   }
 
   if (variant === "row") {
+    // Reference 02: poster on the start side, title / date / place, the blue starting price and an outline heart.
     return (
-      <article className="group relative flex h-full gap-4 overflow-hidden rounded-[18px] border border-line bg-surface p-2.5 shadow-card transition hover:shadow-float">
-        <Poster event={event} sizes="(min-width: 640px) 240px, 128px" className="aspect-[4/3] w-32 shrink-0 rounded-[14px] sm:w-60" priority={priority}>
-          <FavoriteButton event={event} className="absolute left-2 top-2 z-[2]" />
-          {date && <DateBadge iso={date} className="absolute bottom-2 right-2" />}
-        </Poster>
-        <div className="flex min-w-0 flex-1 flex-col py-1">
-          <h3 className="line-clamp-2 text-[16px] font-black leading-7 text-ink">{titleLink}</h3>
-          {event.subtitle && <p className="mt-0.5 line-clamp-1 text-[13px] text-muted">{event.subtitle}</p>}
+      <article className="group relative flex h-full gap-3.5 overflow-hidden rounded-[22px] border border-line bg-surface p-3 shadow-card transition hover:-translate-y-0.5 hover:shadow-float">
+        <Poster event={event} sizes="(min-width: 640px) 140px, 112px" className="aspect-[3/4] w-[104px] shrink-0 rounded-[16px] sm:w-[124px]" priority={priority} />
+        <div className="flex min-w-0 flex-1 flex-col py-0.5">
+          <div className="flex items-start gap-1">
+            <h3 className="line-clamp-2 flex-1 text-[16px] font-black leading-7 text-ink">{titleLink}</h3>
+            <FavoriteButton event={event} plain className="relative z-[2] -ml-2 -mt-1.5 size-10" />
+          </div>
           <EventMeta when={when} place={place} />
-          <div className="relative z-[2] mt-auto flex items-center justify-between gap-2 pt-3">
-            <Price event={event} chip />
-            <BuyLink href={href} />
+          <div className="relative z-[2] mt-auto pt-2">
+            <Price event={event} />
           </div>
         </div>
       </article>
@@ -151,7 +153,7 @@ export function EventCard({ event, variant = "grid", priority }: { event: Public
 
   if (variant === "grid") {
     return (
-      <article className="@container group relative flex h-full flex-col overflow-hidden rounded-[18px] border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:shadow-float">
+      <article className="@container group relative flex h-full flex-col overflow-hidden rounded-[22px] border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:shadow-float">
         <Poster event={event} sizes="(min-width: 1280px) 300px, (min-width: 768px) 33vw, 50vw" className="aspect-[16/9]" priority={priority}>
           <FavoriteButton event={event} className="absolute left-3 top-3 z-[2]" />
           {date && <DateBadge iso={date} className="absolute bottom-2.5 right-2.5" />}
@@ -171,7 +173,7 @@ export function EventCard({ event, variant = "grid", priority }: { event: Public
   }
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-[18px] border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:shadow-float">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-[22px] border border-line bg-surface shadow-card transition hover:-translate-y-0.5 hover:shadow-float">
       <Poster event={event} sizes="(min-width: 1280px) 280px, (min-width: 640px) 32vw, 48vw" className="aspect-[1.08] lg:aspect-[4/3]" priority={priority}>
         <FavoriteButton event={event} className="absolute left-2.5 top-2.5 z-[2]" />
         {date && <DateBadge iso={date} className="absolute bottom-2.5 right-2.5" />}
@@ -192,9 +194,9 @@ export function EventCard({ event, variant = "grid", priority }: { event: Public
 
 function EventMeta({ when, place }: { when: { date: string; time?: string }; place: string }) {
   return (
-    <ul className="mt-2.5 space-y-1.5 text-[12.5px] text-ink-2">
+    <ul className="mt-2 space-y-1.5 text-[12.5px] text-muted">
       <li className="flex items-center gap-1.5">
-        <Icon name="common/calendar-simple" className="size-4 shrink-0 text-muted" />
+        <Icon name="common/calendar-simple" className="size-4 shrink-0 text-ink-2" />
         <span className="truncate">
           {when.date}
           {when.time && `، ساعت ${when.time}`}
@@ -202,7 +204,7 @@ function EventMeta({ when, place }: { when: { date: string; time?: string }; pla
       </li>
       {place && (
         <li className="flex items-center gap-1.5">
-          <Icon name="common/location" className="size-4 shrink-0 text-muted" />
+          <Icon name="common/location" className="size-4 shrink-0 text-ink-2" />
           <span className="truncate">{place}</span>
         </li>
       )}
@@ -212,7 +214,7 @@ function EventMeta({ when, place }: { when: { date: string; time?: string }; pla
 
 function BuyLink({ href }: { href: string }) {
   return (
-    <Link href={href} tabIndex={-1} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-[13.5px] font-bold text-white transition hover:bg-brand-700">
+    <Link href={href} tabIndex={-1} className="bg-grad-primary glow-primary inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-[13.5px] font-black text-white transition hover:brightness-110">
       خرید بلیت
       <ArrowLeft className="size-[18px]" />
     </Link>
@@ -220,9 +222,22 @@ function BuyLink({ href }: { href: string }) {
 }
 
 export function EventCardSkeleton({ variant = "grid" }: { variant?: EventCardVariant }) {
+  if (variant === "row") {
+    return (
+      <div className="flex gap-3.5 rounded-[22px] border border-line bg-surface p-3" aria-hidden>
+        <Skeleton className="aspect-[3/4] w-[104px] rounded-[16px] sm:w-[124px]" />
+        <div className="flex-1 space-y-2.5 py-1">
+          <Skeleton className="h-4 w-4/5" />
+          <Skeleton className="h-3 w-2/3" />
+          <Skeleton className="h-3 w-1/2" />
+          <Skeleton className="mt-5 h-5 w-2/5" />
+        </div>
+      </div>
+    );
+  }
   if (variant === "compact") {
     return (
-      <div className="flex h-[150px] gap-3 rounded-[18px] border border-line bg-surface p-2" aria-hidden>
+      <div className="flex h-[150px] gap-3 rounded-[22px] border border-line bg-surface p-2" aria-hidden>
         <div className="flex-1 space-y-2.5 py-2">
           <Skeleton className="h-4 w-4/5" />
           <Skeleton className="h-3 w-2/3" />
@@ -234,15 +249,15 @@ export function EventCardSkeleton({ variant = "grid" }: { variant?: EventCardVar
     );
   }
   return (
-    <div className="overflow-hidden rounded-[18px] border border-line bg-surface" aria-hidden>
+    <div className="overflow-hidden rounded-[22px] border border-line bg-surface" aria-hidden>
       <Skeleton className={cn("w-full rounded-none", variant === "poster" ? "aspect-[1.08] lg:aspect-[4/3]" : "aspect-[16/9]")} />
       <div className="space-y-2.5 p-3.5">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-2/3" />
         {variant !== "poster" && (
           <div className="flex justify-between pt-2">
-            <Skeleton className="h-11 w-28 rounded-xl" />
-            <Skeleton className="h-11 w-32 rounded-xl" />
+            <Skeleton className="h-11 w-28 rounded-full" />
+            <Skeleton className="h-11 w-32 rounded-full" />
           </div>
         )}
       </div>

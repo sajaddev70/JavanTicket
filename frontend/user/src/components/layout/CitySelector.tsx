@@ -32,13 +32,13 @@ export function CitySelector({ className }: { className?: string }) {
         aria-haspopup="dialog"
         aria-label={`شهر: ${current?.name ?? "همه شهرها"} (تغییر شهر)`}
         className={cn(
-          "flex h-11 min-w-0 shrink-0 items-center gap-1.5 rounded-[14px] bg-field px-3 min-[400px]:gap-2 min-[400px]:px-3.5 text-[14px] font-bold text-ink transition hover:bg-brand-50",
+          "glass flex h-11 min-w-0 shrink-0 items-center gap-1.5 rounded-full px-3 min-[400px]:gap-2 min-[400px]:px-3.5 text-[13.5px] font-bold transition hover:bg-white/20",
           className,
         )}
       >
-        <Icon name="common/location" className="size-[18px] text-ink" />
+        <Icon name="common/location" className="size-[18px]" />
         <span className="max-w-[88px] truncate min-[400px]:max-w-[110px]">{isLoading ? "..." : (current?.name ?? "همه شهرها")}</span>
-        <Icon name="common/chevron-down" className="size-4 text-ink-2" />
+        <Icon name="common/chevron-down" className="size-4 opacity-80" />
       </button>
 
       <Dialog open={open} onClose={() => setOpen(false)} title="انتخاب شهر" description="رویدادهای شهر انتخاب‌شده در همه صفحات نمایش داده می‌شود.">

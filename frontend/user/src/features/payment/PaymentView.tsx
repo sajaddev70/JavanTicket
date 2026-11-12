@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, CircleCheck, Landmark, Lock } from "lucide-react";
+import { ChevronRight, CircleCheck, Landmark, Lock } from "lucide-react";
 import { paymentService } from "@/services/payment.service";
 import { errorMessage, isStatus } from "@/services/api";
 import { usePageBlock } from "@/hooks/useContent";
@@ -63,17 +63,17 @@ function Payment({ order, receivedAt, refetch }: { order: Order; receivedAt: num
   const payLabel = `پرداخت ${faPrice(order.total_amount)}`;
 
   return (
-    <div className="container-page space-y-3.5 pb-32 pt-3 lg:pb-10 lg:pt-6">
+    <div className="container-page space-y-3.5 pb-44 pt-1 lg:pb-10 lg:pt-6">
       <div className="flex items-center gap-2">
         <Link
           href={`/checkout?order=${encodeURIComponent(order.order_number)}`}
           aria-label="بازگشت به اطلاعات خریدار"
-          className="flex size-11 items-center justify-center rounded-xl text-brand-600 hover:bg-brand-50"
+          className="glass flex size-11 items-center justify-center rounded-full hover:bg-white/20"
         >
           <ChevronRight className="size-6" />
         </Link>
-        <h1 className="text-[26px] font-black text-ink">پرداخت</h1>
-        <CheckoutSteps current={2} className="mr-auto hidden w-full max-w-[560px] md:block" />
+        <h1 className="text-[26px] font-black text-white">پرداخت</h1>
+        <CheckoutSteps current={2} className="mr-auto hidden w-full max-w-[560px] rounded-[20px] bg-surface px-2 py-3 shadow-card md:block" />
       </div>
 
       <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start lg:gap-5">
@@ -138,19 +138,27 @@ function Payment({ order, receivedAt, refetch }: { order: Order; receivedAt: num
             </Link>{" "}
             خرید و بازگشت وجه را می‌پذیرید. پس از پرداخت، نتیجه فقط پس از تأیید بانک نمایش داده می‌شود.
           </p>
-          <Button size="xl" block className="mt-4 hidden lg:flex" disabled={!method} loading={start.isPending || start.isSuccess} onClick={() => start.mutate()}>
+          <div className="mt-6 hidden text-center lg:block">
+            <p className="text-[14px] text-muted">مبلغ قابل پرداخت</p>
+            <p className="mt-1 text-[30px] font-black text-success">{faPrice(order.total_amount)}</p>
+          </div>
+          <Button variant="success" size="xl" block className="mt-4 hidden lg:flex" disabled={!method} loading={start.isPending || start.isSuccess} onClick={() => start.mutate()}>
+            <Lock className="size-5" />
             {payLabel}
-            <ArrowLeft className="size-5" />
           </Button>
         </section>
       </div>
 
       {/* Phones: the pay button stays on screen */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 rounded-t-[26px] border-t border-line bg-surface/95 shadow-nav backdrop-blur-xl lg:hidden">
         <div className="container-page pb-[calc(12px+env(safe-area-inset-bottom))] pt-3">
-          <Button size="xl" block disabled={!method} loading={start.isPending || start.isSuccess} onClick={() => start.mutate()}>
-            {payLabel}
-            <ArrowLeft className="size-5" />
+          <p className="mb-2 flex items-baseline justify-between text-[13px] text-muted">
+            مبلغ قابل پرداخت
+            <b className="text-[20px] font-black text-success">{faPrice(order.total_amount)}</b>
+          </p>
+          <Button variant="success" size="xl" block disabled={!method} loading={start.isPending || start.isSuccess} onClick={() => start.mutate()}>
+            <Lock className="size-5" />
+            پرداخت و تکمیل خرید
           </Button>
         </div>
       </div>

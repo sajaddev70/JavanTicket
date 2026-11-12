@@ -1,5 +1,9 @@
 package com.devs.nisha_user.ui.home
 
+import com.devs.nisha_user.core.designsystem.component.ButtonVariant
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.devs.nisha_user.core.designsystem.component.scrollingBand
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -89,9 +93,10 @@ fun HomeScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val feed = state.feed.valueOrNull
     PullToRefreshBox(isRefreshing = state.refreshing, onRefresh = { viewModel.load(refresh = true) }, modifier = Modifier.fillMaxSize()) {
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
-            // The header stays at the top like the site's sticky header (it also covers the status bar).
-            stickyHeader(key = "header") { header() }
+        val list = rememberLazyListState()
+        LazyColumn(Modifier.fillMaxSize().scrollingBand(list), state = list, contentPadding = PaddingValues(bottom = 24.dp)) {
+            // The header sits on the navy band and scrolls away with it (reference 01).
+            item(key = "header") { header() }
             item(key = "hero") {
                 Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp)) {
                     when {
@@ -136,28 +141,39 @@ fun HeroSlider(slides: List<HeroSlide>) {
         pager.animateScrollToPage((pager.currentPage + 1) % slides.size)
     }
     val c = Jt.colors
-    Box(Modifier.fillMaxWidth().cardShadow(JtShapes.hero, c.shadow, 14.dp).clip(JtShapes.hero).background(c.navy950)) {
+    Column {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .shadow(18.dp, JtShapes.hero, ambientColor = Color(0xFF7B35F6).copy(0.35f), spotColor = Color(0xFF7B35F6).copy(0.5f))
+            .clip(JtShapes.hero)
+            .background(c.navy950)
+            .border(1.5.dp, Color(0xFFAE66FF).copy(alpha = 0.75f), JtShapes.hero),
+    ) {
         HorizontalPager(pager, Modifier.fillMaxWidth().semantics { contentDescription = "رویدادهای برگزیده" }) { i ->
             val slide = slides[i]
             Box(Modifier.fillMaxWidth().heightIn(min = 300.dp)) {
                 RemoteImage(slide.image, Modifier.matchParentSize(), placeholder = c.navy950)
                 Box(
                     Modifier.matchParentSize().background(
-                        Brush.verticalGradient(0f to Color(0x40071834), 0.5f to Color(0xD9071834), 1f to Color(0xFF071834)),
+                        Brush.verticalGradient(0f to Color.Transparent, 0.5f to Color(0x8C1F1A78), 1f to Color(0xF21A1060)),
                     ),
                 )
                 Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 36.dp)) {
-                    slide.kicker?.let { Text(it, style = text(13f, W.Medium), color = Color.White.copy(alpha = 0.8f)) }
+                    slide.kicker?.let {
+                        Text(it, style = text(12.5f, W.Bold), color = Color.White, modifier = Modifier.clip(JtShapes.pill).background(Jt.brushes.primary).padding(horizontal = 12.dp, vertical = 4.dp))
+                    }
                     Text(slide.title, style = text(24f, W.Black, lineHeight = 1.45f), color = Color.White, modifier = Modifier.padding(top = 4.dp).semantics { heading() })
                     slide.subtitle?.let { Text(it, style = text(14f, lineHeight = 2f), color = Color.White.copy(alpha = 0.85f), modifier = Modifier.padding(top = 8.dp)) }
                     if (slide.link != null && slide.button != null) {
-                        JtButton(slide.button, { actions.openLink(slide.link) }, Modifier.padding(top = 20.dp), size = ButtonSize.LG, trailing = Lucide.ArrowLeft)
+                        JtButton(slide.button, { actions.openLink(slide.link) }, Modifier.padding(top = 16.dp), variant = ButtonVariant.ORANGE, size = ButtonSize.LG, trailing = Lucide.ArrowLeft)
                     }
                 }
             }
         }
+    }
         if (slides.size > 1) {
-            Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 slides.indices.forEach { i ->
                     val on = i == pager.currentPage
                     Box(
@@ -168,8 +184,8 @@ fun HeroSlider(slides: List<HeroSlide>) {
                         contentAlignment = Alignment.Center,
                     ) {
                         Box(
-                            Modifier.size(10.dp).clip(CircleShape)
-                                .then(if (on) Modifier.background(Color.White) else Modifier.border(1.dp, Color.White.copy(alpha = 0.7f), CircleShape)),
+                            Modifier.width(if (on) 22.dp else 9.dp).height(9.dp).clip(CircleShape)
+                                .then(if (on) Modifier.background(Jt.brushes.primary) else Modifier.background(c.lineStrong)),
                         )
                     }
                 }
@@ -183,24 +199,24 @@ fun HeroSlider(slides: List<HeroSlide>) {
 fun CategoryStrip(categories: List<Category>) {
     val actions = LocalAppActions.current
     val c = Jt.colors
-    SectionCard("دسته‌بندی رویدادها", onMore = { actions.navigate(EventsRoute()) }) {
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(categories, key = { it.id }) { cat ->
-                val color = parseHexColor(cat.color, c.brand500)
-                Column(
-                    Modifier
-                        .width(112.dp)
-                        .height(96.dp)
-                        .clip(JtShapes.xl2)
-                        .background(color.mix(c.surface, 0.10f))
-                        .clickable(onClickLabel = cat.name) { actions.navigate(EventsRoute(category = cat.slug)) }
-                        .padding(horizontal = 6.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
-                ) {
-                    CategoryIcon(cat.slug, cat.iconUrl, size = 32.dp, tint = color)
-                    Text(cat.name, style = text(12.5f, W.Bold, lineHeight = 1.6f), color = c.ink, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                }
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(vertical = 4.dp)) {
+        items(categories, key = { it.id }) { cat ->
+            val color = parseHexColor(cat.color, c.brand500)
+            // Pastel tile with the icon and the name inside (reference 01).
+            Column(
+                Modifier
+                    .width(86.dp)
+                    .height(102.dp)
+                    .cardShadow(JtShapes.card, c.shadow)
+                    .clip(JtShapes.card)
+                    .background(Brush.verticalGradient(listOf(color.mix(c.surface, 0.22f), color.mix(c.surface, 0.08f))))
+                    .clickable(onClickLabel = cat.name) { actions.navigate(EventsRoute(category = cat.slug)) }
+                    .padding(horizontal = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+            ) {
+                CategoryIcon(cat.slug, cat.iconUrl, size = 30.dp, tint = color)
+                Text(cat.name, style = text(12f, W.Black, lineHeight = 1.45f), color = c.ink, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -212,7 +228,7 @@ fun EventRow(row: HomeRow, cityName: String?, onRetry: () -> Unit) {
     val actions = LocalAppActions.current
     val compact = row.section.section == "this-week"
     val variant = if (compact) EventCardVariant.COMPACT else EventCardVariant.FEATURED
-    SectionCard(row.section.title, subtitle = row.section.subtitle, onMore = { actions.navigate(eventsRouteOf(row)) }) {
+    SectionCard(row.section.title, subtitle = row.section.subtitle, onMore = { actions.navigate(eventsRouteOf(row)) }, plain = true) {
         val events = row.events.getOrNull()
         when {
             row.events.isFailure -> ErrorState(null, onRetry = onRetry)

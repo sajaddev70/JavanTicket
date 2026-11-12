@@ -144,8 +144,8 @@ fun SeatMap(
             Modifier
                 .fillMaxWidth()
                 .height(boxH)
-                .clip(JtShapes.xl2)
-                .background(c.surface2)
+                .clip(JtShapes.hero)
+                .background(Jt.brushes.bandSolid)
                 .semantics { contentDescription = "نقشه صندلی‌های سالن؛ برای انتخاب روی صندلی‌های آزاد بزنید." },
         ) {
             Canvas(
@@ -206,7 +206,7 @@ private fun DrawScope.drawStage(l: Layout, c: JavanColors, measurer: androidx.co
         lineTo(l.cx - w / 2 + U * 0.4f, top + U * 2.9f)
         close()
     }
-    drawPath(path, Brush.verticalGradient(listOf(c.navy800, c.stage), startY = top, endY = top + U * 2.9f))
+    drawPath(path, Brush.verticalGradient(listOf(Color(0xFFA76DFD), Color(0xFF6324F9)), startY = top, endY = top + U * 2.9f))
     listOf(-0.22f, 0.22f).forEach { k ->
         val center = Offset(l.cx + w * k, top + U * 1.5f)
         drawOval(
@@ -221,7 +221,7 @@ private fun DrawScope.drawStage(l: Layout, c: JavanColors, measurer: androidx.co
 
 /** Row letters on the start (right) side of the hall, as on the reference. */
 private fun DrawScope.drawRowLabels(l: Layout, c: JavanColors, measurer: androidx.compose.ui.text.TextMeasurer) {
-    val style = TextStyle(fontFamily = Vazirmatn, fontWeight = W.Bold, fontSize = androidx.compose.ui.unit.TextUnit(U * 0.48f / density / fontScale, androidx.compose.ui.unit.TextUnitType.Sp), color = c.muted)
+    val style = TextStyle(fontFamily = Vazirmatn, fontWeight = W.Bold, fontSize = androidx.compose.ui.unit.TextUnit(U * 0.48f / density / fontScale, androidx.compose.ui.unit.TextUnitType.Sp), color = Color.White.copy(alpha = 0.6f))
     l.edgeRows.forEach { (label, y) ->
         val m = measurer.measure(label, style)
         val x = (l.maxX + 1.25f) * U

@@ -57,15 +57,16 @@ export function HeroSlider() {
     return () => clearInterval(id);
   }, [count, paused]);
 
-  if (blocks.isLoading || banners.isLoading) return <Skeleton className="h-[300px] w-full rounded-[24px] sm:h-[320px] lg:h-[380px]" />;
+  if (blocks.isLoading || banners.isLoading) return <Skeleton className="h-[330px] w-full rounded-[26px] bg-white/15 sm:h-[340px] lg:h-[400px]" />;
   if (!count) return null;
   const current = index % count;
 
   return (
+    <div>
     <section
       aria-roledescription="carousel"
       aria-label="رویدادهای برگزیده"
-      className="relative overflow-hidden rounded-[24px] bg-navy-950 text-white"
+      className="relative overflow-hidden rounded-[26px] bg-navy-950 text-white shadow-[0_0_0_1.5px_rgb(174_102_255/0.75),0_14px_40px_rgb(123_53_246/0.38)]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -90,22 +91,23 @@ export function HeroSlider() {
         >
           <SmartImage src={mediaUrl(slide.image)} fallback={null} alt="" fill preload={i === 0} sizes="(min-width: 1280px) 1216px, 100vw" className="object-cover" />
           {/* Text sits on the start (right) side: the photo fades into navy behind it */}
-          <div className="absolute inset-0 bg-gradient-to-l from-[#0b2b5b]/95 via-[#0b2b5b]/70 via-45% to-[#0b2b5b]/5" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#071d3e]/60 to-transparent to-50% sm:hidden" />
-          <div className="relative flex min-h-[300px] flex-col justify-center p-5 sm:min-h-[320px] sm:p-8 lg:min-h-[380px] lg:px-12">
-            <div className="max-w-[78%] sm:max-w-[560px]">
-              {slide.kicker && <p className="text-[13px] font-medium text-white/80 sm:text-[14px]">{slide.kicker}</p>}
+          {/* The photo fades into deep indigo at the bottom, where the text sits (reference 01) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1a1060]/95 via-[#1f1a78]/55 via-45% to-transparent" />
+          <div className="absolute inset-0 hidden bg-gradient-to-l from-[#0f2a68]/80 via-[#0f2a68]/30 via-50% to-transparent sm:block" />
+          <div className="relative flex min-h-[330px] flex-col justify-end p-5 sm:min-h-[340px] sm:p-8 lg:min-h-[400px] lg:px-12">
+            <div className="sm:max-w-[560px]">
+              {slide.kicker && <p className="inline-block rounded-full bg-grad-primary px-3 py-1 text-[12px] font-bold text-white sm:text-[13px]">{slide.kicker}</p>}
               {i === 0 ? (
-                <h1 className="mt-1 text-[26px] font-black leading-[1.45] sm:text-[32px] lg:text-[40px]">{slide.title}</h1>
+                <h1 className="mt-2 text-[24px] font-black leading-[1.5] sm:text-[32px] lg:text-[40px]">{slide.title}</h1>
               ) : (
-                <h2 className="mt-1 text-[26px] font-black leading-[1.45] sm:text-[32px] lg:text-[40px]">{slide.title}</h2>
+                <h2 className="mt-2 text-[24px] font-black leading-[1.5] sm:text-[32px] lg:text-[40px]">{slide.title}</h2>
               )}
               {slide.subtitle && <p className="mt-2 text-[14px] leading-7 text-white/85 sm:text-[16px]">{slide.subtitle}</p>}
               {slide.href && slide.button && (
                 <Link
                   href={slide.href}
                   tabIndex={i === current ? 0 : -1}
-                  className="mt-5 inline-flex min-h-12 items-center gap-3 rounded-xl bg-brand-600 px-6 text-[15px] font-bold text-white shadow-cta transition hover:bg-brand-700"
+                  className="bg-grad-orange glow-orange mt-4 inline-flex min-h-12 items-center gap-3 rounded-full px-6 text-[15px] font-black text-white transition hover:brightness-105"
                 >
                   {slide.button}
                   <ArrowLeft className="size-5" />
@@ -115,8 +117,9 @@ export function HeroSlider() {
           </div>
         </div>
       ))}
+    </section>
       {count > 1 && (
-        <div className="absolute bottom-3 left-4 flex gap-0.5" role="tablist" aria-label="انتخاب اسلاید">
+        <div className="mt-2 flex justify-center gap-0.5" role="tablist" aria-label="انتخاب اسلاید">
           {slides.map((s, i) => (
             <button
               key={s.key}
@@ -127,11 +130,11 @@ export function HeroSlider() {
               onClick={() => setIndex(i)}
               className="flex size-7 items-center justify-center"
             >
-              <span className={cn("block rounded-full transition-all", i === current ? "h-2.5 w-2.5 bg-white" : "size-2 bg-white/45")} />
+              <span className={cn("block rounded-full transition-all", i === current ? "h-2.5 w-6 bg-grad-primary" : "size-2.5 bg-line-strong")} />
             </button>
           ))}
         </div>
       )}
-    </section>
+    </div>
   );
 }

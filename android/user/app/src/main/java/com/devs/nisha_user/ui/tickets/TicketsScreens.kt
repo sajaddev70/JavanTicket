@@ -1,5 +1,6 @@
 package com.devs.nisha_user.ui.tickets
 
+import com.devs.nisha_user.core.designsystem.component.scrollingBand
 import com.devs.nisha_user.core.designsystem.component.CodeText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -96,7 +97,7 @@ fun TicketsScreen(viewModel: TicketsViewModel = hiltViewModel()) {
     Column(Modifier.fillMaxSize()) {
         JtTopBar("بلیت‌های من", onBack = null)
         PullToRefreshBox(isRefreshing = s.refreshing, onRefresh = { viewModel.reload(refresh = true) }, modifier = Modifier.fillMaxSize()) {
-            LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyColumn(Modifier.fillMaxSize().scrollingBand(list), state = list, contentPadding = PaddingValues(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item(key = "tabs-account") { AccountTabs(TicketsRoute, Modifier.padding(top = 12.dp)) }
                 item(key = "intro") {
                     Text("بلیت‌های الکترونیک شما؛ برای ورود، کد QR هر بلیت را نشان دهید.", style = text(13.5f), color = c.ink2, modifier = Modifier.padding(horizontal = 16.dp))
@@ -183,7 +184,7 @@ private fun TicketContent(t: TicketDetail, guide: PageBlock?, sending: Boolean, 
     val actions = LocalAppActions.current
     val context = LocalContext.current
     val toaster = LocalToaster.current
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxSize().let { m -> val sc = rememberScrollState(); m.scrollingBand(sc).verticalScroll(sc) }.padding(16.dp).navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("لطفاً این بلیت را در زمان ورود به همراه داشته باشید.", style = text(13.5f), color = c.ink2)
 
         // The ticket itself: QR stub, details, and the poster with the category.

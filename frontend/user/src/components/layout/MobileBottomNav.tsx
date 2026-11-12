@@ -32,7 +32,10 @@ export function MobileBottomNav() {
     <>
       {/* Keeps the end of the page clear of the fixed bar */}
       <div className="h-bottom-nav lg:hidden" aria-hidden />
-      <nav aria-label="دسترسی سریع" className="fixed inset-x-0 bottom-0 z-40 rounded-t-[22px] border-t border-line bg-surface pb-safe shadow-nav lg:hidden">
+      <nav
+        aria-label="دسترسی سریع"
+        className="fixed inset-x-0 bottom-0 z-40 rounded-t-[26px] border-t border-line bg-surface/95 pb-safe shadow-nav backdrop-blur-xl lg:hidden"
+      >
         <ul className="mx-auto grid h-16 max-w-[560px] grid-cols-4">
           {tabs.map(({ href, label, icon, active }) => (
             <li key={label}>
@@ -40,13 +43,14 @@ export function MobileBottomNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex h-full flex-col items-center justify-center gap-1 text-[12px] font-bold transition-colors",
-                  active ? "text-brand-600" : "text-ink-2 hover:text-ink",
+                  "relative flex h-full flex-col items-center justify-center gap-0.5 text-[11.5px] transition-colors",
+                  active ? "font-black text-purple" : "font-bold text-ink-2 hover:text-ink",
                 )}
               >
-                <Icon name={icon} className="size-6" />
+                <span className={cn("flex h-8 w-12 items-center justify-center rounded-full transition", active && "bg-purple-bg")}>
+                  <Icon name={icon} className="size-[23px]" />
+                </span>
                 {label}
-                {active && <span aria-hidden className="absolute bottom-1 h-[3px] w-9 rounded-full bg-brand-600" />}
               </Link>
             </li>
           ))}

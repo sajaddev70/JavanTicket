@@ -9,7 +9,7 @@ export function useTheme(): Theme {
   return useSyncExternalStore(subscribeTheme, currentTheme, () => "light");
 }
 
-export function ThemeToggle({ className }: { className?: string }) {
+export function ThemeToggle({ className, onBand }: { className?: string; onBand?: boolean }) {
   const theme = useTheme();
   const dark = theme === "dark";
   return (
@@ -19,7 +19,8 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={dark ? "تغییر به تم روشن" : "تغییر به تم تیره"}
       title={dark ? "تم روشن" : "تم تیره"}
       className={cn(
-        "flex size-11 shrink-0 items-center justify-center rounded-xl text-ink/80 transition hover:bg-field hover:text-ink",
+        "flex size-11 shrink-0 items-center justify-center rounded-full transition",
+        onBand ? "glass hover:bg-white/20" : "text-ink/80 hover:bg-field hover:text-ink",
         className,
       )}
     >

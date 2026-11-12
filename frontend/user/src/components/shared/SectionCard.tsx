@@ -25,7 +25,7 @@ export function SectionHeader({
   return (
     <div className={cn("mb-3.5 flex items-center justify-between gap-3", className)}>
       <div className="min-w-0">
-        <h2 id={headingId} className="flex items-center gap-2 text-[19px] font-black leading-8 text-ink sm:text-[21px]">
+        <h2 id={headingId} className="flex items-center gap-2 text-[20px] font-black leading-8 text-ink sm:text-[22px]">
           {icon}
           {title}
         </h2>
@@ -54,8 +54,11 @@ export function SectionCard({
   actions,
   headingId,
   className,
+  plain,
   children,
 }: {
+  /** No white panel: the title and content sit straight on the page (home rows of reference 01). */
+  plain?: boolean;
   title: string;
   subtitle?: string | null;
   icon?: React.ReactNode;
@@ -67,7 +70,7 @@ export function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section aria-labelledby={headingId} className={cn("card p-4 sm:p-5", className)}>
+    <section aria-labelledby={headingId} className={cn(plain ? "py-1" : "card p-4 sm:p-5", className)}>
       <SectionHeader title={title} subtitle={subtitle} icon={icon} moreHref={moreHref} moreLabel={moreLabel} actions={actions} headingId={headingId} />
       {children}
     </section>

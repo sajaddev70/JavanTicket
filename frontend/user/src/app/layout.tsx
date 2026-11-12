@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: siteName ? { default: siteName, template: `%s | ${siteName}` } : "خرید بلیت",
     description: settings?.meta_description ?? undefined,
     applicationName: settings?.short_name ?? siteName,
-    appleWebApp: { capable: true, title: settings?.short_name ?? siteName, statusBarStyle: "default" },
+    appleWebApp: { capable: true, title: settings?.short_name ?? siteName, statusBarStyle: "black-translucent" },
     icons: { apple: "/assets/pwa/apple-touch-icon.png" },
     openGraph: { siteName, locale: "fa_IR", type: "website" },
   };
@@ -26,8 +26,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a1424" },
+    { media: "(prefers-color-scheme: light)", color: "#102b67" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a1846" },
   ],
 };
 

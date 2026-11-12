@@ -13,14 +13,17 @@ export function SearchField({
   className,
   defaultValue,
   onSearch,
-  placeholder = "جستجو در رویدادها، هنرمندان، سالن‌ها و ...",
+  placeholder = "جستجو در رویدادها و نمایشگاه‌ها...",
   autoFocus,
+  onBand,
 }: {
   className?: string;
   defaultValue?: string;
   onSearch?: (q: string) => void;
   placeholder?: string;
   autoFocus?: boolean;
+  /** Translucent field on the navy band (reference 02). */
+  onBand?: boolean;
 }) {
   const router = useRouter();
   const id = useId();
@@ -47,9 +50,18 @@ export function SearchField({
         autoFocus={autoFocus}
         enterKeyHint="search"
         placeholder={placeholder}
-        className="h-12 w-full rounded-2xl border border-transparent bg-field pl-12 pr-5 text-[14px] text-ink outline-none transition placeholder:text-muted focus:border-brand-500/40 focus:bg-surface focus:ring-4 focus:ring-brand-500/10"
+        className={cn(
+          "h-12 w-full rounded-full pl-5 pr-12 text-[14px] outline-none transition focus:ring-4",
+          onBand
+            ? "glass placeholder:text-white/75 focus:bg-white/20 focus:ring-white/15"
+            : "border border-transparent bg-field text-ink placeholder:text-muted focus:border-purple/40 focus:bg-surface focus:ring-purple/10",
+        )}
       />
-      <button type="submit" aria-label="جستجو" className="absolute left-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-xl text-ink-2 hover:text-brand-600">
+      <button
+        type="submit"
+        aria-label="جستجو"
+        className={cn("absolute right-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full", onBand ? "text-white" : "text-ink-2 hover:text-purple")}
+      >
         <Icon name="common/search" className="size-[22px]" />
       </button>
     </form>

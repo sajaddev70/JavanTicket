@@ -87,7 +87,13 @@ private enum class Tone { SUCCESS, PENDING, FAILED }
 fun PaymentResultScreen(viewModel: PaymentResultViewModel = hiltViewModel()) {
     val s by viewModel.state.collectAsStateWithLifecycle()
     val actions = LocalAppActions.current
-    Column(Modifier.fillMaxSize()) {
+    // Reference 07: the whole screen in the result's color (green → navy on success).
+    val bg = when (s.result?.status) {
+        PaymentStatus.SUCCESS -> Jt.brushes.resultSuccess
+        PaymentStatus.FAILED -> Jt.brushes.resultFailed
+        else -> Jt.brushes.resultPending
+    }
+    Column(Modifier.fillMaxSize().background(bg)) {
         JtTopBar("نتیجه پرداخت", onBack = { actions.replace(HomeRoute) })
         val result = s.result
         when {

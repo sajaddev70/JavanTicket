@@ -1,5 +1,7 @@
 package com.devs.nisha_user.ui.seats
 
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.devs.nisha_user.core.designsystem.component.scrollingBand
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -115,7 +117,8 @@ private fun SeatSelection(data: SeatMapData, state: SeatsUiState, hero: PageBloc
     val sections = remember(data.sections) { data.sections.associateBy { it.id } }
 
     Box(Modifier.fillMaxSize()) {
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 120.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        val list = rememberLazyListState()
+        LazyColumn(Modifier.fillMaxSize().scrollingBand(list), state = list, contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 120.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             hero?.subtitle?.let { item(key = "hint") { Text(it, style = text(14f), color = c.ink2) } }
             item(key = "session") {
                 JtCard(Modifier.fillMaxWidth(), padding = PaddingValues(12.dp)) {

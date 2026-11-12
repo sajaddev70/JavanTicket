@@ -62,63 +62,70 @@ export function EventsBrowser() {
     { key: "sort", label: filters.sort === "newest" ? "مرتب‌سازی" : SORT_OPTIONS.find((o) => o.value === filters.sort)!.label, icon: <ChevronDown className="size-4" />, active: filters.sort !== "newest" },
   ];
 
+  const glassChip = (active: boolean) =>
+    cn(
+      "flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[13.5px] font-bold transition",
+      active ? "bg-grad-primary glow-primary text-white" : "glass hover:bg-white/20",
+    );
+
   return (
-    <div className="container-page pb-8 pt-3 lg:pt-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="container-page pb-8 pt-2 lg:pt-6">
+      {/* Title on the band: desktop only — phones open straight on search and filters (reference 02) */}
+      <div className="hidden flex-wrap items-end justify-between gap-3 text-white lg:flex">
         <div className="min-w-0">
-          <h1 className="text-[28px] font-black leading-[1.4] text-ink sm:text-[32px]">{category?.name ?? "همه رویدادها"}</h1>
-          {(category?.tagline || block?.subtitle) && <p className="mt-1 text-[14px] leading-7 text-muted">{category?.tagline ?? block?.subtitle}</p>}
+          <h1 className="text-[30px] font-black leading-[1.4]">{category?.name ?? "همه رویدادها"}</h1>
+          {(category?.tagline || block?.subtitle) && <p className="mt-1 text-[14px] leading-7 text-white/80">{category?.tagline ?? block?.subtitle}</p>}
         </div>
+      </div>
+      <h1 className="sr-only lg:hidden">{category?.name ?? "همه رویدادها"}</h1>
+
+      {/* Category pills: همه، نمایشگاه، همایش، کنسرت ... */}
+      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 py-1 sm:mx-0 sm:px-0 lg:mt-4" role="group" aria-label="دسته‌بندی">
+        <button type="button" aria-pressed={!filters.category} onClick={() => update({ category: null })} className={glassChip(!filters.category)}>
+          همه
+        </button>
+        {(categories ?? []).map((c) => (
+          <button key={c.slug} type="button" aria-pressed={filters.category === c.slug} onClick={() => update({ category: c.slug })} className={glassChip(filters.category === c.slug)}>
+            {c.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Filter chips: city, date, sort, more — each opens a bottom sheet */}
+      <div className="no-scrollbar -mx-4 mt-2 flex gap-2 overflow-x-auto px-4 py-1 sm:mx-0 sm:px-0" role="group" aria-label="فیلتر رویدادها">
+        {chips
+          .filter((c) => c.key !== "category")
+          .map((c) => (
+            <button key={c.key} type="button" onClick={() => setSheet(c.key)} aria-haspopup="dialog" className={glassChip(c.active)}>
+              {c.key !== "sort" && c.icon}
+              <span className="max-w-[140px] truncate">{c.label}</span>
+              {c.key === "sort" && c.icon}
+            </button>
+          ))}
+        <button type="button" onClick={() => setSheet("more")} aria-haspopup="dialog" className={glassChip(moreCount > 0)}>
+          <Icon name="common/filter" className="size-[18px]" />
+          فیلترها
+          {moreCount > 0 && <span className="rounded-full bg-white/25 px-1.5 text-[11px]">{faNumber(moreCount)}</span>}
+        </button>
         {filters.q && (
-          <button type="button" onClick={() => update({ q: null })} className="flex min-h-11 items-center gap-2 rounded-xl bg-brand-50 px-3 text-[13px] font-bold text-brand-600">
-            جستجو: {filters.q}
+          <button type="button" onClick={() => update({ q: null })} className={glassChip(false)}>
+            جستجو: <span className="max-w-[120px] truncate">{filters.q}</span>
             <X className="size-4" aria-label="حذف جستجو" />
           </button>
         )}
-      </div>
-
-      <div className="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="group" aria-label="فیلتر رویدادها">
-        {chips.map((c) => (
-          <button
-            key={c.key}
-            type="button"
-            onClick={() => setSheet(c.key)}
-            aria-haspopup="dialog"
-            className={cn(
-              "flex h-11 shrink-0 items-center gap-2 rounded-[14px] border px-3.5 text-[13.5px] font-bold transition",
-              c.active ? "border-brand-600 bg-brand-50 text-brand-600" : "border-line bg-surface text-ink hover:border-brand-500/40",
-            )}
-          >
-            {c.key !== "sort" && c.icon}
-            <span className="max-w-[140px] truncate">{c.label}</span>
-            {c.key === "sort" && c.icon}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => setSheet("more")}
-          aria-haspopup="dialog"
-          className="flex h-11 shrink-0 items-center gap-2 rounded-[14px] border-[1.5px] border-navy-900 bg-surface px-3.5 text-[13.5px] font-bold text-navy-900 dark:border-ink dark:text-ink"
-        >
-          فیلترها
-          <Icon name="common/sliders" className="size-[18px]" />
-          {moreCount > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-[11px] text-white">{faNumber(moreCount)}</span>}
-        </button>
-      </div>
-
-      <div className="mt-4 flex min-h-11 items-center justify-between gap-3">
-        <p className="text-[13.5px] text-ink-2" aria-live="polite">
-          {events.isLoading ? "در حال جستجو ..." : <><b className="font-black text-ink">{faNumber(total)}</b> رویداد</>}
-        </p>
         {anyFilter && (
-          <button type="button" onClick={() => router.push(pathname)} className="flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-[13px] font-bold text-danger-fg hover:bg-danger-bg">
+          <button type="button" onClick={() => router.push(pathname)} className={cn(glassChip(false), "text-[#ffc2cd]")}>
             <X className="size-4" />
             حذف فیلترها
           </button>
         )}
       </div>
 
-      <div className="mt-2">
+      <p className="sr-only" aria-live="polite">
+        {events.isLoading ? "در حال جستجو ..." : `${faNumber(total)} رویداد`}
+      </p>
+
+      <div className="mt-4 lg:mt-6">
         {events.isError ? (
           <ErrorState message={errorMessage(events.error)} onRetry={() => events.refetch()} />
         ) : !events.isLoading && !events.data?.items.length ? (
@@ -132,10 +139,10 @@ export function EventsBrowser() {
             }
           />
         ) : (
-          <div className={cn("grid grid-cols-2 gap-3 transition-opacity sm:gap-4 md:grid-cols-3 xl:grid-cols-4", events.isFetching && events.isPlaceholderData && "opacity-60")}>
+          <div className={cn("grid gap-3 transition-opacity sm:gap-4 md:grid-cols-2 xl:grid-cols-3", events.isFetching && events.isPlaceholderData && "opacity-60")}>
             {events.isLoading
-              ? Array.from({ length: 8 }, (_, i) => <EventCardSkeleton key={i} variant="grid" />)
-              : events.data!.items.map((event, i) => <EventCard key={event.id} event={event} variant="grid" priority={i < 2} />)}
+              ? Array.from({ length: 6 }, (_, i) => <EventCardSkeleton key={i} variant="row" />)
+              : events.data!.items.map((event, i) => <EventCard key={event.id} event={event} variant="row" priority={i < 2} />)}
           </div>
         )}
       </div>
@@ -199,7 +206,7 @@ export function EventsBrowser() {
                 aria-pressed={filters.section === o.value}
                 onClick={() => update({ type: o.value })}
                 className={cn(
-                  "min-h-11 rounded-xl border px-4 text-[13.5px] font-bold",
+                  "min-h-11 rounded-full border px-4 text-[13.5px] font-bold",
                   filters.section === o.value ? "border-brand-600 bg-brand-50 text-brand-600" : "border-line text-ink-2",
                 )}
               >
@@ -227,7 +234,7 @@ function PriceRange({ min, max, onChange }: { min: number | null; max: number | 
     if (nextMin !== min || nextMax !== max) onChange(nextMin, nextMax);
   };
   const field =
-    "h-12 w-full min-w-0 rounded-xl border border-line bg-field px-3 text-center text-[14px] text-ink outline-none focus:border-brand-500/60 focus:bg-surface focus:ring-4 focus:ring-brand-500/10";
+    "h-12 w-full min-w-0 rounded-full border border-line bg-field px-3 text-center text-[14px] text-ink outline-none focus:border-brand-500/60 focus:bg-surface focus:ring-4 focus:ring-brand-500/10";
   return (
     <form
       key={`${min}-${max}`}

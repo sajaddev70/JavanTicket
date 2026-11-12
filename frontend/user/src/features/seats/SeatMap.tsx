@@ -289,8 +289,8 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
     <svg viewBox={`${layout.vb.x} ${layout.vb.y} ${layout.vb.w} ${layout.vb.h}`} className="block h-auto w-full select-none" role="group" aria-label="نقشه صندلی‌های سالن">
       <defs>
         <linearGradient id="stage-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="var(--navy-800)" />
-          <stop offset="1" stopColor="var(--stage)" />
+          <stop offset="0" stopColor="#a76dfd" />
+          <stop offset="1" stopColor="#6324f9" />
         </linearGradient>
         <radialGradient id="stage-light" cx="0.5" cy="0" r="1">
           <stop offset="0" stopColor="#fff" stopOpacity="0.55" />
@@ -309,7 +309,7 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
         صحنه
       </text>
       {layout.edgeRows.map((r) => (
-        <text key={r.label + r.y} x={(layout.maxX + 1.25) * U} y={r.y * U + U * 0.17} fontSize={U * 0.48} fontWeight={700} fill="var(--muted)" textAnchor="middle" fontFamily="var(--font-sans)" aria-hidden>
+        <text key={r.label + r.y} x={(layout.maxX + 1.25) * U} y={r.y * U + U * 0.17} fontSize={U * 0.48} fontWeight={700} fill="rgb(255 255 255 / 0.6)" textAnchor="middle" fontFamily="var(--font-sans)" aria-hidden>
           {r.label}
         </text>
       ))}
@@ -377,7 +377,7 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
     <div>
       {/* Toolbar: zoom on the start side, reset on the end side (reference 04) */}
       <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex h-11 items-center rounded-xl border border-line bg-surface shadow-card" role="group" aria-label="بزرگ‌نمایی نقشه">
+        <div className="flex h-11 items-center rounded-full border border-line bg-surface shadow-card" role="group" aria-label="بزرگ‌نمایی نقشه">
           <button type="button" onClick={() => zoomAt(1.25)} disabled={view.scale >= MAX_SCALE} aria-label="بزرگ‌نمایی" className="flex size-11 items-center justify-center text-ink hover:text-brand-600 disabled:opacity-40">
             <Plus className="size-5" />
           </button>
@@ -388,7 +388,7 @@ export const SeatMap = memo(function SeatMap({ seats, sections, tiers, fallbackP
             <Minus className="size-5" />
           </button>
         </div>
-        <button type="button" onClick={reset} className="flex h-11 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-[13px] font-bold text-ink shadow-card hover:text-brand-600">
+        <button type="button" onClick={reset} className="flex h-11 items-center gap-2 rounded-full border border-line bg-surface px-3.5 text-[13px] font-bold text-ink shadow-card hover:text-brand-600">
           <RotateCcw className="size-[18px]" />
           بازنشانی نقشه
         </button>

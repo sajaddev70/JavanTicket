@@ -22,6 +22,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
@@ -181,6 +183,7 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
             onMenu = { menuOpen = true },
             initialQuery = query,
             onSearch = onSearch,
+            showSearch = onSearch != null,
         )
     }
 
@@ -191,6 +194,9 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
         LocalToaster provides app.toaster,
     ) {
         Box(Modifier.fillMaxSize().background(Jt.colors.page)) {
+            // The navy → indigo band behind the top of every screen (references 01–12); full-screen designs
+            // (login, OTP, payment result) paint their own background over it.
+            Box(Modifier.fillMaxWidth().height(340.dp).background(Jt.brushes.band(Jt.colors.page)))
             if (settings == null && contentError != null) {
                 // Nothing could be loaded at all (no connection at first start): the offline page with a retry.
                 Column(Modifier.fillMaxSize().statusBarsPadding().padding(top = 48.dp)) { ErrorState(contentError, onRetry = { app.loadContent(force = true) }) }

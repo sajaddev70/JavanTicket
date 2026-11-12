@@ -11,16 +11,15 @@ export function CategoryStrip() {
   if (!isLoading && !isError && !data?.length) return null;
 
   return (
-    <section aria-label="دسته‌بندی رویدادها" className="card px-1.5 py-3.5 sm:px-4">
+    <section aria-label="دسته‌بندی رویدادها">
       {isError ? (
         <ErrorState message="دریافت دسته‌بندی‌ها با خطا مواجه شد." onRetry={() => refetch()} className="border-0" />
       ) : (
-        <ul className="no-scrollbar flex gap-1.5 overflow-x-auto px-1 lg:justify-between lg:gap-3">
+        <ul className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 py-2 sm:mx-0 sm:px-0 lg:justify-between lg:gap-3">
           {isLoading
             ? Array.from({ length: 7 }, (_, i) => (
-                <li key={i} className="flex w-[64px] shrink-0 flex-col items-center gap-2">
-                  <Skeleton className="size-[54px] rounded-2xl" />
-                  <Skeleton className="h-3 w-12" />
+                <li key={i} className="shrink-0">
+                  <Skeleton className="h-[100px] w-[84px] rounded-[20px] sm:h-[104px] sm:w-[92px]" />
                 </li>
               ))
             : data!.map((c) => (

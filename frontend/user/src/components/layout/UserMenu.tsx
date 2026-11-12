@@ -45,13 +45,13 @@ export function UserMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex min-h-11 items-center gap-2 rounded-xl border border-line-strong bg-surface px-3 text-[14px] font-bold text-ink hover:border-brand-500/40"
+        className="glass flex min-h-11 items-center gap-2 rounded-full px-3 text-[14px] font-bold hover:bg-white/20"
       >
-        <span className="flex size-7 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+        <span className="flex size-7 items-center justify-center rounded-full bg-white/20 text-white">
           <UserRound className="size-4" />
         </span>
         <span className="max-w-[140px] truncate">{name}</span>
-        <ChevronDown className={cn("size-4 text-muted transition", open && "rotate-180")} />
+        <ChevronDown className={cn("size-4 opacity-75 transition", open && "rotate-180")} />
       </button>
       {open && (
         <div role="menu" className="absolute left-0 top-[calc(100%+8px)] z-50 w-60 animate-[toast-in_0.15s_ease] rounded-2xl border border-line bg-surface p-2 shadow-float">

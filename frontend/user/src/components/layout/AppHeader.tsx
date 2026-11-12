@@ -7,7 +7,6 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { AppLogo } from "@/components/ui/BrandMark";
 import { SmartLink } from "@/components/ui/SmartLink";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { ButtonLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/cn";
@@ -21,9 +20,18 @@ function isActive(pathname: string, url: string) {
   return path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
 }
 
+/** Round translucent button of the band header (search, account) — reference 01. */
+export function BandIconLink({ href, label, children, className }: { href: string; label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <Link href={href} aria-label={label} title={label} className={cn("glass flex size-11 shrink-0 items-center justify-center rounded-full transition hover:bg-white/20", className)}>
+      {children}
+    </Link>
+  );
+}
+
 /**
- * Compact header of the redesign: logo, city and account on phones (search underneath on browse screens);
- * on desktop the same row also carries the admin-managed menu and the search field.
+ * Header on the navy band (references 01, 02): the white logo on the start side, round glass buttons on the end side;
+ * on desktop the same row also carries the admin-managed menu, the search field, city, theme and account.
  */
 export function AppHeader() {
   const pathname = usePathname();
@@ -32,17 +40,21 @@ export function AppHeader() {
   const hydrated = useAuthStore((s) => s.hydrated);
   const user = useAuthStore((s) => s.user);
   const next = pathname === "/login" || pathname === "/verify" ? "" : `?next=${encodeURIComponent(pathname)}`;
-  const firstName = user?.fullName?.trim().split(/\s+/)[0];
 
   return (
-    <header className={cn("bg-surface lg:sticky lg:top-0 lg:z-40 lg:border-b lg:border-line lg:bg-surface/95 lg:backdrop-blur", hasOwnTopBar(pathname) && "hidden lg:block")}>
+    <header
+      className={cn(
+        "text-white lg:sticky lg:top-0 lg:z-40 lg:border-b lg:border-white/10 lg:bg-navy-900/80 lg:backdrop-blur-xl",
+        hasOwnTopBar(pathname) && "hidden lg:block",
+      )}
+    >
       <div className="container-page pt-safe">
-        <div className="flex h-[72px] items-center gap-2 min-[400px]:gap-3 lg:h-[76px] lg:gap-6">
+        <div className="flex h-[76px] items-center gap-2 min-[400px]:gap-3 lg:h-[78px] lg:gap-6">
           <AppLogo siteName={settings?.site_name} shortName={settings?.short_name} />
 
           <nav aria-label="منوی اصلی" className="hidden h-full items-center gap-6 xl:flex">
             {nav.isLoading
-              ? Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-4 w-14" />)
+              ? Array.from({ length: 4 }, (_, i) => <Skeleton key={i} className="h-4 w-14 bg-white/15" />)
               : nav.data?.header.map((item) => {
                   const active = isActive(pathname, item.url);
                   return (
@@ -52,44 +64,41 @@ export function AppHeader() {
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "relative flex h-full items-center text-[14px] font-bold transition-colors",
-                        active ? "text-brand-600 after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-brand-600" : "text-ink-2 hover:text-ink",
+                        active
+                          ? "text-white after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-grad-primary"
+                          : "text-white/75 hover:text-white",
                       )}
                     />
                   );
                 })}
           </nav>
 
-          <SearchField className="hidden flex-1 lg:block lg:max-w-[420px] xl:mr-auto" />
+          <SearchField onBand className="hidden flex-1 lg:block lg:max-w-[420px] xl:mr-auto" />
 
           <div className="mr-auto flex items-center gap-2 min-[400px]:gap-2.5 lg:mr-0">
             <CitySelector />
-            <ThemeToggle className="hidden lg:flex" />
+            <ThemeToggle onBand className="hidden lg:flex" />
             <div className="hidden lg:block">
               {!hydrated ? (
-                <Skeleton className="h-11 w-[120px] rounded-xl" />
+                <Skeleton className="h-11 w-[120px] rounded-full bg-white/15" />
               ) : user ? (
                 <UserMenu />
               ) : (
-                <ButtonLink href={`/login${next}`} size="sm" className="min-h-11 px-5 shadow-none">
+                <Link href={`/login${next}`} className="bg-grad-primary glow-primary flex min-h-11 items-center gap-2 rounded-full px-5 text-[13.5px] font-bold text-white">
                   <Icon name="common/profile" className="size-[18px]" />
                   ورود / ثبت‌نام
-                </ButtonLink>
+                </Link>
               )}
             </div>
-            {/* Phones: round account button with its label underneath, as in the references */}
-            <Link
-              href={user ? "/profile" : `/login${next}`}
-              aria-label={user ? "پروفایل" : "ورود / ثبت‌نام"}
-              className="flex min-w-11 flex-col items-center gap-0.5 lg:hidden"
-            >
-              <span className="flex size-11 items-center justify-center rounded-full bg-field text-ink">
-                <Icon name="common/profile" className="size-[22px]" />
-              </span>
-              <span className="max-w-[64px] truncate text-[11px] font-bold leading-4 text-ink-2">{hydrated && user ? (firstName ?? "پروفایل") : "ورود"}</span>
-            </Link>
+            {/* Phones: a round glass search button (reference 01); the account lives in the bottom navigation */}
+            {!showsHeaderSearch(pathname) && (
+              <BandIconLink href="/events" label="جستجو در رویدادها" className="lg:hidden">
+                <Icon name="common/search" className="size-[21px]" />
+              </BandIconLink>
+            )}
           </div>
         </div>
-        {showsHeaderSearch(pathname) && <SearchField className="pb-3 lg:hidden" />}
+        {showsHeaderSearch(pathname) && <SearchField onBand className="pb-3 lg:hidden" />}
       </div>
     </header>
   );

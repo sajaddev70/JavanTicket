@@ -1,5 +1,6 @@
 package com.devs.nisha_user.ui.checkout
 
+import com.devs.nisha_user.core.designsystem.component.scrollingBand
 import com.devs.nisha_user.core.format.ltr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -123,7 +124,7 @@ private fun CheckoutForm(order: Order, s: CheckoutUiState, notice: PageBlock?, v
     val f = s.form
     val e = s.fieldErrors
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().padding(16.dp).navigationBarsPadding(),
+        Modifier.fillMaxSize().let { m -> val sc = rememberScrollState(); m.scrollingBand(sc).verticalScroll(sc) }.imePadding().padding(16.dp).navigationBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         CheckoutSteps(current = 1)

@@ -25,7 +25,7 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
       />
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex w-[264px] flex-col bg-navy-900 text-white dark:border-l dark:border-white/5 transition-transform duration-300 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[232px] lg:translate-x-0",
+          "fixed inset-y-0 right-0 z-50 bg-band-solid flex w-[264px] flex-col text-white dark:border-l dark:border-white/5 transition-transform duration-300 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[232px] lg:translate-x-0",
           open ? "translate-x-0 shadow-2xl" : "translate-x-full",
         )}
         aria-label="منوی اصلی"
@@ -46,7 +46,7 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
 
         <nav className="scrollbar-thin flex-1 overflow-y-auto px-2 pb-4">
           {menu.isLoading &&
-            Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="mb-2 h-[42px] rounded-[10px] bg-white/10" />)}
+            Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="mb-2 h-[44px] rounded-full bg-white/10" />)}
           {menu.isError && (
             <button type="button" onClick={() => menu.refetch()} className="w-full rounded-[10px] px-3 py-3 text-right text-[13px] text-white/80 hover:bg-white/10">
               دریافت منو با خطا مواجه شد. تلاش مجدد
@@ -63,10 +63,10 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
                     onClick={onClose}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "group flex h-[42px] items-center gap-3 rounded-[10px] px-3 text-[14.5px] font-medium transition-colors",
+                      "group flex h-[44px] items-center gap-3 rounded-full px-3.5 text-[14.5px] font-medium transition-colors",
                       active
-                        ? "bg-brand-600 text-white shadow-[0_6px_16px_rgb(26_110_232_/_0.35)]"
-                        : "text-white/85 hover:bg-white/[0.06] hover:text-white",
+                        ? "bg-grad-primary font-bold text-white shadow-[0_8px_20px_rgb(110_50_245_/_0.45)]"
+                        : "text-white/85 hover:bg-white/[0.08] hover:text-white",
                     )}
                   >
                     <MenuItemIcon icon={item.icon} />

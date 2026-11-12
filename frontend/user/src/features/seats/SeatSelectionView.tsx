@@ -161,16 +161,21 @@ function SeatSelection({ sessionId, data, receivedAt, refetch }: { sessionId: nu
 
   return (
     <>
-      <PageTopBar fallbackHref={`/events/${encodeURIComponent(session.event_slug)}`} />
+      <PageTopBar
+        fallbackHref={`/events/${encodeURIComponent(session.event_slug)}`}
+        title="انتخاب صندلی"
+        subtitle="صندلی‌های موردنظر خود را انتخاب کنید."
+      />
       <div className="container-page space-y-3 pb-[200px] pt-1 lg:pb-10 lg:pt-6">
-        {/* Event strip: photo with the title, place, date and time */}
-        <section aria-label="اطلاعات سانس" className="relative overflow-hidden rounded-[18px] bg-navy-950 text-white">
-          <SmartImage src={mediaUrl(session.banner_url)} fallback={null} alt="" fill preload sizes="(min-width: 1280px) 1216px, 100vw" className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-l from-[#0b2b5b] via-[#0b2b5b]/85 via-50% to-[#0b2b5b]/30" />
-          <div className="relative p-4 sm:p-5">
-            <h1 className="text-[20px] font-black leading-8 sm:text-[24px]">{session.event_title}</h1>
+        {/* Event strip on the band: a small photo with the title, place, date and time */}
+        <section aria-label="اطلاعات سانس" className="glass flex items-center gap-3 rounded-[22px] p-2.5 sm:p-3">
+          <div className="relative aspect-square w-16 shrink-0 overflow-hidden rounded-2xl bg-navy-950 sm:w-20">
+            <SmartImage src={mediaUrl(session.banner_url)} fallback={null} alt="" fill preload sizes="80px" className="object-cover" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="line-clamp-1 text-[16px] font-black leading-7 sm:text-[20px]">{session.event_title}</h2>
             {(session.title || session.event_subtitle) && <p className="mt-0.5 text-[13.5px] text-white/85">{session.title ?? session.event_subtitle}</p>}
-            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[12.5px] text-white/90">
+            <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-white/85">
               {place && (
                 <li className="flex items-center gap-1.5">
                   <Icon name="common/location" className="size-4" />
@@ -197,7 +202,7 @@ function SeatSelection({ sessionId, data, receivedAt, refetch }: { sessionId: nu
 
         {/* Reservation countdown from the server's hold deadline */}
         {data.hold?.seconds_left != null && selected.length > 0 ? (
-          <section aria-label="زمان رزرو" className="flex items-center gap-3 rounded-2xl bg-brand-50 px-4 py-3">
+          <section aria-label="زمان رزرو" className="flex items-center gap-3 rounded-[20px] border border-line bg-surface px-4 py-3 shadow-card">
             <p className="min-w-0 flex-1 text-[12.5px] leading-6 text-ink-2">
               صندلی‌های انتخاب‌شده برای شما محفوظ هستند. لطفاً در زمان مقرر خرید را تکمیل کنید.
             </p>
@@ -210,24 +215,26 @@ function SeatSelection({ sessionId, data, receivedAt, refetch }: { sessionId: nu
             </div>
           </section>
         ) : (
-          <p className="flex items-center gap-2 rounded-2xl bg-surface-2 px-4 py-3 text-[12.5px] leading-6 text-ink-2">
+          <p className="flex items-center gap-2 rounded-[20px] border border-line bg-surface px-4 py-3 text-[12.5px] leading-6 text-ink-2 shadow-card">
             <Info className="size-[18px] shrink-0 text-brand-600" />
             با انتخاب هر صندلی، آن صندلی تا {faNumber(data.hold?.hold_minutes ?? 10)} دقیقه برای شما نگه داشته می‌شود.
           </p>
         )}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-          <section aria-labelledby="map-title" className="card min-w-0 p-3 sm:p-4">
+          <div className="min-w-0 space-y-3">
+          <section aria-labelledby="map-title" className="bg-band-solid min-w-0 rounded-[26px] p-3 text-white shadow-float sm:p-4">
             <h2 id="map-title" className="sr-only">
               نقشه سالن
             </h2>
             {seats.length === 0 ? (
-              <EmptyState className="border-0" message="برای این سانس نقشه صندلی تعریف نشده است." />
+              <EmptyState message="برای این سانس نقشه صندلی تعریف نشده است." />
             ) : (
               <SeatMap seats={seats} sections={sections} tiers={session.tiers} fallbackPrice={Number(session.price)} pending={pending} onToggle={onSale ? onToggle : () => {}} />
             )}
-            <SeatLegend className="mt-3" seats={seats} tiers={session.tiers} fallbackPrice={Number(session.price)} isVip={isVipTier} />
           </section>
+          <SeatLegend seats={seats} tiers={session.tiers} fallbackPrice={Number(session.price)} isVip={isVipTier} />
+          </div>
 
           <aside className="lg:sticky lg:top-24">
             <SeatSummarySheet
@@ -264,12 +271,11 @@ function SeatSelection({ sessionId, data, receivedAt, refetch }: { sessionId: nu
 function SeatSelectionSkeleton() {
   return (
     <>
-      <PageTopBar fallbackHref="/events" />
+      <PageTopBar fallbackHref="/events" title="انتخاب صندلی" subtitle="صندلی‌های موردنظر خود را انتخاب کنید." />
       <div className="container-page space-y-3 pt-1 lg:pt-6" aria-busy>
-        <Skeleton className="h-[120px] rounded-[18px]" />
-        <Skeleton className="h-[64px] rounded-2xl" />
-        <div className="card flex h-[460px] flex-col items-center justify-center gap-3 text-[14px] text-muted">
-          <span className="size-10 animate-spin rounded-full border-4 border-brand-100 border-t-brand-600" />
+        <Skeleton className="h-[92px] rounded-[22px] bg-white/15" />
+        <div className="bg-band-solid flex h-[460px] flex-col items-center justify-center gap-3 rounded-[26px] text-[14px] text-white/80">
+          <span className="size-10 animate-spin rounded-full border-4 border-white/20 border-t-white" />
           در حال بارگذاری نقشه سالن ...
         </div>
       </div>

@@ -16,7 +16,7 @@ function SeatSwatch({ kind }: { kind: Swatch }) {
   };
   const { fill, stroke } = paint[kind];
   return (
-    <svg viewBox="0 0 24 24" className="size-6 shrink-0" aria-hidden>
+    <svg viewBox="0 0 24 24" className="size-7 shrink-0" aria-hidden>
       <rect x="2.5" y="2.5" width="19" height="19" rx="5" fill={fill} stroke={stroke} strokeWidth="1.3" />
       {kind === "selected" && <path d="m7.5 12.3 3 3 6-6.3" stroke="#fff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />}
       {kind === "sold" && <path d="m8.5 8.5 7 7m0-7-7 7" stroke="var(--seat-sold-mark)" strokeWidth="1.6" strokeLinecap="round" />}
@@ -33,15 +33,15 @@ export function SeatLegend({ seats, tiers, fallbackPrice, isVip, className }: { 
   const items: { kind: Swatch; label: string }[] = [
     { kind: "free", label: "صندلی آزاد" },
     { kind: "selected", label: "صندلی انتخاب‌شده" },
-    { kind: "sold", label: "صندلی فروخته شده" },
+    { kind: "sold", label: "صندلی رزرو شده" },
     ...(vipTiers.length ? [{ kind: "vip" as const, label: "صندلی VIP" }] : []),
     ...(has("LOCKED") ? [{ kind: "locked" as const, label: "در حال خرید" }] : []),
     ...(has("B2B_RESERVED") ? [{ kind: "reserved" as const, label: "رزرو سازمانی" }] : []),
   ];
   const priced = tiers.filter((t) => t.price !== null || fallbackPrice);
   return (
-    <div className={cn("rounded-2xl border border-line bg-surface px-3.5 py-3", className)}>
-      <ul className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5 text-[12.5px] text-ink-2">
+    <div className={cn("rounded-[20px] border border-line bg-surface px-4 py-3.5 shadow-card", className)}>
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-3 text-[13px] font-bold text-ink-2 sm:flex sm:flex-wrap sm:justify-between">
         {items.map((i) => (
           <li key={i.kind} className="flex items-center gap-1.5">
             <SeatSwatch kind={i.kind} />

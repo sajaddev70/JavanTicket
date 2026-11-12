@@ -14,12 +14,12 @@ export function CheckoutSteps({ current, className }: { current: number; classNa
           return (
             <li key={label} aria-current={active ? "step" : undefined} className="relative flex flex-col items-center text-center">
               {i > 0 && (
-                <span aria-hidden className={cn("absolute right-[calc(-50%+22px)] top-[17px] h-[2px] w-[calc(100%-44px)] rounded-full", i <= current ? "bg-brand-600" : "bg-line-strong")} />
+                <span aria-hidden className={cn("absolute right-[calc(-50%+22px)] top-[17px] h-[2px] w-[calc(100%-44px)] rounded-full", i <= current ? "bg-grad-primary" : "bg-line-strong")} />
               )}
               <span
                 className={cn(
                   "relative z-10 flex size-9 items-center justify-center rounded-full text-[14px] font-black transition",
-                  active ? "bg-brand-600 text-white ring-4 ring-brand-500/15" : done ? "bg-brand-100 text-brand-600" : "bg-field text-muted",
+                  active ? "bg-grad-primary text-white ring-4 ring-brand-500/15" : done ? "bg-brand-100 text-brand-600" : "bg-field text-muted",
                 )}
               >
                 {done ? <Check className="size-[18px]" strokeWidth={3} /> : (i + 1).toLocaleString("fa-IR")}

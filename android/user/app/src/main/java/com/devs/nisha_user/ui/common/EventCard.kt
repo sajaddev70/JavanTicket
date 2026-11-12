@@ -70,7 +70,7 @@ fun eventWhen(e: PublicEvent): EventWhen {
 fun eventPlace(e: PublicEvent, separator: String = " - "): String = listOfNotNull(e.cityName, e.hallName ?: e.venueName).joinToString(separator)
 
 @Composable
-fun FavoriteButton(eventId: Long, title: String, modifier: Modifier = Modifier, size: Dp = 36.dp) {
+fun FavoriteButton(eventId: Long, title: String, modifier: Modifier = Modifier, size: Dp = 36.dp, plain: Boolean = false) {
     val actions = LocalAppActions.current
     val on = actions.isFavorite(eventId)
     val c = Jt.colors
@@ -78,11 +78,11 @@ fun FavoriteButton(eventId: Long, title: String, modifier: Modifier = Modifier, 
         modifier
             .size(size)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.22f))
+            .background(if (plain) Color.Transparent else Color.Black.copy(alpha = 0.22f))
             .clickable(role = Role.Button, onClickLabel = if (on) "حذف $title از علاقه‌مندی‌ها" else "افزودن $title به علاقه‌مندی‌ها") { actions.toggleFavorite(eventId) },
         contentAlignment = Alignment.Center,
     ) {
-        JtIcon(Lucide.Heart, size = 20.dp, tint = if (on) c.ticket else Color.White, filled = on)
+        JtIcon(Lucide.Heart, size = if (plain) 24.dp else 20.dp, tint = if (on || plain) c.ticket else Color.White, filled = on, strokeWidth = 2.1f)
     }
 }
 
@@ -109,12 +109,12 @@ fun PriceText(price: Double?, modifier: Modifier = Modifier) {
         return
     }
     Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        JtIcon(PackageIcons.Ticket, size = 18.dp, tint = c.brand600, strokeWidth = 1.8f)
+        // Blue starting price of the references ("از ۱۵۰,۰۰۰ تومان").
         Text(
             buildAnnotatedString {
-                withStyle(SpanStyle(color = c.brand600)) { append("از ") }
-                withStyle(SpanStyle(color = c.brand600, fontWeight = W.Black, fontSize = 14.5.sp)) { append(Fa.number(p)) }
-                withStyle(SpanStyle(color = c.brand600, fontWeight = W.Bold)) { append(" تومان") }
+                withStyle(SpanStyle(color = c.price, fontWeight = W.Black)) { append("از ") }
+                withStyle(SpanStyle(color = c.price, fontWeight = W.Black, fontSize = 16.sp)) { append(Fa.number(p)) }
+                withStyle(SpanStyle(color = c.price, fontWeight = W.Black)) { append(" تومان") }
             },
             style = text(13f).copy(fontFamily = Vazirmatn),
             maxLines = 1,
@@ -191,22 +191,20 @@ fun EventCard(event: PublicEvent, modifier: Modifier = Modifier, variant: EventC
             }
         }
 
-        EventCardVariant.ROW -> Row(frame.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(Modifier.width(128.dp).aspectRatio(0.78f)) {
-                RemoteImage(event.bannerUrl, Modifier.matchParentSize().clip(JtShapes.xl2), fallback = event.categoryCoverUrl, contentDescription = event.title)
-                FavoriteButton(event.id, event.title, Modifier.align(Alignment.TopEnd).padding(6.dp), size = 36.dp)
-            }
-            Column(Modifier.weight(1f).padding(vertical = 4.dp)) {
-                Text(event.title, style = text(15f, W.Black, lineHeight = 1.6f), color = c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        // Reference 02: poster on the start side, title with an outline heart, date / place and the blue price.
+        EventCardVariant.ROW -> Row(frame.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            RemoteImage(event.bannerUrl, Modifier.width(104.dp).aspectRatio(0.75f).clip(JtShapes.xl2), fallback = event.categoryCoverUrl, contentDescription = event.title)
+            Column(Modifier.weight(1f).padding(vertical = 2.dp)) {
+                Row(verticalAlignment = Alignment.Top) {
+                    Text(event.title, style = text(16f, W.Black, lineHeight = 1.6f), color = c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    FavoriteButton(event.id, event.title, Modifier.padding(start = 4.dp), size = 36.dp, plain = true)
+                }
                 Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     MetaLine(PackageIcons.Calendar, whenText.time?.let { "${whenText.date}، ساعت $it" } ?: whenText.date)
                     if (place.isNotEmpty()) MetaLine(PackageIcons.Location, place)
                 }
                 Spacer(Modifier.weight(1f).heightIn(min = 12.dp))
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    PriceText(event.minPrice, Modifier.weight(1f))
-                    SmallButton("خرید بلیت", open)
-                }
+                PriceText(event.minPrice)
             }
         }
 
@@ -226,7 +224,7 @@ fun EventCard(event: PublicEvent, modifier: Modifier = Modifier, variant: EventC
                 Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     SmallButton("خرید بلیت ←", open)
                     Spacer(Modifier.weight(1f))
-                    Box(Modifier.clip(JtShapes.xl).background(c.brand50).padding(horizontal = 10.dp, vertical = 8.dp)) { PriceText(event.minPrice) }
+                    Box(Modifier.clip(JtShapes.pill).background(c.blueBg).padding(horizontal = 12.dp, vertical = 8.dp)) { PriceText(event.minPrice) }
                 }
             }
         }

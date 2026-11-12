@@ -265,7 +265,7 @@ function EventsScreen() {
                 type="button"
                 aria-pressed={f.on}
                 onClick={() => resetPage(f.set)(!f.on)}
-                className={cn('h-10 rounded-xl border px-4 text-[13px] font-bold', f.on ? 'border-brand-600 bg-brand-600 text-white' : 'border-line bg-surface text-ink')}
+                className={cn('h-10 rounded-xl border px-4 text-[13px] font-bold', f.on ? 'border-brand-600 bg-grad-primary text-white' : 'border-line bg-surface text-ink')}
               >
                 {f.label}
               </button>

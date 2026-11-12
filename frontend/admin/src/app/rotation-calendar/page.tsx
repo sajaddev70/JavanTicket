@@ -148,7 +148,7 @@ export default function RotationCalendarPage() {
       type="button"
       onClick={() => setView(v)}
       aria-pressed={view === v}
-      className={cn('inline-flex h-10 items-center gap-2 rounded-lg px-4 text-[13.5px] font-bold transition', view === v ? 'bg-brand-600 text-white shadow-cta' : 'text-ink hover:bg-field')}
+      className={cn('inline-flex h-10 items-center gap-2 rounded-lg px-4 text-[13.5px] font-bold transition', view === v ? 'bg-grad-primary text-white glow-primary' : 'text-ink hover:bg-field')}
     >
       <Icon className="size-4" />
       {label}
@@ -334,7 +334,7 @@ function MonthGrid({ days, anchor, sessions, onOpen, onDay }: { days: Date[]; an
                 onClick={() => onDay(d)}
                 className={cn(
                   'flex size-7 items-center justify-center rounded-full text-[12.5px] font-bold',
-                  sameDay(d, today) ? 'bg-brand-600 text-white' : out ? 'text-muted' : 'text-ink hover:bg-field',
+                  sameDay(d, today) ? 'bg-grad-primary text-white' : out ? 'text-muted' : 'text-ink hover:bg-field',
                 )}
               >
                 {new Intl.DateTimeFormat('fa-IR', { day: 'numeric' }).format(d)}

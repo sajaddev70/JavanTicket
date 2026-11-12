@@ -42,15 +42,18 @@ import com.devs.nisha_user.core.designsystem.theme.JtShapes
 import com.devs.nisha_user.core.designsystem.theme.W
 import com.devs.nisha_user.core.designsystem.theme.text
 
-/** The site's Button variants (components/ui/Button.tsx). */
-enum class ButtonVariant { PRIMARY, OUTLINE, SOFT, GHOST, DANGER_GHOST }
+/**
+ * The site's Button variants (components/ui/Button.tsx): gradient pills of the Javan Light Redesign — violet (main
+ * flow), magenta (event CTA), green (pay), orange (hero) — plus glass for the navy band.
+ */
+enum class ButtonVariant { PRIMARY, PINK, SUCCESS, ORANGE, GLASS, OUTLINE, SOFT, GHOST, DANGER_GHOST }
 
 /** min-h-10 / 11 / 12 / 14 with the matching text sizes. */
 enum class ButtonSize(val minHeight: Dp, val horizontal: Dp, val text: TextStyle) {
-    SM(40.dp, 16.dp, text(13.5f, W.Bold)),
-    MD(44.dp, 20.dp, text(14f, W.Bold)),
-    LG(48.dp, 24.dp, text(15f, W.Bold)),
-    XL(56.dp, 28.dp, text(16f, W.Bold)),
+    SM(40.dp, 16.dp, text(13.5f, W.Black)),
+    MD(48.dp, 20.dp, text(14.5f, W.Black)),
+    LG(52.dp, 24.dp, text(16f, W.Black)),
+    XL(56.dp, 28.dp, text(17f, W.Black)),
 }
 
 @Composable
@@ -66,7 +69,7 @@ fun JtButton(
     leading: LucidePaths? = null,
     trailing: LucidePaths? = null,
     leadingTint: Color? = null,
-    shape: Shape = JtShapes.xl,
+    shape: Shape = JtShapes.pill,
 ) {
     JtButtonBase(onClick, modifier, variant, size, enabled, loading, block, shape) {
         val iconSize = if (size == ButtonSize.SM) 18.dp else 20.dp
@@ -89,15 +92,30 @@ fun JtButtonBase(
     enabled: Boolean = true,
     loading: Boolean = false,
     block: Boolean = false,
-    shape: Shape = JtShapes.xl,
+    shape: Shape = JtShapes.pill,
     content: @Composable RowScope.() -> Unit,
 ) {
     val c = Jt.colors
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed && enabled) 0.98f else 1f, label = "press")
+    val brush = when (variant) {
+        ButtonVariant.PRIMARY -> Jt.brushes.primary
+        ButtonVariant.PINK -> Jt.brushes.pink
+        ButtonVariant.SUCCESS -> Jt.brushes.success
+        ButtonVariant.ORANGE -> Jt.brushes.orange
+        else -> null
+    }
+    val glow = when (variant) {
+        ButtonVariant.PRIMARY -> Color(0xFF6E32F5)
+        ButtonVariant.PINK -> Color(0xFFDC0A78)
+        ButtonVariant.SUCCESS -> Color(0xFF0AA028)
+        ButtonVariant.ORANGE -> Color(0xFFFB8A06)
+        else -> null
+    }
     val (bg, fg, border) = when (variant) {
-        ButtonVariant.PRIMARY -> Triple(if (pressed) c.brand700 else c.brand600, Color.White, null)
+        ButtonVariant.PRIMARY, ButtonVariant.PINK, ButtonVariant.SUCCESS, ButtonVariant.ORANGE -> Triple(Color.Transparent, Color.White, null)
+        ButtonVariant.GLASS -> Triple(Color.White.copy(alpha = if (pressed) 0.2f else 0.12f), Color.White, BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)))
         ButtonVariant.OUTLINE -> Triple(c.surface, c.ink, BorderStroke(1.dp, if (pressed) c.brand500.copy(alpha = 0.5f) else c.lineStrong))
         ButtonVariant.SOFT -> Triple(if (pressed) c.brand100 else c.brand50, c.brand600, null)
         ButtonVariant.GHOST -> Triple(if (pressed) c.field else Color.Transparent, c.ink2, null)
@@ -108,9 +126,10 @@ fun JtButtonBase(
         modifier = modifier
             .then(if (block) Modifier.fillMaxWidth() else Modifier)
             .scale(scale)
-            .then(if (variant == ButtonVariant.PRIMARY && active) Modifier.shadow(8.dp, shape, ambientColor = c.brand600.copy(0.25f), spotColor = c.brand600.copy(0.35f)) else Modifier)
+            .then(if (glow != null && active) Modifier.shadow(10.dp, shape, ambientColor = glow.copy(0.3f), spotColor = glow.copy(0.45f)) else Modifier)
             .clip(shape)
             .background(bg)
+            .then(if (brush != null) Modifier.background(brush).alpha(if (pressed) 0.92f else 1f) else Modifier)
             .then(if (border != null) Modifier.border(border, shape) else Modifier)
             .clickable(enabled = active, interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
             .defaultMinSize(minHeight = size.minHeight)
@@ -123,7 +142,7 @@ fun JtButtonBase(
     }
 }
 
-/** Square icon button (size-11 rounded-xl), bordered or filled. */
+/** Round icon button (size-11), bordered or filled; see [GlassIconButton] for the navy band. */
 @Composable
 fun JtIconButton(
     icon: LucidePaths,
@@ -135,7 +154,7 @@ fun JtIconButton(
     background: Color = Color.Transparent,
     tint: Color = Jt.colors.ink,
     borderColor: Color? = Jt.colors.line,
-    shape: Shape = JtShapes.xl,
+    shape: Shape = JtShapes.pill,
     enabled: Boolean = true,
     filledIcon: Boolean = false,
 ) {
@@ -168,4 +187,17 @@ fun TextLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, t
         Text(text, style = style, color = color)
         if (trailing != null) JtIcon(trailing, size = 16.dp, tint = color)
     }
+}
+
+/** Round translucent button on the navy band (search, account, back, share) — references 01–06. */
+@Composable
+fun GlassIconButton(icon: LucidePaths, onClick: () -> Unit, contentDescription: String, modifier: Modifier = Modifier, iconSize: Dp = 21.dp, filledIcon: Boolean = false, tint: Color = Color.White) {
+    JtIconButton(
+        icon, onClick, contentDescription, modifier,
+        iconSize = iconSize,
+        background = Color.White.copy(alpha = 0.12f),
+        tint = tint,
+        borderColor = Color.White.copy(alpha = 0.14f),
+        filledIcon = filledIcon,
+    )
 }

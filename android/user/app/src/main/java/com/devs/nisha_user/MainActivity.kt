@@ -29,10 +29,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val mode by app.themeMode.collectAsStateWithLifecycle()
             val dark = isDarkTheme(mode)
-            // Status / navigation bar icons follow the app theme, not only the system one.
+            // Every screen opens on the navy band (or a full-screen gradient), so the status bar icons are always light;
+            // the navigation bar icons follow the app theme.
             DisposableEffect(dark) {
-                val style = if (dark) SystemBarStyle.dark(Color.TRANSPARENT) else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
-                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                val nav = if (dark) SystemBarStyle.dark(Color.TRANSPARENT) else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+                enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT), navigationBarStyle = nav)
                 onDispose {}
             }
             JavanTheme(dark) { JavanAppRoot(app, dark) }

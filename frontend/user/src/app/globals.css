@@ -3,121 +3,151 @@
 /* `dark:` utilities follow the data-theme attribute set by the theme script / toggle. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* ---------- Design tokens: light (docs/design-tokens.json of the redesign package) ---------- */
+/* ---------- Design tokens: light (Javan Light Redesign — file/Javan_Light_Redesign_13_Screens) ---------- */
 :root {
-  --page: #f7f9fc;
+  --page: #f6f4fe;
   --surface: #ffffff;
-  --surface-2: #f5f7fb;
-  --field: #f1f4f9;
-  --line: #e4e7ec;
-  --line-strong: #d0d5dd;
-  --ink: #101828;
-  --ink-2: #344054;
-  --muted: #667085;
-  --skeleton: #eaeef4;
+  --surface-2: #f9f8ff;
+  --field: #f1effb;
+  --line: #e9e6f6;
+  --line-strong: #d7d2ee;
+  --ink: #11143a;
+  --ink-2: #3b3f66;
+  --muted: #6e7299;
+  --skeleton: #ece9f8;
 
-  --navy-800: #12386f;
-  --navy-900: #0b2b5b;
-  --navy-950: #071d3e;
+  /* Brand (Javan_SVG_Assets/docs/brand_colors.txt) */
+  --navy-800: #163c8c;
+  --navy-900: #102b67;
+  --navy-950: #0a1b4a;
 
-  --brand-50: #eef5ff;
-  --brand-100: #dceaff;
-  --brand-500: #2f7bef;
-  --brand-600: #1268e8;
-  --brand-700: #0b57c9;
+  /* Interaction accent of the references is violet; brand blue stays for prices, links on cards and seats. */
+  --brand-50: #f1e9ff;
+  --brand-100: #e4d5ff;
+  --brand-500: #8e45ff;
+  --brand-600: #7b35f6;
+  --brand-700: #6324f9;
+  --blue: #2f80ff;
+  --blue-bg: #eaf3ff;
+  --cyan: #6eb8ff;
+  --price: #1a8cfa;
 
-  --purple: #7c3aed;
-  --purple-bg: #f4efff;
+  --purple: #7b35f6;
+  --purple-600: #6324f9;
+  --purple-400: #ae66ff;
+  --purple-bg: #f1e9ff;
+  --magenta: #e0147f;
+  --magenta-bg: #ffe8f4;
+  --orange: #fb8a06;
 
-  --ticket: #f43f5e;
-  --ticket-700: #e11d48;
-  --success: #16a34a;
-  --success-bg: #ecfdf3;
-  --success-fg: #15803d;
-  --warning: #f59e0b;
-  --warning-bg: #fff8eb;
-  --warning-fg: #b45309;
-  --danger: #dc2626;
-  --danger-bg: #fef2f2;
-  --danger-fg: #dc2626;
+  --ticket: #ff5a75;
+  --ticket-700: #f03a5a;
+  --success: #12a63a;
+  --success-bg: #e3f8ea;
+  --success-fg: #0e8a30;
+  --warning: #f08a1c;
+  --warning-bg: #fff0e1;
+  --warning-fg: #d2650a;
+  --danger: #f0384f;
+  --danger-bg: #ffe8ed;
+  --danger-fg: #e0243f;
 
-  /* Seat map states (assets/icons/seat) */
-  --seat-free: #d9e9ff;
-  --seat-free-stroke: #84b7ff;
-  --seat-selected: #1268e8;
-  --seat-sold: #eef1f5;
-  --seat-sold-stroke: #cdd4dd;
-  --seat-sold-mark: #98a2b3;
-  --seat-vip: #f5b223;
-  --seat-vip-stroke: #d99400;
-  --seat-locked: #e4e7ec;
-  --seat-locked-stroke: #c3cad5;
-  --seat-reserved: #ede9fe;
-  --seat-reserved-stroke: #c4b5fd;
+  /* Seat map states (reference 05) */
+  --seat-free: #8fcbff;
+  --seat-free-stroke: #63b2ff;
+  --seat-selected: #eb3d9d;
+  --seat-sold: #c3c9da;
+  --seat-sold-stroke: #aab2c8;
+  --seat-sold-mark: #6e7699;
+  --seat-vip: #fdb124;
+  --seat-vip-stroke: #f39a00;
+  --seat-locked: #b4bbd0;
+  --seat-locked-stroke: #9aa3bd;
+  --seat-reserved: #c9b3ff;
+  --seat-reserved-stroke: #a685ff;
   --seat-disabled: transparent;
-  --stage: #0b2b5b;
+  --stage: #7b35f6;
+  --seat-panel: #12307a;
 
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 14px rgb(16 24 40 / 0.04);
-  --shadow-float: 0 12px 32px rgb(16 24 40 / 0.1);
-  --shadow-nav: 0 -4px 20px rgb(16 24 40 / 0.06);
+  /* Gradients of the references */
+  --band-end: var(--page);
+  --grad-primary: linear-gradient(to left, #6324f9, #8e45ff);
+  --grad-pink: linear-gradient(to left, #c9046a, #e8168a);
+  --grad-success: linear-gradient(to left, #079a22, #1dbb3b);
+  --grad-orange: linear-gradient(to left, #fb8a06, #fda54f);
+  --grad-login: linear-gradient(to left, #675cfc, #a45cf0 55%, #fa68b5);
+
+  --shadow-card: 0 1px 2px rgb(40 30 110 / 0.04), 0 8px 24px rgb(60 40 160 / 0.07);
+  --shadow-float: 0 16px 40px rgb(60 40 160 / 0.14);
+  --shadow-nav: 0 -6px 24px rgb(60 40 160 / 0.08);
 }
 
-/* ---------- Design tokens: dark ---------- */
+/* ---------- Design tokens: dark (same language on a deep navy base #0F172A) ---------- */
 [data-theme="dark"] {
-  --page: #0a1424;
-  --surface: #111d33;
-  --surface-2: #15233b;
-  --field: #18273f;
-  --line: #22324f;
-  --line-strong: #2c3d5c;
-  --ink: #eef2f8;
-  --ink-2: #c3cee0;
-  --muted: #95a3ba;
-  --skeleton: #1f2e4a;
+  --page: #090f2a;
+  --surface: #121a3d;
+  --surface-2: #161f48;
+  --field: #1b2552;
+  --line: #252f66;
+  --line-strong: #323d7d;
+  --ink: #eef0ff;
+  --ink-2: #c4c8ea;
+  --muted: #9096c4;
+  --skeleton: #1e2755;
 
-  --navy-800: #13305a;
-  --navy-900: #0d2347;
-  --navy-950: #061430;
+  --navy-800: #1b3f8f;
+  --navy-900: #122e6e;
+  --navy-950: #0a1846;
 
-  --brand-50: #13284a;
-  --brand-100: #1a3561;
-  --brand-500: #5596ff;
-  --brand-600: #3b86f7;
-  --brand-700: #2f74e0;
+  --brand-50: #261c5c;
+  --brand-100: #31237a;
+  --brand-500: #b28aff;
+  --brand-600: #a06bff;
+  --brand-700: #8a52ff;
+  --blue: #5a9bff;
+  --blue-bg: #14295a;
+  --cyan: #8ccaff;
+  --price: #5aaeff;
 
-  --purple: #a78bfa;
-  --purple-bg: #261c45;
+  --purple: #a06bff;
+  --purple-600: #8a52ff;
+  --purple-400: #c08cff;
+  --purple-bg: #261c5c;
+  --magenta: #ff5ec8;
+  --magenta-bg: #3a1640;
+  --orange: #ffa23a;
 
-  --ticket: #fb7185;
-  --ticket-700: #f43f5e;
+  --ticket: #ff7189;
+  --ticket-700: #ff5a75;
   --success: #2ccf68;
-  --success-bg: #0f2a1e;
+  --success-bg: #0d2f26;
   --success-fg: #4ade80;
-  --warning: #fbbf24;
-  --warning-bg: #2b2310;
+  --warning: #fbae3c;
+  --warning-bg: #33230d;
   --warning-fg: #fbbf24;
-  --danger: #f45b69;
-  --danger-bg: #2c1420;
-  --danger-fg: #fb7185;
+  --danger: #ff5a6e;
+  --danger-bg: #3a1424;
+  --danger-fg: #ff7189;
 
-  --seat-free: #1d3a66;
-  --seat-free-stroke: #3a6db8;
-  --seat-selected: #3b86f7;
-  --seat-sold: #1b2a43;
-  --seat-sold-stroke: #2c3d5c;
-  --seat-sold-mark: #5f6f89;
-  --seat-vip: #d99a1a;
-  --seat-vip-stroke: #f5b223;
-  --seat-locked: #2a3a58;
-  --seat-locked-stroke: #3a4c6e;
-  --seat-reserved: #2e2554;
-  --seat-reserved-stroke: #5b5299;
+  --seat-free: #3f8de8;
+  --seat-free-stroke: #6eb8ff;
+  --seat-selected: #ff4fae;
+  --seat-sold: #3a4370;
+  --seat-sold-stroke: #4a5488;
+  --seat-sold-mark: #9aa2cc;
+  --seat-vip: #f5a516;
+  --seat-vip-stroke: #fdb124;
+  --seat-locked: #2e3766;
+  --seat-locked-stroke: #3f4980;
+  --seat-reserved: #5b44a8;
+  --seat-reserved-stroke: #8466e0;
   --seat-disabled: transparent;
-  --stage: #13305a;
+  --stage: #8a52ff;
+  --seat-panel: #0f2160;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.25), 0 6px 20px rgb(0 0 0 / 0.22);
-  --shadow-float: 0 14px 44px rgb(0 0 0 / 0.45);
-  --shadow-nav: 0 -4px 20px rgb(0 0 0 / 0.35);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.28);
+  --shadow-float: 0 16px 44px rgb(0 0 0 / 0.5);
+  --shadow-nav: 0 -6px 24px rgb(0 0 0 / 0.4);
 }
 
 @theme inline {
@@ -143,9 +173,18 @@
   --color-brand-500: var(--brand-500);
   --color-brand-600: var(--brand-600);
   --color-brand-700: var(--brand-700);
+  --color-blue: var(--blue);
+  --color-blue-bg: var(--blue-bg);
+  --color-cyan: var(--cyan);
+  --color-price: var(--price);
 
   --color-purple: var(--purple);
+  --color-purple-600: var(--purple-600);
+  --color-purple-400: var(--purple-400);
   --color-purple-bg: var(--purple-bg);
+  --color-magenta: var(--magenta);
+  --color-magenta-bg: var(--magenta-bg);
+  --color-orange: var(--orange);
 
   --color-ticket: var(--ticket);
   --color-ticket-700: var(--ticket-700);
@@ -159,17 +198,17 @@
   --color-danger-bg: var(--danger-bg);
   --color-danger-fg: var(--danger-fg);
 
-  /* Radii of the design tokens: button / input 12, card 16, event card 18, hero / sheet 24. */
-  --radius-btn: 12px;
-  --radius-card: 16px;
-  --radius-event: 18px;
-  --radius-hero: 24px;
-  --radius-sheet: 24px;
+  /* Radii of the references: pill buttons, card 20, event card 20, hero / sheet 26. */
+  --radius-btn: 999px;
+  --radius-card: 20px;
+  --radius-event: 20px;
+  --radius-hero: 26px;
+  --radius-sheet: 26px;
 
   --shadow-card: var(--shadow-card);
   --shadow-float: var(--shadow-float);
   --shadow-nav: var(--shadow-nav);
-  --shadow-cta: 0 8px 18px rgb(18 104 232 / 0.22);
+  --shadow-cta: 0 10px 24px rgb(110 50 245 / 0.32);
 }
 
 @layer base {
@@ -225,6 +264,74 @@
   border: 1px solid var(--line);
   background-color: var(--surface);
   box-shadow: var(--shadow-card);
+}
+
+/*
+ * Navy → indigo band behind the top of every screen (references 01–13): a deep navy base with a blue glow on the
+ * start side and a violet glow on the end side, fading into the page color at the bottom.
+ */
+@utility bg-band {
+  background:
+    radial-gradient(70% 55% at 100% 0%, rgb(47 128 255 / 0.35), transparent 70%),
+    radial-gradient(75% 60% at 0% 72%, rgb(174 102 255 / 0.42), transparent 70%),
+    linear-gradient(180deg, #0f2a68 0%, #183887 34%, #33409f 60%, #5a52bf 82%, #8a6fd6 100%);
+  /* Fade the whole band (glows included) into the page instead of ending on a hard edge. */
+  -webkit-mask-image: linear-gradient(180deg, #000 58%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 58%, transparent 100%);
+}
+
+/* Solid version of the band (seat map panel, profile header, login) without the fade. */
+@utility bg-band-solid {
+  background:
+    radial-gradient(80% 60% at 100% 0%, rgb(47 128 255 / 0.32), transparent 70%),
+    radial-gradient(80% 70% at 0% 100%, rgb(174 102 255 / 0.38), transparent 70%),
+    linear-gradient(180deg, #0f2a68 0%, #1a3a8c 55%, #2f3c9c 100%);
+}
+
+/* Translucent controls placed on the band: round header buttons, search field, filter chips. */
+@utility glass {
+  background-color: rgb(255 255 255 / 0.12);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@utility bg-grad-primary {
+  background-image: var(--grad-primary);
+}
+@utility bg-grad-pink {
+  background-image: var(--grad-pink);
+}
+@utility bg-grad-success {
+  background-image: var(--grad-success);
+}
+@utility bg-grad-orange {
+  background-image: var(--grad-orange);
+}
+@utility bg-grad-login {
+  background-image: var(--grad-login);
+}
+
+/* Glows of the gradient buttons. */
+@utility glow-primary {
+  box-shadow: 0 10px 24px rgb(110 50 245 / 0.34);
+}
+@utility glow-pink {
+  box-shadow: 0 10px 24px rgb(220 10 120 / 0.3);
+}
+@utility glow-success {
+  box-shadow: 0 10px 24px rgb(10 160 40 / 0.3);
+}
+@utility glow-orange {
+  box-shadow: 0 8px 20px rgb(251 138 6 / 0.35);
+}
+
+/* Selected card of the references (session, payment method): violet border with a soft violet wash. */
+@utility card-selected {
+  border-color: var(--purple) !important;
+  background-color: color-mix(in srgb, var(--purple) 9%, var(--surface));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--purple) 16%, transparent), var(--shadow-card);
 }
 
 @layer utilities {

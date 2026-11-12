@@ -145,10 +145,10 @@ function CheckoutForm({ order, receivedAt, refetch }: { order: Order; receivedAt
 
   return (
     <div className="container-page space-y-3.5 pb-32 pt-3 lg:pb-10 lg:pt-6">
-      <CheckoutSteps current={1} className="mx-auto max-w-[760px] rounded-2xl bg-surface-2 px-2 py-3" />
+      <CheckoutSteps current={1} className="mx-auto max-w-[760px] rounded-[22px] bg-surface px-2 py-3 shadow-card" />
 
       {/* Reservation countdown: the server's deadline for this order */}
-      <section aria-label="زمان رزرو" className={cn("flex items-center gap-3 rounded-2xl px-4 py-3", urgent ? "bg-danger-bg" : "bg-brand-50")}>
+      <section aria-label="زمان رزرو" className={cn("flex items-center gap-3 rounded-[22px] border border-line px-4 py-3 shadow-card", urgent ? "bg-danger-bg" : "bg-surface")}>
         <Icon name="common/clock" className={cn("size-7 shrink-0", urgent ? "text-danger-fg" : "text-brand-600")} />
         <div className="min-w-0 flex-1">
           <p className={cn("text-[14px] font-black", urgent ? "text-danger-fg" : "text-ink")}>{urgent ? "زمان رزرو در حال اتمام است!" : "صندلی‌ها برای شما رزرو شده‌اند"}</p>

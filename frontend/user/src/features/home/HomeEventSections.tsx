@@ -32,9 +32,9 @@ function EventRow({ section, index }: { section: HomeSection; index: number }) {
   const itemClass = compact ? "w-[86%] min-[520px]:w-[60%] md:w-[46%] lg:w-[calc((100%-24px)/3)]" : "w-[46%] min-[520px]:w-[34%] md:w-[31%] lg:w-[calc((100%-36px)/4)]";
 
   return (
-    <SectionCard title={section.title} subtitle={section.subtitle} headingId={headingId} moreHref={sectionHref(section)}>
+    <SectionCard plain title={section.title} subtitle={section.subtitle} headingId={headingId} moreHref={sectionHref(section)}>
       {isError ? (
-        <ErrorState onRetry={() => refetch()} className="border-0" />
+        <ErrorState onRetry={() => refetch()} />
       ) : isLoading ? (
         <div className="flex gap-3 overflow-hidden">
           {Array.from({ length: 4 }, (_, i) => (
@@ -44,7 +44,7 @@ function EventRow({ section, index }: { section: HomeSection; index: number }) {
           ))}
         </div>
       ) : !data?.length ? (
-        <EmptyState className="border-0" message={city ? `در حال حاضر رویدادی برای ${city.name} وجود ندارد.` : "در حال حاضر رویدادی برای نمایش وجود ندارد."} />
+        <EmptyState message={city ? `در حال حاضر رویدادی برای ${city.name} وجود ندارد.` : "در حال حاضر رویدادی برای نمایش وجود ندارد."} />
       ) : (
         <Carousel label={section.title} itemClassName={itemClass}>
           {data.map((event, i) => (
