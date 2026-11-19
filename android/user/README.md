@@ -212,11 +212,11 @@ cd android/user
 اجرا روی گوشی متصل با USB و بک‌اند روی کامپیوتر:
 
 ```bash
-adb reverse tcp:8081 tcp:8081
+adb reverse tcp:8080 tcp:8080
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-(در شبیه‌ساز می‌توان `javan.apiBaseUrl=http://10.0.2.2:8081/api/v1` گذاشت یا همان `adb reverse` را زد.)
+(در شبیه‌ساز می‌توان `javan.apiBaseUrl=http://10.0.2.2:8080/api/v1` گذاشت یا همان `adb reverse` را زد.)
 
 **حساب نمایشی**: موبایل `09121234567`، کد `1111` (وقتی کلید پیامک تنظیم نشده). درگاه آزمایشی با `PAYMENT_MODE=dev` بک‌اند فعال است.
 

@@ -34,7 +34,7 @@ object NetworkModule {
         isLenient = true
     }
 
-    /** "http://host:8081/api/v1/" (Retrofit needs the trailing slash). */
+    /** "http://host:8080/api/v1/" (Retrofit needs the trailing slash). */
     @Provides
     @Named("baseUrl")
     fun baseUrl(): String = BuildConfig.API_BASE_URL.trimEnd('/') + "/"

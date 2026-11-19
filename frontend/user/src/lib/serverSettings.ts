@@ -2,7 +2,7 @@ import type { PageBlock, SiteSettings } from "@/types/content";
 import type { EventDetail } from "@/types/event";
 
 /** Backend as seen from the Next.js server (Docker network in production). */
-const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
+const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
 /** GET for metadata / manifest rendering on the server; null when the API is unreachable or answers an error. */
 async function serverGet<T>(path: string, revalidate: number): Promise<T | null> {

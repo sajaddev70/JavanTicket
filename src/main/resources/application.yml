@@ -43,7 +43,7 @@ spring:
     type: simple
 
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8080}
   forward-headers-strategy: framework
 
 app:
@@ -53,7 +53,7 @@ app:
   # Images uploaded from the admin panel; served under /uploads/
   upload-dir: ${UPLOAD_DIR:uploads}
   # Address of the user site as the browser sees it; payment gateways send the buyer back here.
-  user-site-url: ${USER_SITE_URL:http://localhost:3003}
+  user-site-url: ${USER_SITE_URL:http://localhost:3001}
 
 sms:
   # "kavenegar" sends real SMS when an API key is set; without a key (or with "dev") the fixed dev code is used and only logged.

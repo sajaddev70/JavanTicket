@@ -23,7 +23,7 @@ import coil.request.ImageRequest
 import com.devs.nisha_user.core.designsystem.theme.Jt
 import com.devs.nisha_user.domain.model.SiteSettings
 
-/** Origin of the backend ("http://host:8081"), which serves /media and /uploads. */
+/** Origin of the backend ("http://host:8080"), which serves /media and /uploads. */
 val LocalMediaOrigin = staticCompositionLocalOf { "" }
 
 /** Site settings (logo, contacts, fee ...) for components deep in the tree. */

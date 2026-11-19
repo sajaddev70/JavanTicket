@@ -25,10 +25,10 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     TZ=Asia/Tehran \
     HOSTNAME=0.0.0.0 \
-    PORT=3003
+    PORT=3001
 COPY --from=build --chown=node:node /app/public ./public
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
 USER node
-EXPOSE 3003
+EXPOSE 3001
 CMD ["node", "server.js"]

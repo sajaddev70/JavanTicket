@@ -21,7 +21,7 @@ class PaymentService(
     private val crud: JdbcCrud,
     private val orders: OrderService,
     private val gateways: List<PaymentGateway>,
-    @Value("\${app.user-site-url:http://localhost:3003}") private val userSiteUrl: String,
+    @Value("\${app.user-site-url:http://localhost:3001}") private val userSiteUrl: String,
     @Value("\${checkout.hold-minutes:10}") private val holdMinutes: Int,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)

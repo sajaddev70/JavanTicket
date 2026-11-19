@@ -1,7 +1,7 @@
 # API Contract — User Site (frontend/user)
 
 Every endpoint the user site calls. Base URL: `NEXT_PUBLIC_API_URL` (browser) / `API_INTERNAL_URL` (server rendering),
-e.g. `http://localhost:8081/api/v1`.
+e.g. `http://localhost:8080/api/v1`.
 
 ## Conventions
 

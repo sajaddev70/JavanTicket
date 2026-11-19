@@ -3,7 +3,7 @@ import { authStorage } from "@/stores/authStorage";
 import type { AuthResponse } from "@/types/user";
 
 /** Backend base URL as the browser sees it (inlined at build time). */
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
 const DEV = process.env.NODE_ENV !== "production";
 

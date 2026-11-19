@@ -7,12 +7,12 @@ FROM ${REGISTRY}/eclipse-temurin:17-jre
 ENV TZ=Asia/Tehran \
     SPRING_PROFILES_ACTIVE=prod \
     UPLOAD_DIR=/app/uploads \
-    SERVER_PORT=8081 \
+    SERVER_PORT=8080 \
     JAVA_OPTS="-XX:MaxRAMPercentage=75"
 
 WORKDIR /app
 COPY build/libs/*.jar app.jar
 RUN mkdir -p /app/uploads
 
-EXPOSE 8081
+EXPOSE 8080
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

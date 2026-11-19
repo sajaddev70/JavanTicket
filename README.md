@@ -14,9 +14,9 @@ docker compose up -d --build
 
 | بخش | آدرس |
 |---|---|
-| سایت کاربر | `http://SERVER:3003` |
-| پنل مدیریت | `http://SERVER:3002/admin` — مدیر ارشد `09101414285` |
-| API | `http://SERVER:8081/api/v1` — مستندات: `/swagger-ui.html` |
+| سایت کاربر | `http://SERVER:3001` |
+| پنل مدیریت | `http://SERVER:3000/admin` — مدیر ارشد `09101414285` |
+| API | `http://SERVER:8080/api/v1` — مستندات: `/swagger-ui.html` |
 
 راه‌اندازی روی دامنه با nginx و SSL: [deploy/README.md](deploy/README.md)
 

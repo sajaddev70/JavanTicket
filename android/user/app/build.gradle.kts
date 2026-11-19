@@ -11,10 +11,10 @@ plugins {
 
 /**
  * Backend and user-site addresses. Override per machine in local.properties (or with -P on the command line):
- *   javan.apiBaseUrl=http://192.168.1.10:8081/api/v1
- *   javan.siteUrl=http://192.168.1.10:3003
+ *   javan.apiBaseUrl=http://192.168.1.10:8080/api/v1
+ *   javan.siteUrl=http://192.168.1.10:3001
  * Debug defaults to localhost, which reaches the computer's backend from a USB-connected phone after
- * `adb reverse tcp:8081 tcp:8081` (an emulator can use http://10.0.2.2:8081/api/v1 instead).
+ * `adb reverse tcp:8080 tcp:8080` (an emulator can use http://10.0.2.2:8080/api/v1 instead).
  */
 val localProps = Properties().apply {
     rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
@@ -22,8 +22,8 @@ val localProps = Properties().apply {
 fun setting(key: String, default: String): String =
     (findProperty(key) as String?) ?: localProps.getProperty(key) ?: default
 
-val releaseApiUrl = setting("javan.apiBaseUrl.release", "https://sakooticket.ir/api/v1")
-val releaseSiteUrl = setting("javan.siteUrl.release", "https://sakooticket.ir")
+val releaseApiUrl = setting("javan.apiBaseUrl.release", "http://87.107.164.153:8080/api/v1")
+val releaseSiteUrl = setting("javan.siteUrl.release", "http://87.107.164.153:3001")
 
 android {
     namespace = "com.devs.nisha_user"
@@ -42,8 +42,8 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_BASE_URL", "\"${setting("javan.apiBaseUrl", "https://sakooticket.ir/api/v1")}\"")
-            buildConfigField("String", "SITE_URL", "\"${setting("javan.siteUrl", "https://sakooticket.ir")}\"")
+            buildConfigField("String", "API_BASE_URL", "\"${setting("javan.apiBaseUrl", "http://87.107.164.153:8080/api/v1")}\"")
+            buildConfigField("String", "SITE_URL", "\"${setting("javan.siteUrl", "http://87.107.164.153:3001")}\"")
         }
         release {
             isMinifyEnabled = true
