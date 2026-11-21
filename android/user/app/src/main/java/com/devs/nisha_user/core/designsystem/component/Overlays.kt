@@ -197,7 +197,7 @@ fun <T> JtTabs(items: List<TabItem<T>>, selected: T, onSelect: (T) -> Unit, modi
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
             ) {
-                Text(item.label, style = text(14f, if (on) W.Black else W.Bold), color = Color.White.copy(alpha = if (on) 1f else 0.9f), maxLines = 1)
+                Text(item.label, style = text(14f, if (on) W.Black else W.Bold), color = Color.White.copy(alpha = if (on) 1f else 0.9f), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                 if (item.badge != null) {
                     Text(
                         "(${Fa.number(item.badge)})",

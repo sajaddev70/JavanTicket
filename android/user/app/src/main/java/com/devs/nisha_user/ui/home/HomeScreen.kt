@@ -57,6 +57,7 @@ import com.devs.nisha_user.core.designsystem.component.RemoteImage
 import com.devs.nisha_user.core.designsystem.component.SectionCard
 import com.devs.nisha_user.core.designsystem.component.Skeleton
 import com.devs.nisha_user.core.designsystem.component.cardShadow
+import com.devs.nisha_user.core.designsystem.component.bleed
 import com.devs.nisha_user.core.designsystem.icon.JtIcon
 import com.devs.nisha_user.core.designsystem.icon.Lucide
 import com.devs.nisha_user.core.designsystem.theme.Jt
@@ -199,7 +200,7 @@ fun HeroSlider(slides: List<HeroSlide>) {
 fun CategoryStrip(categories: List<Category>) {
     val actions = LocalAppActions.current
     val c = Jt.colors
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(vertical = 4.dp)) {
+    LazyRow(Modifier.bleed(16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
         items(categories, key = { it.id }) { cat ->
             val color = parseHexColor(cat.color, c.brand500)
             // Pastel tile with the icon and the name inside (reference 01).
@@ -233,7 +234,7 @@ fun EventRow(row: HomeRow, cityName: String?, onRetry: () -> Unit) {
         when {
             row.events.isFailure -> ErrorState(null, onRetry = onRetry)
             events.isNullOrEmpty() -> EmptyState(if (cityName != null) "در حال حاضر رویدادی برای $cityName وجود ندارد." else "در حال حاضر رویدادی برای نمایش وجود ندارد.")
-            else -> LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            else -> LazyRow(Modifier.bleed(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(horizontal = 16.dp)) {
                 items(events, key = { it.id }) { e ->
                     EventCard(e, Modifier.width(if (compact) 300.dp else 176.dp), variant)
                 }
@@ -249,8 +250,8 @@ private fun eventsRouteOf(row: HomeRow): EventsRoute {
 
 @Composable
 fun HomeRowSkeleton() {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        items(3) { EventCardSkeleton(Modifier.width(330.dp), EventCardVariant.FEATURED) }
+    LazyRow(Modifier.bleed(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(horizontal = 16.dp)) {
+        items(3) { EventCardSkeleton(Modifier.width(300.dp), EventCardVariant.FEATURED) }
     }
 }
 
@@ -287,10 +288,10 @@ private fun CityTile(city: City?, othersCount: Int, modifier: Modifier) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            RemoteImage(city.imageUrl, Modifier.width(64.dp).height(52.dp).clip(JtShapes.xl), contentDescription = null)
-            Column {
-                Text(city.name, style = text(14.5f, W.Black), color = c.ink, maxLines = 1)
-                Text("${Fa.number(city.eventsCount)} رویداد", style = text(12f), color = c.muted, modifier = Modifier.padding(top = 2.dp))
+            RemoteImage(city.imageUrl, Modifier.width(56.dp).height(52.dp).clip(JtShapes.xl), contentDescription = null)
+            Column(Modifier.weight(1f)) {
+                Text(city.name, style = text(14.5f, W.Black), color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${Fa.number(city.eventsCount)} رویداد", style = text(12f), color = c.muted, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
             }
         }
     } else {
@@ -303,7 +304,7 @@ private fun CityTile(city: City?, othersCount: Int, modifier: Modifier) {
             Box(Modifier.size(44.dp).clip(CircleShape).background(c.surface), contentAlignment = Alignment.Center) {
                 JtIcon(Lucide.MapPin, size = 20.dp, tint = c.ink2)
             }
-            Column {
+            Column(Modifier.weight(1f)) {
                 Text("سایر شهرها", style = text(14.5f, W.Black), color = c.ink)
                 Text(if (othersCount > 0) "+ ${Fa.number(othersCount)} شهر" else "همه رویدادها", style = text(12f), color = c.muted)
             }

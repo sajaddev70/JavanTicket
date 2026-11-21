@@ -146,14 +146,14 @@ private fun TicketRow(t: TicketListItem, modifier: Modifier, onClick: () -> Unit
             }
             Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 JtIcon(Lucide.CalendarDays, size = 16.dp, tint = c.ink2)
-                Text("${Fa.fullDate(t.startTime)} - ${Fa.time(t.startTime)}", style = text(12.5f), color = c.ink2, maxLines = 1)
+                Text("${Fa.fullDate(t.startTime)} - ${Fa.time(t.startTime)}", style = text(12.5f), color = c.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 JtIcon(Lucide.MapPin, size = 16.dp, tint = c.ink2)
                 Text(listOf(t.hallName, t.cityName).joinToString("، "), style = text(12.5f), color = c.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(t.seatLabel.orEmpty(), style = text(12.5f, W.Bold), color = c.brand600, maxLines = 1, modifier = Modifier.weight(1f))
+                Text(t.seatLabel.orEmpty(), style = text(12.5f, W.Bold), color = c.brand600, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                 JtIcon(Lucide.ChevronLeft, size = 20.dp, tint = c.muted)
             }
         }

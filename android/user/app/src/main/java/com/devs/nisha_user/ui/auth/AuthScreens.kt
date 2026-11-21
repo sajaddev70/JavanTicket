@@ -1,5 +1,6 @@
 package com.devs.nisha_user.ui.auth
 
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.CompositingStrategy
@@ -240,10 +241,10 @@ fun VerifyScreen(hero: PageBlock?, viewModel: VerifyViewModel = hiltViewModel())
                             Text("کد را دریافت نکردید؟", style = text(14.5f), color = c.ink2)
                         }
                     }
-                    Row(Modifier.padding(top = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        TextAction("ارسال مجدد کد", Lucide.RefreshCw, enabled = s.resendLeft == 0 && !s.resending, onClick = viewModel::resend)
+                    Row(Modifier.padding(top = 16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
+                        TextAction("ارسال مجدد کد", Lucide.RefreshCw, enabled = s.resendLeft == 0 && !s.resending, onClick = viewModel::resend, modifier = Modifier.weight(1f, fill = false))
                         Box(Modifier.width(1.dp).height(24.dp).background(c.lineStrong))
-                        TextAction("تغییر شماره موبایل", Lucide.Pencil, enabled = true, onClick = actions.back)
+                        TextAction("تغییر شماره موبایل", Lucide.Pencil, enabled = true, onClick = actions.back, modifier = Modifier.weight(1f, fill = false))
                     }
                     JtButton(
                         if (s.verifying) "در حال بررسی ..." else "ورود به حساب",
@@ -264,16 +265,16 @@ fun VerifyScreen(hero: PageBlock?, viewModel: VerifyViewModel = hiltViewModel())
 private const val VERIFY_LENGTH = 4
 
 @Composable
-private fun TextAction(label: String, icon: LucidePaths, enabled: Boolean, onClick: () -> Unit) {
+private fun TextAction(label: String, icon: LucidePaths, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val c = Jt.colors
     val color = if (enabled) c.brand600 else c.brand600.copy(alpha = 0.4f)
     Row(
-        Modifier.clip(JtShapes.lg).clickable(enabled = enabled, onClick = onClick).heightIn(min = 44.dp).padding(horizontal = 8.dp),
+        modifier.clip(JtShapes.lg).clickable(enabled = enabled, onClick = onClick).heightIn(min = 44.dp).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         JtIcon(icon, size = 20.dp, tint = color)
-        Text(label, style = text(14.5f, W.Bold), color = color)
+        Text(label, style = text(14.5f, W.Bold), color = color, textAlign = TextAlign.Center)
     }
 }
 
@@ -300,21 +301,26 @@ fun OtpInput(digits: List<String>, onChange: (List<String>) -> Unit, modifier: M
             cursorBrush = SolidColor(Color.Transparent),
             modifier = modifier.focusRequester(focus).semantics { contentDescription = "کد تأیید ${Fa.number(digits.size)} رقمی" },
             decorationBox = {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // The boxes shrink with the screen (up to 64dp) so all of them stay fully visible on narrow phones.
+                BoxWithConstraints {
+                val gap = 12.dp
+                val box = if (maxWidth == androidx.compose.ui.unit.Dp.Infinity) 64.dp else minOf(64.dp, (maxWidth - gap * (digits.size - 1)) / digits.size)
+                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                     digits.forEachIndexed { i, d ->
                         val active = enabled && i == value.length.coerceAtMost(digits.size - 1)
                         Box(
                             Modifier
-                                .size(64.dp)
+                                .size(box)
                                 .then(if (active) Modifier.border(4.dp, c.brand500.copy(alpha = 0.10f), JtShapes.xl2) else Modifier)
                                 .clip(JtShapes.xl2)
                                 .background(c.surface)
                                 .border(2.dp, if (invalid) c.danger.copy(alpha = 0.5f) else if (active) c.brand500 else if (d.isNotEmpty()) c.brand500.copy(alpha = 0.4f) else c.lineStrong, JtShapes.xl2),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(toFaDigits(d), style = text(30f, W.Black), color = c.ink)
+                            Text(toFaDigits(d), style = text(if (box < 56.dp) 24f else 30f, W.Black), color = c.ink)
                         }
                     }
+                }
                 }
             },
         )

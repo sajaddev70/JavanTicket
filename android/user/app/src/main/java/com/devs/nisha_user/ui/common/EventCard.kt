@@ -117,7 +117,7 @@ fun PriceText(price: Double?, modifier: Modifier = Modifier) {
                 withStyle(SpanStyle(color = c.price, fontWeight = W.Black)) { append(" تومان") }
             },
             style = text(13f).copy(fontFamily = Vazirmatn),
-            maxLines = 1,
+            maxLines = 2,
         )
     }
 }
@@ -224,7 +224,7 @@ fun EventCard(event: PublicEvent, modifier: Modifier = Modifier, variant: EventC
                 Row(Modifier.fillMaxWidth().padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     SmallButton("خرید بلیت ←", open)
                     Spacer(Modifier.weight(1f))
-                    Box(Modifier.clip(JtShapes.pill).background(c.blueBg).padding(horizontal = 12.dp, vertical = 8.dp)) { PriceText(event.minPrice) }
+                    Box(Modifier.weight(1f, fill = false).clip(JtShapes.pill).background(c.blueBg).padding(horizontal = 12.dp, vertical = 8.dp)) { PriceText(event.minPrice) }
                 }
             }
         }

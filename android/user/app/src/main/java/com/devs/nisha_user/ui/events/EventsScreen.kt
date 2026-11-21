@@ -1,5 +1,6 @@
 package com.devs.nisha_user.ui.events
 
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Spacer
 import com.devs.nisha_user.core.designsystem.icon.PackageIcons
 import com.devs.nisha_user.core.designsystem.component.scrollingBand
@@ -118,6 +119,7 @@ fun EventsScreen(
                         height = 44.dp,
                         compactText = true,
                         glass = true,
+                        modifier = Modifier.width(IntrinsicSize.Max),
                     )
                 }
                 item {

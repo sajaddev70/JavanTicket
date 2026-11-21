@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
@@ -78,7 +79,7 @@ fun JtButton(
         } else if (leading != null) {
             JtIcon(leading, size = iconSize, tint = leadingTint ?: LocalContentColor.current)
         }
-        Text(text, style = size.text, color = LocalContentColor.current, maxLines = 1)
+        Text(text, style = size.text, color = LocalContentColor.current, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         if (trailing != null && !loading) JtIcon(trailing, size = iconSize, tint = LocalContentColor.current)
     }
 }

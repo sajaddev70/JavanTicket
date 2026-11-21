@@ -21,7 +21,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ../../../JavanTicket
       args:
         REGISTRY: ${REGISTRY:-docker.abrha.net}
     image: javanticket-backend
@@ -66,7 +66,7 @@ services:
 
   admin:
     build:
-      context: ./frontend/admin
+      context: frontend/admin
       args:
         REGISTRY: ${REGISTRY:-docker.abrha.net}
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:?set PUBLIC_API_URL in .env}
@@ -90,7 +90,7 @@ services:
 
   user:
     build:
-      context: ./frontend/user
+      context: frontend/user
       args:
         REGISTRY: ${REGISTRY:-docker.abrha.net}
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:?set PUBLIC_API_URL in .env}

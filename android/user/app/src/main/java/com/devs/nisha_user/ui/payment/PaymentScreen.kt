@@ -166,7 +166,7 @@ fun PaymentScreen(security: PageBlock?, viewModel: PaymentViewModel = hiltViewMo
 @Composable
 private fun DetailRow(label: String, value: @Composable () -> Unit) {
     Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = text(14.5f), color = Jt.colors.ink2, modifier = Modifier.weight(1f))
+        Text(label, style = text(14.5f), color = Jt.colors.ink2, modifier = Modifier.weight(1f).padding(end = 8.dp))
         value()
     }
 }

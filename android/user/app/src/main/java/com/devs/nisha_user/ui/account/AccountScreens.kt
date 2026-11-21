@@ -1,5 +1,6 @@
 package com.devs.nisha_user.ui.account
 
+import androidx.compose.ui.text.style.TextAlign
 import com.devs.nisha_user.core.designsystem.component.scrollingBand
 import com.devs.nisha_user.core.format.ltr
 import com.devs.nisha_user.core.designsystem.component.CodeText
@@ -283,7 +284,7 @@ private fun InfoLine(label: String, value: String, copy: Boolean = false) {
                     toaster.success("$label کپی شد.")
                 }, "کپی $label", size = 36.dp, iconSize = 16.dp, borderColor = null, tint = Jt.colors.muted)
             }
-            if (copy) CodeText(value, size = 14f) else Text(value, style = text(14f, W.Bold), color = Jt.colors.ink)
+            if (copy) CodeText(value, Modifier.weight(1.5f, fill = false), size = 14f) else Text(value, style = text(14f, W.Bold), color = Jt.colors.ink, textAlign = TextAlign.End, modifier = Modifier.weight(1.5f, fill = false))
         }
         HDivider()
     }
@@ -345,7 +346,7 @@ private fun Stat(icon: LucidePaths, label: String, value: Int, modifier: Modifie
     JtCard(modifier, padding = PaddingValues(12.dp), onClick = onClick) {
         IconTile(icon, size = 44.dp, iconSize = 22.dp)
         Text(Fa.number(value), style = text(22f, W.Black), color = c.ink, modifier = Modifier.padding(top = 8.dp))
-        Text(label, style = text(12f, lineHeight = 1.6f), color = c.ink2, maxLines = 2)
+        Text(label, style = text(12f, lineHeight = 1.6f), color = c.ink2, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
     }
 }
 

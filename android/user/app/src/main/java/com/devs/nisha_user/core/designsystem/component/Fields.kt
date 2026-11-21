@@ -243,12 +243,12 @@ fun <T> JtPicker(
                 .background(if (glass) Color.White.copy(alpha = 0.12f) else if (filled) c.field else c.surface)
                 .then(if (filled) Modifier else Modifier.border(1.dp, if (glass) Color.White.copy(alpha = 0.14f) else c.lineStrong, shape))
                 .clickable(role = Role.DropdownList, onClickLabel = sheetTitle) { open = true }
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = if (glass) 10.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(if (glass) 6.dp else 8.dp),
         ) {
             if (icon != null) JtIcon(icon, size = 18.dp, tint = if (filled || glass) ink else c.ink2)
-            Text(current, style = text(if (compactText) 13.5f else 14f, W.Bold), color = ink, maxLines = 1, modifier = Modifier.weight(1f, fill = !glass))
+            Text(current, style = text(if (compactText) 13.5f else 14f, W.Bold), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = !glass))
             JtIcon(Lucide.ChevronDown, size = 16.dp, tint = if (glass) Color.White.copy(alpha = 0.8f) else c.muted)
         }
     }

@@ -1,5 +1,6 @@
 package com.devs.nisha_user.ui.eventdetail
 
+import com.devs.nisha_user.core.designsystem.component.bleed
 import com.devs.nisha_user.core.designsystem.icon.PackageIcons
 import com.devs.nisha_user.core.designsystem.component.GlassIconButton
 import com.devs.nisha_user.core.designsystem.component.scrollingBand
@@ -204,7 +205,7 @@ private fun EventDetailContent(event: EventDetail, selectedId: Long?, onSelect: 
                     if (event.cancelled) {
                         Text("این رویداد لغو شده است.", style = text(13.5f, W.Bold), color = c.dangerFg, modifier = Modifier.padding(top = 12.dp).clip(JtShapes.xl).background(c.dangerBg).padding(horizontal = 12.dp, vertical = 8.dp))
                     }
-                    Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FlowRow(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         JtButton(if (favorite) "در علاقه‌مندی‌ها" else "افزودن به علاقه‌مندی", { actions.toggleFavorite(event.id) }, variant = ButtonVariant.OUTLINE, leading = Lucide.Heart, leadingTint = c.ticket)
                         JtButton("اشتراک‌گذاری", { actions.share(event.title, "${event.title}\n${actions.siteUrl}${EventDetailRoute(event.slug).path()}") }, variant = ButtonVariant.OUTLINE, leading = Lucide.Share2, leadingTint = c.brand600)
                     }
@@ -224,7 +225,7 @@ private fun EventDetailContent(event: EventDetail, selectedId: Long?, onSelect: 
                     if (event.sessions.isEmpty()) {
                         EmptyState("سانسی برای این رویداد ثبت نشده است.", description = "زمان برگزاری به‌زودی اعلام می‌شود.")
                     } else {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        LazyRow(Modifier.bleed(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(horizontal = 16.dp)) {
                             items(event.sessions, key = { it.id }) { s -> SessionCard(s, s.id == selectedId) { onSelect(s.id) } }
                         }
                     }
@@ -350,7 +351,7 @@ private fun EventDetailContent(event: EventDetail, selectedId: Long?, onSelect: 
                     JtCard(Modifier.fillMaxWidth()) {
                         CardTitle("سخنرانان", Lucide.Mic, iconSize = 20.dp)
                         Spacer(Modifier.height(16.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        LazyRow(Modifier.bleed(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), contentPadding = PaddingValues(horizontal = 16.dp)) {
                             items(event.speakers, key = { it.fullName }) { s ->
                                 Column(Modifier.width(120.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                     Box(Modifier.size(96.dp).border(4.dp, c.brand50, CircleShape).padding(4.dp).clip(CircleShape).background(c.field), contentAlignment = Alignment.Center) {
@@ -375,7 +376,7 @@ private fun EventDetailContent(event: EventDetail, selectedId: Long?, onSelect: 
                     JtCard(Modifier.fillMaxWidth()) {
                         CardTitle("گالری رویداد", Lucide.Images, iconSize = 20.dp)
                         Spacer(Modifier.height(16.dp))
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        LazyRow(Modifier.bleed(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(horizontal = 16.dp)) {
                             itemsIndexed(event.gallery, key = { _, g -> g.imageUrl }) { i, g ->
                                 RemoteImage(
                                     g.imageUrl,

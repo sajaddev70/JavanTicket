@@ -37,7 +37,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -173,9 +175,20 @@ fun InfoRow(
     Row(modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         if (icon != null) JtIcon(icon, size = 20.dp, tint = Jt.colors.brand600)
         Text(label, style = text(13.5f, if (icon != null) W.Bold else W.Normal), color = if (icon != null) Jt.colors.ink else labelColor)
-        Spacer(Modifier.weight(1f).width(8.dp))
-        if (trailing != null) trailing()
-        Text(value, style = text(13.5f, if (valueBold) W.Bold else W.Normal), color = valueColor, overflow = TextOverflow.Ellipsis, maxLines = 2)
+        Spacer(Modifier.width(2.dp))
+        // The value takes the rest of the row and wraps at the end side, so a long venue or date never pushes the label out.
+        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+            if (trailing != null) trailing()
+            Text(
+                value,
+                style = text(13.5f, if (valueBold) W.Bold else W.Normal),
+                color = valueColor,
+                textAlign = TextAlign.End,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 3,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+        }
     }
 }
 
@@ -188,7 +201,7 @@ fun Badge(label: String, background: Color, color: Color, modifier: Modifier = M
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         if (icon != null) JtIcon(icon, size = if (large) 20.dp else 16.dp, tint = color)
-        Text(label, style = text(if (large) 14f else 12.5f, if (large) W.Black else W.Bold), color = color, maxLines = 1)
+        Text(label, style = text(if (large) 14f else 12.5f, if (large) W.Black else W.Bold), color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -204,4 +217,18 @@ fun IconTile(icon: LucidePaths, modifier: Modifier = Modifier, size: Dp = 48.dp,
 @Composable
 fun CodeText(value: String, modifier: Modifier = Modifier, size: Float = 13.5f, color: Color = Jt.colors.ink, weight: FontWeight = W.Bold) {
     Text(ltr(value), style = code(size, weight), color = color, modifier = modifier)
+}
+
+/**
+ * Lets a horizontal scroller run edge to edge through its parent's [horizontal] padding, so the cards scroll under the
+ * screen (or card) edge instead of being cut off at an invisible line. Pair it with the same contentPadding.
+ */
+fun Modifier.bleed(horizontal: Dp): Modifier = layout { measurable, constraints ->
+    val extra = horizontal.roundToPx() * 2
+    if (!constraints.hasBoundedWidth) {
+        val p = measurable.measure(constraints)
+        return@layout layout(p.width, p.height) { p.place(0, 0) }
+    }
+    val p = measurable.measure(constraints.copy(minWidth = constraints.minWidth + extra, maxWidth = constraints.maxWidth + extra))
+    layout(p.width - extra, p.height) { p.place(-extra / 2, 0) }
 }

@@ -18,6 +18,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -140,17 +142,21 @@ fun BrandMark(modifier: Modifier = Modifier, tone: BrandTone = BrandTone.LIGHT) 
  * ("مرکز همایش و نمایش" / "جوان"). [onBand] = the white version used on the navy header band of the references.
  */
 @Composable
-fun AppLogo(settings: SiteSettings?, modifier: Modifier = Modifier, onBand: Boolean = true) {
+fun AppLogo(settings: SiteSettings?, modifier: Modifier = Modifier, onBand: Boolean = true, compact: Boolean = false) {
     val ink = if (onBand || Jt.colors.isDark) Color.White else Jt.colors.navy800
     val name = settings?.shortName?.trim()?.ifBlank { null } ?: settings?.siteName?.trim().orEmpty()
     val full = settings?.siteName?.trim().orEmpty()
-    val kicker = if (name.isNotEmpty() && full.contains(name) && full != name) full.replace(name, "").trim() else null
-    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        BrandMark(Modifier.width(52.dp).height(48.dp), tone = if (onBand || Jt.colors.isDark) BrandTone.LIGHT else BrandTone.COLOR)
+    // On narrow phones the small kicker line ("مرکز همایش و نمایش") is dropped so the header buttons always fit whole.
+    val kicker = if (!compact && name.isNotEmpty() && full.contains(name) && full != name) full.replace(name, "").trim() else null
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)) {
+        BrandMark(
+            if (compact) Modifier.width(42.dp).height(39.dp) else Modifier.width(52.dp).height(48.dp),
+            tone = if (onBand || Jt.colors.isDark) BrandTone.LIGHT else BrandTone.COLOR,
+        )
         if (name.isNotEmpty()) {
             Column {
-                kicker?.let { Text(it, style = text(10f, W.Bold, lineHeight = 1.3f), color = ink.copy(alpha = 0.92f), maxLines = 1) }
-                Text(name, style = text(24f, W.Black, lineHeight = 1.15f), color = ink)
+                kicker?.let { Text(it, style = text(10f, W.Bold, lineHeight = 1.3f), color = ink.copy(alpha = 0.92f), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                Text(name, style = text(if (compact) 21f else 24f, W.Black, lineHeight = 1.15f), color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -178,28 +184,36 @@ fun SiteHeader(
     val actions = LocalAppActions.current
     val settings = com.devs.nisha_user.core.designsystem.component.LocalSiteSettings.current
     Column(modifier.fillMaxWidth().statusBarsPadding()) {
-        Row(Modifier.fillMaxWidth().height(76.dp).padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.clip(JtShapes.lg).clickable(role = Role.Button, onClickLabel = "صفحه اصلی") { actions.openLink("/") }.heightIn(min = 44.dp), contentAlignment = Alignment.Center) {
-                AppLogo(settings)
+        // Every control is measured against the real screen width: the buttons keep their size, the city pill shrinks
+        // (ellipsizing a long city name) and the logo drops its kicker on narrow phones, so nothing slides off-screen.
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val compact = maxWidth < 420.dp
+            val gap = if (compact) 6.dp else 8.dp
+            Row(Modifier.fillMaxWidth().height(76.dp).padding(horizontal = if (compact) 12.dp else 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.clip(JtShapes.lg).clickable(role = Role.Button, onClickLabel = "صفحه اصلی") { actions.openLink("/") }.heightIn(min = 44.dp), contentAlignment = Alignment.Center) {
+                    AppLogo(settings, compact = compact)
+                }
+                Spacer(Modifier.width(gap))
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                    JtPicker(
+                        value = cityId,
+                        options = listOf(PickerOption<Long?>(null, "همه شهرها")) + cities.map { PickerOption<Long?>(it.id, it.name) },
+                        onSelect = onCity,
+                        icon = PackageIcons.Location,
+                        sheetTitle = "انتخاب شهر",
+                        height = 44.dp,
+                        compactText = true,
+                        glass = true,
+                        modifier = Modifier.widthIn(max = 140.dp),
+                    )
+                }
+                Spacer(Modifier.width(gap))
+                if (!showSearch) {
+                    GlassIconButton(PackageIcons.Search, { actions.navigate(EventsRoute()) }, "جستجو در رویدادها")
+                    Spacer(Modifier.width(gap))
+                }
+                GlassIconButton(Lucide.Menu, onMenu, "باز کردن منو")
             }
-            Spacer(Modifier.weight(1f))
-            JtPicker(
-                value = cityId,
-                options = listOf(PickerOption<Long?>(null, "همه شهرها")) + cities.map { PickerOption<Long?>(it.id, it.name) },
-                onSelect = onCity,
-                icon = PackageIcons.Location,
-                sheetTitle = "انتخاب شهر",
-                height = 44.dp,
-                compactText = true,
-                glass = true,
-                modifier = Modifier.widthIn(min = 92.dp, max = 140.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            if (!showSearch) {
-                GlassIconButton(PackageIcons.Search, { actions.navigate(EventsRoute()) }, "جستجو در رویدادها")
-                Spacer(Modifier.width(8.dp))
-            }
-            GlassIconButton(Lucide.Menu, onMenu, "باز کردن منو")
         }
         if (showSearch) {
             Box(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp)) {
