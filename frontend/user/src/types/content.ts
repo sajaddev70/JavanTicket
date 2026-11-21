@@ -19,6 +19,10 @@ export interface SiteSettings {
   newsletter_text?: string | null;
   /** Service fee in percent of the tickets after discount (0 = none). */
   service_fee_percent?: number | null;
+  /** While true the public address shows the maintenance page; the full site is reachable through /preview. */
+  maintenance_enabled?: boolean | null;
+  maintenance_title?: string | null;
+  maintenance_text?: string | null;
 }
 
 /** Hero / banner text blocks keyed by block_key (HOME_HERO, EVENTS_HERO, SEAT_HERO, AUTH_HERO, CHECKOUT_NOTICE, ...). */

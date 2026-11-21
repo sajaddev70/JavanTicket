@@ -281,6 +281,9 @@ data class SiteSettingsRequest(
     @field:DecimalMin(value = "0", message = "کارمزد خدمات نمی‌تواند منفی باشد.")
     @field:DecimalMax(value = "30", message = "کارمزد خدمات حداکثر ۳۰ درصد است.")
     val serviceFeePercent: BigDecimal? = null,
+    val maintenanceEnabled: Boolean? = null,
+    @field:Size(max = 150) val maintenanceTitle: String? = null,
+    @field:Size(max = 2000) val maintenanceText: String? = null,
 ) {
     fun columns() = linkedMapOf(
         "site_name" to siteName!!.trim(), "short_name" to shortName.blankToNull(), "tagline" to tagline.blankToNull(),
@@ -289,6 +292,8 @@ data class SiteSettingsRequest(
         "instagram_url" to instagramUrl.blankToNull(), "telegram_url" to telegramUrl.blankToNull(), "linkedin_url" to linkedinUrl.blankToNull(), "aparat_url" to aparatUrl.blankToNull(),
         "newsletter_title" to newsletterTitle.blankToNull(), "newsletter_text" to newsletterText.blankToNull(), "footer_text" to footerText.blankToNull(),
         "service_fee_percent" to (serviceFeePercent ?: BigDecimal.ZERO),
+        "maintenance_enabled" to (maintenanceEnabled ?: false),
+        "maintenance_title" to maintenanceTitle.blankToNull(), "maintenance_text" to maintenanceText.blankToNull(),
     )
 }
 

@@ -42,7 +42,8 @@ class PublicDataController(
     fun getSiteSettings(): ApiResponse<Map<String, Any?>> = ApiResponse.ok(
         crud.list(
             "SELECT site_name, short_name, tagline, meta_description, logo_url, logo_dark_url, contact_phone, contact_email, " +
-                "address, instagram_url, telegram_url, linkedin_url, aparat_url, newsletter_title, newsletter_text, footer_text, service_fee_percent " +
+                "address, instagram_url, telegram_url, linkedin_url, aparat_url, newsletter_title, newsletter_text, footer_text, service_fee_percent, " +
+                "maintenance_enabled, maintenance_title, maintenance_text " +
                 "FROM site_settings ORDER BY id LIMIT 1",
         ).firstOrNull() ?: emptyMap(),
     )
