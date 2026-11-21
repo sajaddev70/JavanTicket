@@ -8,17 +8,20 @@
 
 ```bash
 ./gradlew clean bootJar
-cp .env.example .env        # JWT_SECRET، PUBLIC_API_URL و PUBLIC_USER_SITE_URL را پر کنید
+cp .env.example .env        # DB_PASSWORD، JWT_SECRET و کلید کاوه‌نگار را پر کنید
 docker compose up -d --build
 ```
 
-| بخش | آدرس |
-|---|---|
-| سایت کاربر | `http://SERVER:3001` |
-| پنل مدیریت | `http://SERVER:3000/admin` — مدیر ارشد `09101414285` |
-| API | `http://SERVER:8080/api/v1` — مستندات: `/swagger-ui.html` |
+| بخش | آدرس Production | روی سرور (فقط 127.0.0.1) |
+|---|---|---|
+| سایت کاربر | `https://sakooticket.ir` | `127.0.0.1:3001` |
+| پنل کاربران | `https://panel.sakooticket.ir` → `sakooticket.ir/profile` | — |
+| پنل مدیریت | `https://adm.sakooticket.ir/admin` — مدیر ارشد `09101414285` | `127.0.0.1:3000` |
+| API | `https://sakooticket.ir/api/v1` | `127.0.0.1:8080` |
 
-راه‌اندازی روی دامنه با nginx و SSL: [deploy/README.md](deploy/README.md)
+راهنمای کامل استقرار Production (nginx، SSL، Backup، Rollback): [DEPLOYMENT.md](DEPLOYMENT.md)
+
+Swagger (`/swagger-ui.html`) فقط در اجرای محلی (بدون پروفایل `prod`) فعال است.
 
 بدون کلید پیامک، کد ورود `1111` است. در اولین اجرا روی پایگاه داده خالی، داده نمایشی کامل پر می‌شود (مشتری نمایشی: `09121234567`).
 

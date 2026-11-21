@@ -2,6 +2,7 @@ package com.devs.nisha.security
 
 import com.devs.nisha.repository.UserRepository
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -20,6 +21,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfig(
     private val jwtProvider: JwtProvider,
     private val userRepository: UserRepository,
+    // Browser origins allowed to call the API (app.cors.allowed-origins). Native apps send no Origin and are unaffected.
+    @Value("\${app.cors.allowed-origins}") private val corsAllowedOrigins: List<String>,
 ) {
 
     @Bean
@@ -50,7 +53,7 @@ class SecurityConfig(
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration().apply {
-            allowedOriginPatterns = listOf("*")
+            allowedOriginPatterns = corsAllowedOrigins.map { it.trim() }.filter { it.isNotEmpty() }
             allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
             allowedHeaders = listOf("*")
             allowCredentials = true

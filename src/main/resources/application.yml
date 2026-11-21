@@ -54,6 +54,10 @@ app:
   upload-dir: ${UPLOAD_DIR:uploads}
   # Address of the user site as the browser sees it; payment gateways send the buyer back here.
   user-site-url: ${USER_SITE_URL:http://localhost:3001}
+  cors:
+    # Comma-separated browser origins allowed to call the API. Production sets the real domains via CORS_ALLOWED_ORIGINS;
+    # the default only covers local development (any port on localhost).
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:[*],http://127.0.0.1:[*]}
 
 sms:
   # "kavenegar" sends real SMS when an API key is set; without a key (or with "dev") the fixed dev code is used and only logged.
