@@ -81,7 +81,7 @@ export function Dialog({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          "relative flex max-h-[88vh] w-full flex-col bg-surface shadow-float outline-none",
+          "relative flex max-h-[88vh] w-full flex-col bg-surface-solid shadow-float outline-none",
           variant === "sheet" && "animate-[sheet-up_0.22s_ease] rounded-t-[22px] sm:max-w-lg sm:animate-[toast-in_0.18s_ease] sm:rounded-[22px]",
           variant === "drawer" && "fixed inset-y-0 right-0 max-h-none max-w-[340px] animate-[fade-in_0.15s_ease]",
           className,

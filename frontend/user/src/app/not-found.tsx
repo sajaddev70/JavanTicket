@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { SiteHeader } from "@/components/layout/SiteHeader";
+import { AppHeader } from "@/components/layout/AppHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { MobileTabBar } from "@/components/layout/MobileTabBar";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { NotFoundContent } from "@/components/feedback/NotFoundContent";
 
 export const metadata: Metadata = {
@@ -15,12 +15,12 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col bg-page">
-      <SiteHeader />
+      <AppHeader />
       <main id="main" className="flex flex-1">
         <NotFoundContent />
       </main>
       <SiteFooter />
-      <MobileTabBar />
+      <MobileBottomNav />
     </div>
   );
 }

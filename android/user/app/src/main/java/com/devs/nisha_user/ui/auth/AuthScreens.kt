@@ -1,5 +1,13 @@
 package com.devs.nisha_user.ui.auth
 
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.statusBarsPadding
+import com.devs.nisha_user.core.designsystem.component.GlassIconButton
 import com.devs.nisha_user.core.format.ltr
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -90,16 +98,20 @@ import com.devs.nisha_user.ui.navigation.VerifyRoute
 /** Decorative background of the auth screens: the AUTH_HERO image faded towards the page, and the site's wave. */
 @Composable
 private fun AuthBackground(hero: PageBlock?) {
-    val c = Jt.colors
-    val context = LocalContext.current
-    Box(Modifier.fillMaxSize()) {
-        RemoteImage(hero?.imageUrl, Modifier.fillMaxSize(), alpha = if (c.isDark) 0.2f else 0.35f, placeholder = c.page)
-        Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(c.page, c.page.copy(alpha = 0.7f)), radius = 1400f)))
-        AsyncImage(
-            model = remember { ImageRequest.Builder(context).data(assetUrl("auth/login-wave.svg")).decoderFactory(SvgDecoder.Factory()).build() },
-            contentDescription = null,
-            alpha = if (c.isDark) 0.2f else 0.7f,
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().aspectRatio(1200f / 320f),
+    // Reference 13: navy → blue → violet → sunset gradient, with the AUTH_HERO photo rising from the bottom.
+    Box(Modifier.fillMaxSize().background(Jt.brushes.login13)) {
+        RemoteImage(
+            hero?.imageUrl,
+            Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .fillMaxHeight(0.42f)
+                .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                .drawWithContent {
+                    drawContent()
+                    drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color.Black), endY = size.height * 0.45f), blendMode = BlendMode.DstIn)
+                },
+            placeholder = Color.Transparent,
         )
     }
 }
@@ -117,7 +129,7 @@ fun LoginScreen(hero: PageBlock?, features: List<Feature>, viewModel: LoginViewM
     Box(Modifier.fillMaxSize()) {
         AuthBackground(hero)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding()) {
-            Row(Modifier.fillMaxWidth().padding(top = 40.dp, start = 8.dp)) { JtIconButton(Lucide.ArrowRight, actions.back, "بازگشت", borderColor = null) }
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 8.dp, start = 16.dp, end = 16.dp), horizontalArrangement = Arrangement.End) { GlassIconButton(Lucide.ArrowLeft, actions.back, "بازگشت") }
             JtCard(Modifier.padding(16.dp).fillMaxWidth(), padding = PaddingValues(horizontal = 20.dp, vertical = 32.dp)) {
                 BrandLogo(Modifier.align(Alignment.CenterHorizontally).width(112.dp).height(96.dp))
                 Text("ورود / ثبت‌نام", style = text(26f, W.Black), color = c.ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 20.dp))
@@ -158,7 +170,7 @@ fun LoginScreen(hero: PageBlock?, features: List<Feature>, viewModel: LoginViewM
                     }
                 }
                 Text(s.error ?: "کد تأیید به این شماره ارسال خواهد شد.", style = text(13f, if (s.error != null) W.Semibold else W.Normal), color = if (s.error != null) c.dangerFg else c.muted, modifier = Modifier.padding(top = 8.dp))
-                JtButton(if (s.sending) "در حال ارسال کد ..." else "دریافت کد تأیید", viewModel::submit, Modifier.padding(top = 20.dp), size = ButtonSize.XL, block = true, loading = s.sending, trailing = if (s.sending) null else Lucide.ArrowLeft)
+                JtButton(if (s.sending) "در حال ارسال کد ..." else "دریافت کد تأیید", viewModel::submit, Modifier.padding(top = 20.dp), size = ButtonSize.XL, block = true, loading = s.sending)
 
                 val shown = features.take(3)
                 if (shown.isNotEmpty()) {
@@ -206,7 +218,7 @@ fun VerifyScreen(hero: PageBlock?, viewModel: VerifyViewModel = hiltViewModel())
     Box(Modifier.fillMaxSize()) {
         AuthBackground(hero)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).imePadding().navigationBarsPadding(), verticalArrangement = Arrangement.Center) {
-            Row(Modifier.fillMaxWidth().padding(top = 40.dp, start = 8.dp)) { JtIconButton(Lucide.ArrowRight, actions.back, "بازگشت", borderColor = null) }
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(top = 8.dp, start = 16.dp, end = 16.dp), horizontalArrangement = Arrangement.End) { GlassIconButton(Lucide.ArrowLeft, actions.back, "بازگشت") }
             JtCard(Modifier.padding(16.dp).fillMaxWidth(), padding = PaddingValues(horizontal = 20.dp, vertical = 36.dp)) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                     BrandLogo(Modifier.width(110.dp).height(92.dp))
@@ -229,10 +241,10 @@ fun VerifyScreen(hero: PageBlock?, viewModel: VerifyViewModel = hiltViewModel())
                             Text("کد را دریافت نکردید؟", style = text(14.5f), color = c.ink2)
                         }
                     }
-                    Row(Modifier.padding(top = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        TextAction("ارسال مجدد کد", Lucide.RefreshCw, enabled = s.resendLeft == 0 && !s.resending, onClick = viewModel::resend)
+                    Row(Modifier.padding(top = 16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
+                        TextAction("ارسال مجدد کد", Lucide.RefreshCw, enabled = s.resendLeft == 0 && !s.resending, onClick = viewModel::resend, modifier = Modifier.weight(1f, fill = false))
                         Box(Modifier.width(1.dp).height(24.dp).background(c.lineStrong))
-                        TextAction("تغییر شماره موبایل", Lucide.Pencil, enabled = true, onClick = actions.back)
+                        TextAction("تغییر شماره موبایل", Lucide.Pencil, enabled = true, onClick = actions.back, modifier = Modifier.weight(1f, fill = false))
                     }
                     JtButton(
                         if (s.verifying) "در حال بررسی ..." else "ورود به حساب",
@@ -253,16 +265,16 @@ fun VerifyScreen(hero: PageBlock?, viewModel: VerifyViewModel = hiltViewModel())
 private const val VERIFY_LENGTH = 4
 
 @Composable
-private fun TextAction(label: String, icon: LucidePaths, enabled: Boolean, onClick: () -> Unit) {
+private fun TextAction(label: String, icon: LucidePaths, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val c = Jt.colors
     val color = if (enabled) c.brand600 else c.brand600.copy(alpha = 0.4f)
     Row(
-        Modifier.clip(JtShapes.lg).clickable(enabled = enabled, onClick = onClick).heightIn(min = 44.dp).padding(horizontal = 8.dp),
+        modifier.clip(JtShapes.lg).clickable(enabled = enabled, onClick = onClick).heightIn(min = 44.dp).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         JtIcon(icon, size = 20.dp, tint = color)
-        Text(label, style = text(14.5f, W.Bold), color = color)
+        Text(label, style = text(14.5f, W.Bold), color = color, textAlign = TextAlign.Center)
     }
 }
 
@@ -289,21 +301,26 @@ fun OtpInput(digits: List<String>, onChange: (List<String>) -> Unit, modifier: M
             cursorBrush = SolidColor(Color.Transparent),
             modifier = modifier.focusRequester(focus).semantics { contentDescription = "کد تأیید ${Fa.number(digits.size)} رقمی" },
             decorationBox = {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // The boxes shrink with the screen (up to 64dp) so all of them stay fully visible on narrow phones.
+                BoxWithConstraints {
+                val gap = 12.dp
+                val box = if (maxWidth == androidx.compose.ui.unit.Dp.Infinity) 64.dp else minOf(64.dp, (maxWidth - gap * (digits.size - 1)) / digits.size)
+                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                     digits.forEachIndexed { i, d ->
                         val active = enabled && i == value.length.coerceAtMost(digits.size - 1)
                         Box(
                             Modifier
-                                .size(64.dp)
+                                .size(box)
                                 .then(if (active) Modifier.border(4.dp, c.brand500.copy(alpha = 0.10f), JtShapes.xl2) else Modifier)
                                 .clip(JtShapes.xl2)
                                 .background(c.surface)
                                 .border(2.dp, if (invalid) c.danger.copy(alpha = 0.5f) else if (active) c.brand500 else if (d.isNotEmpty()) c.brand500.copy(alpha = 0.4f) else c.lineStrong, JtShapes.xl2),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(toFaDigits(d), style = text(30f, W.Black), color = c.ink)
+                            Text(toFaDigits(d), style = text(if (box < 56.dp) 24f else 30f, W.Black), color = c.ink)
                         }
                     }
+                }
                 }
             },
         )

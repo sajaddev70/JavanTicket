@@ -1,0 +1,272 @@
+[
+  {
+    "file": "01_splash__01_base.png",
+    "page": "صفحه آغازین",
+    "state": "عادی"
+  },
+  {
+    "file": "01_splash__02_state.png",
+    "page": "صفحه آغازین",
+    "state": "بارگذاری"
+  },
+  {
+    "file": "01_splash__03_state.png",
+    "page": "صفحه آغازین",
+    "state": "خطای اتصال"
+  },
+  {
+    "file": "02_login__01_base.png",
+    "page": "ورود و ثبت‌نام",
+    "state": "عادی"
+  },
+  {
+    "file": "02_login__02_state.png",
+    "page": "ورود و ثبت‌نام",
+    "state": "شماره نامعتبر"
+  },
+  {
+    "file": "02_login__03_state.png",
+    "page": "ورود و ثبت‌نام",
+    "state": "در حال ارسال کد"
+  },
+  {
+    "file": "03_otp__01_base.png",
+    "page": "تأیید شماره موبایل",
+    "state": "عادی"
+  },
+  {
+    "file": "03_otp__02_state.png",
+    "page": "تأیید شماره موبایل",
+    "state": "کد اشتباه"
+  },
+  {
+    "file": "03_otp__03_state.png",
+    "page": "تأیید شماره موبایل",
+    "state": "انقضای کد"
+  },
+  {
+    "file": "03_otp__04_state.png",
+    "page": "تأیید شماره موبایل",
+    "state": "تأیید موفق"
+  },
+  {
+    "file": "04_home__01_base.png",
+    "page": "خانه",
+    "state": "عادی"
+  },
+  {
+    "file": "04_home__02_state.png",
+    "page": "خانه",
+    "state": "در حال بارگذاری"
+  },
+  {
+    "file": "04_home__03_state.png",
+    "page": "خانه",
+    "state": "بدون رویداد"
+  },
+  {
+    "file": "05_events__01_base.png",
+    "page": "همه رویدادها",
+    "state": "عادی"
+  },
+  {
+    "file": "05_events__02_state.png",
+    "page": "همه رویدادها",
+    "state": "نتیجه جست‌وجو"
+  },
+  {
+    "file": "05_events__03_state.png",
+    "page": "همه رویدادها",
+    "state": "بدون نتیجه"
+  },
+  {
+    "file": "05_events__04_state.png",
+    "page": "همه رویدادها",
+    "state": "بارگذاری"
+  },
+  {
+    "file": "06_event_details__01_base.png",
+    "page": "جزئیات رویداد",
+    "state": "عادی"
+  },
+  {
+    "file": "06_event_details__02_state.png",
+    "page": "جزئیات رویداد",
+    "state": "رویداد لغوشده"
+  },
+  {
+    "file": "06_event_details__03_state.png",
+    "page": "جزئیات رویداد",
+    "state": "ظرفیت تکمیل"
+  },
+  {
+    "file": "07_sessions__01_base.png",
+    "page": "انتخاب سانس",
+    "state": "عادی"
+  },
+  {
+    "file": "07_sessions__02_state.png",
+    "page": "انتخاب سانس",
+    "state": "سانس انتخاب‌شده"
+  },
+  {
+    "file": "07_sessions__03_state.png",
+    "page": "انتخاب سانس",
+    "state": "سانس تکمیل"
+  },
+  {
+    "file": "08_seats__01_base.png",
+    "page": "انتخاب صندلی",
+    "state": "عادی"
+  },
+  {
+    "file": "08_seats__02_state.png",
+    "page": "انتخاب صندلی",
+    "state": "صندلی انتخاب‌شده"
+  },
+  {
+    "file": "08_seats__03_state.png",
+    "page": "انتخاب صندلی",
+    "state": "صندلی رزروشده"
+  },
+  {
+    "file": "08_seats__04_state.png",
+    "page": "انتخاب صندلی",
+    "state": "اتمام زمان رزرو"
+  },
+  {
+    "file": "09_buyer__01_base.png",
+    "page": "اطلاعات خریدار",
+    "state": "عادی"
+  },
+  {
+    "file": "09_buyer__02_state.png",
+    "page": "اطلاعات خریدار",
+    "state": "خطای اعتبارسنجی"
+  },
+  {
+    "file": "09_buyer__03_state.png",
+    "page": "اطلاعات خریدار",
+    "state": "کد تخفیف اعمال‌شده"
+  },
+  {
+    "file": "10_checkout__01_base.png",
+    "page": "خلاصه خرید",
+    "state": "عادی"
+  },
+  {
+    "file": "10_checkout__02_state.png",
+    "page": "خلاصه خرید",
+    "state": "در حال پردازش"
+  },
+  {
+    "file": "10_checkout__03_state.png",
+    "page": "خلاصه خرید",
+    "state": "مهلت رزرو تمام شد"
+  },
+  {
+    "file": "11_payment__01_base.png",
+    "page": "پرداخت",
+    "state": "عادی"
+  },
+  {
+    "file": "11_payment__02_state.png",
+    "page": "پرداخت",
+    "state": "درگاه در دسترس نیست"
+  },
+  {
+    "file": "11_payment__03_state.png",
+    "page": "پرداخت",
+    "state": "پرداخت ناموفق"
+  },
+  {
+    "file": "12_success__01_base.png",
+    "page": "پرداخت موفق",
+    "state": "عادی"
+  },
+  {
+    "file": "13_tickets__01_base.png",
+    "page": "بلیت‌های من",
+    "state": "عادی"
+  },
+  {
+    "file": "13_tickets__02_state.png",
+    "page": "بلیت‌های من",
+    "state": "بدون بلیت"
+  },
+  {
+    "file": "13_tickets__03_state.png",
+    "page": "بلیت‌های من",
+    "state": "بلیت استفاده‌شده"
+  },
+  {
+    "file": "14_ticket_qr__01_base.png",
+    "page": "بلیت الکترونیکی",
+    "state": "عادی"
+  },
+  {
+    "file": "14_ticket_qr__02_state.png",
+    "page": "بلیت الکترونیکی",
+    "state": "بلیت منقضی"
+  },
+  {
+    "file": "14_ticket_qr__03_state.png",
+    "page": "بلیت الکترونیکی",
+    "state": "خطای نمایش کد"
+  },
+  {
+    "file": "15_orders__01_base.png",
+    "page": "سفارش‌های من",
+    "state": "عادی"
+  },
+  {
+    "file": "15_orders__02_state.png",
+    "page": "سفارش‌های من",
+    "state": "بدون سفارش"
+  },
+  {
+    "file": "15_orders__03_state.png",
+    "page": "سفارش‌های من",
+    "state": "سفارش لغوشده"
+  },
+  {
+    "file": "16_order_detail__01_base.png",
+    "page": "جزئیات سفارش",
+    "state": "عادی"
+  },
+  {
+    "file": "16_order_detail__02_state.png",
+    "page": "جزئیات سفارش",
+    "state": "در انتظار پرداخت"
+  },
+  {
+    "file": "16_order_detail__03_state.png",
+    "page": "جزئیات سفارش",
+    "state": "سفارش لغوشده"
+  },
+  {
+    "file": "17_profile__01_base.png",
+    "page": "پروفایل",
+    "state": "عادی"
+  },
+  {
+    "file": "17_profile__02_state.png",
+    "page": "پروفایل",
+    "state": "حالت ویرایش"
+  },
+  {
+    "file": "17_profile__03_state.png",
+    "page": "پروفایل",
+    "state": "ذخیره موفق"
+  },
+  {
+    "file": "18_favorites__01_base.png",
+    "page": "علاقه‌مندی‌ها",
+    "state": "عادی"
+  },
+  {
+    "file": "18_favorites__02_state.png",
+    "page": "علاقه‌مندی‌ها",
+    "state": "بدون علاقه‌مندی"
+  }
+]

@@ -5,6 +5,7 @@ import { seatService } from "@/services/seat.service";
 import { queryKeys } from "@/constants/queryKeys";
 import { errorMessage, isStatus } from "@/services/api";
 import { toast } from "@/stores/useToastStore";
+import { faNumber } from "@/lib/format";
 import type { Seat, SeatHold, SeatMapData, SeatStatus } from "@/types/event";
 
 export const seatMapQuery = (sessionId: number) =>
@@ -22,12 +23,13 @@ export const useSeatMap = (sessionId: number) => useQuery(seatMapQuery(sessionId
 
 /**
  * Picking and releasing seats. Every pick is a lock on the server (POST /holds); only when it succeeds is the seat
- * shown as selected. A seat taken meanwhile by someone else answers 409: the message is shown and the map reloaded.
+ * shown as selected. A seat taken meanwhile by someone else answers 409: [taken] opens the box and the map reloads.
  */
 export function useSeatLocks(sessionId: number) {
   const qc = useQueryClient();
   const key = queryKeys.seatMap(sessionId);
   const [pending, setPending] = useState<Set<number>>(new Set());
+  const [taken, setTaken] = useState(false);
 
   const patch = useCallback(
     (seatIds: number[], status: SeatStatus, hold?: SeatHold) =>
@@ -61,10 +63,15 @@ export function useSeatLocks(sessionId: number) {
         } else {
           const hold = await seatService.lock(sessionId, seat.id);
           patch([seat.id], "SELECTED", hold);
+          toast.success(`ردیف ${seat.row_label}، صندلی ${faNumber(seat.seat_number)} به انتخاب شما اضافه شد.`);
         }
       } catch (error) {
-        toast.error(errorMessage(error));
-        if (isStatus(error, 409)) patch([seat.id], "LOCKED");
+        if (isStatus(error, 409)) {
+          patch([seat.id], "LOCKED");
+          setTaken(true);
+        } else {
+          toast.error(errorMessage(error));
+        }
         qc.invalidateQueries({ queryKey: key });
       } finally {
         mark(seat.id, false);
@@ -84,5 +91,5 @@ export function useSeatLocks(sessionId: number) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- key is derived from sessionId
   }, [sessionId, qc]);
 
-  return { toggle, releaseAll, pending };
+  return { toggle, releaseAll, pending, taken, dismissTaken: () => setTaken(false) };
 }

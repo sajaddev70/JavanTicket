@@ -28,7 +28,7 @@ class UserTicketController(
     private val crud: JdbcCrud,
     private val currentUser: CurrentUser,
     private val sms: SmsService,
-    @Value("\${app.user-site-url:http://localhost:3003}") private val userSiteUrl: String,
+    @Value("\${app.user-site-url:http://localhost:3001}") private val userSiteUrl: String,
 ) {
     /** Last SMS per ticket, so the button cannot be used to flood a number. */
     private val lastSent = ConcurrentHashMap<Long, Long>()

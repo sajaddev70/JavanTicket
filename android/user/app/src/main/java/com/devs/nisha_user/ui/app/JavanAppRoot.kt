@@ -1,9 +1,16 @@
 package com.devs.nisha_user.ui.app
 
+import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
@@ -15,6 +22,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
@@ -45,6 +54,8 @@ import com.devs.nisha_user.core.designsystem.component.LocalSiteSettings
 import com.devs.nisha_user.core.designsystem.component.LocalToaster
 import com.devs.nisha_user.core.designsystem.component.ToastHost
 import com.devs.nisha_user.core.designsystem.theme.Jt
+import com.devs.nisha_user.core.notification.NotificationHelper
+import com.devs.nisha_user.ui.notification.NotificationPermissionSheet
 import com.devs.nisha_user.domain.model.BlockKeys
 import com.devs.nisha_user.domain.model.ThemeMode
 import com.devs.nisha_user.ui.account.ContentScreen
@@ -102,7 +113,35 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
     val cityId by app.cityId.collectAsStateWithLifecycle()
     val favoriteIds by app.favoriteIds.collectAsStateWithLifecycle()
     val contentError by app.contentError.collectAsStateWithLifecycle()
+    val notificationPromptDismissed by app.notificationPromptDismissed.collectAsStateWithLifecycle()
     var menuOpen by rememberSaveable { mutableStateOf(false) }
+    var showNotificationSheet by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        app.setNotificationPromptDismissed(true)
+        showNotificationSheet = false
+        if (granted) {
+            val sent = NotificationHelper.sendTestNotification(context)
+            if (sent) {
+                app.toaster.success("اعلان‌ها با موفقیت فعال شدند.")
+            }
+        }
+    }
+
+    LaunchedEffect(notificationPromptDismissed) {
+        if (!notificationPromptDismissed) {
+            val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            } else {
+                NotificationManagerCompat.from(context).areNotificationsEnabled()
+            }
+            if (!hasPermission) {
+                showNotificationSheet = true
+            }
+        }
+    }
 
     val actions = remember(nav, favoriteIds) {
         AppActions(
@@ -144,6 +183,7 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
             onMenu = { menuOpen = true },
             initialQuery = query,
             onSearch = onSearch,
+            showSearch = onSearch != null,
         )
     }
 
@@ -154,6 +194,9 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
         LocalToaster provides app.toaster,
     ) {
         Box(Modifier.fillMaxSize().background(Jt.colors.page)) {
+            // The navy → indigo band behind the top of every screen (references 01–12); full-screen designs
+            // (login, OTP, payment result) paint their own background over it.
+            Box(Modifier.fillMaxWidth().height(340.dp).background(Jt.brushes.band(Jt.colors.page)))
             if (settings == null && contentError != null) {
                 // Nothing could be loaded at all (no connection at first start): the offline page with a retry.
                 Column(Modifier.fillMaxSize().statusBarsPadding().padding(top = 48.dp)) { ErrorState(contentError, onRetry = { app.loadContent(force = true) }) }
@@ -224,7 +267,27 @@ fun JavanAppRoot(app: AppViewModel, dark: Boolean) {
             }
             ToastHost(app.toaster)
         }
-        if (menuOpen) MenuSheet(navigation, settings, user, onSignOut = { app.signOut(); nav.navigateTab(HomeRoute) }, onDismiss = { menuOpen = false })
+        if (menuOpen) MenuSheet(navigation, settings, user, onSignOut = { app.signOut(); nav.navigateTab(HomeRoute) }, onDismiss = { menuOpen = false }, dark = dark, onToggleTheme = { app.setTheme(if (dark) ThemeMode.LIGHT else ThemeMode.DARK) })
+        if (showNotificationSheet) {
+            NotificationPermissionSheet(
+                onRequestPermission = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        app.setNotificationPromptDismissed(true)
+                        showNotificationSheet = false
+                        val sent = NotificationHelper.sendTestNotification(context)
+                        if (sent) {
+                            app.toaster.success("اعلان‌ها با موفقیت فعال شدند.")
+                        }
+                    }
+                },
+                onDismiss = {
+                    app.setNotificationPromptDismissed(true)
+                    showNotificationSheet = false
+                }
+            )
+        }
     }
 }
 

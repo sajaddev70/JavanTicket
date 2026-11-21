@@ -54,7 +54,7 @@ export function NotFoundView() {
             </button>
             <Link
               href="/dashboard"
-              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 text-[15px] font-bold text-white shadow-cta transition hover:bg-brand-700"
+              className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 text-[15px] font-bold text-white glow-primary transition hover:bg-brand-700"
             >
               <House className="size-5" />
               بازگشت به داشبورد

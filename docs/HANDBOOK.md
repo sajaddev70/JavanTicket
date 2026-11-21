@@ -59,8 +59,8 @@ JavanTicket/
 │       ├── db/migration/ ← ساختار پایگاه داده (Flyway، فایل‌های V1 تا V10)
 │       └── static/media/ ← تصاویر پیش‌فرض (پوستر، سالن، شهر، آیکون‌ها)
 ├── frontend/
-│   ├── user/             ← سایت کاربر (Next.js 16، پورت 3003)
-│   └── admin/            ← پنل مدیریت (Next.js 16، پورت 3002، آدرس /admin)
+│   ├── user/             ← سایت کاربر (Next.js 16، پورت 3001)
+│   └── admin/            ← پنل مدیریت (Next.js 16، پورت 3000، آدرس /admin)
 ├── android/              ← اپلیکیشن‌های اندروید (user و admin)
 ├── docker-compose.yml    ← اجرای کامل: db → backend → admin → user
 ├── Dockerfile            ← ایمیج بک‌اند
@@ -70,9 +70,9 @@ JavanTicket/
 | جزء | فناوری | پورت پیش‌فرض | آدرس |
 |---|---|---|---|
 | پایگاه داده | PostgreSQL 17 | 5432 | — |
-| بک‌اند (API) | Kotlin، Spring Boot 4، JWT، Flyway | 8081 | `http://SERVER:8081/api/v1` — مستندات API: `/swagger-ui.html` |
-| پنل مدیریت | Next.js 16، React 19، Tailwind 4، React Query | 3002 | `http://SERVER:3002/admin` |
-| سایت کاربر | Next.js 16، React 19، Tailwind 4، React Query | 3003 | `http://SERVER:3003` |
+| بک‌اند (API) | Kotlin، Spring Boot 4، JWT، Flyway | 8080 | `http://SERVER:8080/api/v1` — مستندات API: `/swagger-ui.html` |
+| پنل مدیریت | Next.js 16، React 19، Tailwind 4، React Query | 3000 | `http://SERVER:3000/admin` |
+| سایت کاربر | Next.js 16، React 19، Tailwind 4، React Query | 3001 | `http://SERVER:3001` |
 
 جریان داده: **پنل مدیریت ← API ← پایگاه داده ← API ← سایت کاربر**. هیچ متن، تصویر یا لینکی در کد سایت کاربر ثابت نوشته نشده؛ هر چه کاربر می‌بیند از پایگاه داده می‌آید و از پنل مدیریت قابل تغییر است.
 
@@ -92,8 +92,8 @@ JavanTicket/
 cp .env.example .env
 #    در .env حتماً این‌ها را پر کنید:
 #    JWT_SECRET=<یک رشته تصادفی بلند>     (مثلاً خروجی: openssl rand -hex 32)
-#    PUBLIC_API_URL=http://IP_SERVER:8081/api/v1
-#    PUBLIC_USER_SITE_URL=http://IP_SERVER:3003
+#    PUBLIC_API_URL=http://IP_SERVER:8080/api/v1
+#    PUBLIC_USER_SITE_URL=http://IP_SERVER:3001
 
 # ۳) اجرا
 docker compose up -d --build
@@ -106,6 +106,8 @@ docker compose logs -f backend
 
 > **مهم:** `PUBLIC_API_URL` و `PUBLIC_USER_SITE_URL` هنگام **ساخت** فرانت‌ها داخل آن‌ها قرار می‌گیرند. اگر IP یا دامنه را عوض کردید، دوباره `docker compose up -d --build` بزنید.
 
+برای راه‌اندازی روی دامنه `sakooticket.ir` با nginx و SSL، راهنمای [deploy/README.md](../deploy/README.md) را دنبال کنید.
+
 ### ۳-۲. اجرای محلی برای توسعه
 
 ```bash
@@ -113,10 +115,10 @@ docker compose logs -f backend
 ./gradlew bootRun
 
 # پنل مدیریت
-cd frontend/admin && npm install && npm run dev     # http://localhost:3002/admin
+cd frontend/admin && npm install && npm run dev     # http://localhost:3000/admin
 
 # سایت کاربر
-cd frontend/user && npm install && npm run dev      # http://localhost:3003
+cd frontend/user && npm install && npm run dev      # http://localhost:3001
 ```
 
 بدون کلید پیامک، کد ورود همیشه **`1111`** است (فقط در لاگ بک‌اند نوشته می‌شود).
@@ -297,7 +299,7 @@ docker compose up -d backend
 
 ## ۸. راهنمای کامل پنل مدیریت (بخش به بخش)
 
-آدرس: `http://SERVER:3002/admin` — منوی کناری روی موبایل با دکمه ☰ باز می‌شود. صفحه **«منو»** (`/admin/menu`) همه بخش‌ها را به صورت کاشی نمایش می‌دهد.
+آدرس: `http://SERVER:3000/admin` — منوی کناری روی موبایل با دکمه ☰ باز می‌شود. صفحه **«منو»** (`/admin/menu`) همه بخش‌ها را به صورت کاشی نمایش می‌دهد.
 
 ### مدیریت اصلی
 
@@ -378,7 +380,7 @@ docker compose up -d backend
 
 ## ۹. راهنمای سایت کاربر
 
-آدرس: `http://SERVER:3003`
+آدرس: `http://SERVER:3001`
 
 | صفحه | آدرس | توضیح |
 |---|---|---|
@@ -452,6 +454,7 @@ docker compose up -d backend
 | `PUBLIC_USER_SITE_URL` | آدرس سایت کاربر؛ لینک «مشاهده در سایت» پنل و بازگشت از درگاه |
 | `CHECKOUT_HOLD_MINUTES` | مدت نگهداری صندلی (پیش‌فرض ۱۰ دقیقه)؛ سفارش پرداخت‌نشده پس از آن لغو می‌شود |
 | `DEMO_SEED_*` | داده نمایشی — بخش ۴ |
+| `BIND_ADDRESS` | آدرسی که پورت‌ها روی آن باز می‌شوند؛ پشت nginx مقدار `127.0.0.1` |
 | `BACKEND_PORT`، `ADMIN_PORT`، `USER_PORT` | پورت‌ها |
 
 **درگاه آزمایشی:** با `PAYMENT_MODE=dev` (فقط پروفایل توسعه) یک صفحه بانک شبیه‌سازی‌شده باز می‌شود که می‌توانید پرداخت را موفق یا ناموفق کنید. برای درگاه واقعی، کلاسی که `PaymentGateway` را پیاده‌سازی می‌کند در `service/payment` اضافه می‌شود.

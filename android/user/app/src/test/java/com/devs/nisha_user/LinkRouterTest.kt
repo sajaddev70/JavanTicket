@@ -18,7 +18,7 @@ import org.junit.Test
 
 /** Links written in the admin panel must open the same page in the app as on the site. */
 class LinkRouterTest {
-    private val site = "http://45.156.186.169:3003"
+    private val site = "http://87.107.164.153:3001"
 
     @Test
     fun `site paths map to app screens`() {

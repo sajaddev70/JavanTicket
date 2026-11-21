@@ -16,7 +16,7 @@ export function OfflineView() {
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="mt-2 inline-flex min-h-12 items-center gap-2 rounded-xl bg-brand-600 px-6 text-[15px] font-bold text-white shadow-cta hover:bg-brand-700"
+        className="mt-2 inline-flex min-h-12 items-center gap-2 rounded-xl bg-brand-600 px-6 text-[15px] font-bold text-white glow-primary hover:bg-brand-700"
       >
         <RefreshCw className="size-5" />
         تلاش مجدد

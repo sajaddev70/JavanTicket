@@ -54,6 +54,6 @@ export function InlineAlert({ tone, children }: { tone: "error" | "success"; chi
 }
 
 export const primaryButton =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 text-sm font-bold text-white shadow-cta transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 text-sm font-bold text-white glow-primary transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60";
 export const secondaryButton =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-5 text-sm font-bold text-ink transition hover:border-brand-500/40";

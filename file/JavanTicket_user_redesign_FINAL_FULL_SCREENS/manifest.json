@@ -1,0 +1,59 @@
+{
+  "name": "JavanTicket User Redesign FINAL FULL SCREENS",
+  "full_screens_only": true,
+  "cropped_screenshot_assets_included": false,
+  "screens": [
+    {
+      "file": "01_home.png",
+      "title": "صفحه اصلی / Home"
+    },
+    {
+      "file": "02_events.png",
+      "title": "لیست رویدادها / Events"
+    },
+    {
+      "file": "03_event_detail.png",
+      "title": "جزئیات رویداد / Event Detail"
+    },
+    {
+      "file": "04_seat_selection.png",
+      "title": "انتخاب صندلی / Seat Selection"
+    },
+    {
+      "file": "05_login.png",
+      "title": "ورود / Login"
+    },
+    {
+      "file": "06_otp.png",
+      "title": "تأیید کد / OTP"
+    },
+    {
+      "file": "07_checkout.png",
+      "title": "اطلاعات خریدار و Checkout"
+    },
+    {
+      "file": "08_payment.png",
+      "title": "پرداخت / Payment"
+    },
+    {
+      "file": "09_payment_success.png",
+      "title": "نتیجه پرداخت موفق"
+    },
+    {
+      "file": "10_ticket.png",
+      "title": "بلیت الکترونیک / Ticket"
+    }
+  ],
+  "asset_groups": [
+    "assets/brand",
+    "assets/icons/navigation",
+    "assets/icons/common",
+    "assets/icons/categories",
+    "assets/icons/payment",
+    "assets/icons/seat",
+    "assets/icons/status",
+    "assets/illustrations",
+    "assets/pwa",
+    "assets/android"
+  ]
+}

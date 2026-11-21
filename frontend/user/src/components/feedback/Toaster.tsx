@@ -18,7 +18,7 @@ export function Toaster() {
             key={t.id}
             role={t.tone === "error" ? "alert" : "status"}
             className={cn(
-              "pointer-events-auto flex w-full max-w-md animate-[toast-in_0.18s_ease] items-start gap-3 rounded-2xl border bg-surface px-4 py-3 shadow-float",
+              "pointer-events-auto flex w-full max-w-md animate-[toast-in_0.18s_ease] items-start gap-3 rounded-2xl border bg-surface-solid px-4 py-3 shadow-float",
               t.tone === "success" && "border-success/30",
               t.tone === "error" && "border-danger/30",
               t.tone === "info" && "border-brand-500/30",

@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 
 export const inputClass = (invalid?: boolean) =>
   cn(
-    "w-full min-h-12 rounded-xl border bg-surface px-4 text-[14.5px] text-ink outline-none transition placeholder:text-muted/80",
+    "w-full min-h-[49px] rounded-[13px] border bg-field px-[15px] text-[14px] text-ink outline-none transition placeholder:text-muted/80",
     "focus:ring-4 disabled:bg-field disabled:text-muted",
     invalid ? "border-danger/60 focus:ring-danger/10" : "border-line-strong focus:border-brand-500/60 focus:ring-brand-500/10",
   );
@@ -29,7 +29,7 @@ export function Field({
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-2 block text-[14px] font-semibold text-ink">
+      <label htmlFor={id} className="mb-[7px] block text-[11px] text-muted">
         {label}
         {required && <span className="mr-1 text-danger-fg" aria-hidden>*</span>}
       </label>
@@ -76,7 +76,7 @@ export function Select({
   return (
     <div className={className}>
       {label && (
-        <label htmlFor={id} className="mb-2 block text-[13px] font-semibold text-ink">
+        <label htmlFor={id} className="mb-[7px] block text-[11px] text-muted">
           {label}
         </label>
       )}
@@ -85,7 +85,7 @@ export function Select({
         <select
           id={id}
           className={cn(
-            "min-h-12 w-full appearance-none rounded-xl border border-line-strong bg-surface pl-10 text-[14px] font-semibold text-ink outline-none transition focus:border-brand-500/60 focus:ring-4 focus:ring-brand-500/10",
+            "min-h-[49px] w-full appearance-none rounded-[13px] border border-line-strong bg-field pl-10 text-[14px] font-semibold text-ink outline-none transition focus:border-brand-500/60 focus:ring-4 focus:ring-brand-500/10 [&>option]:bg-surface-solid",
             icon ? "pr-10" : "pr-4",
             selectClassName,
           )}
@@ -102,7 +102,7 @@ export function Select({
 export function Checkbox({ label, className, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: React.ReactNode }) {
   return (
     <label className={cn("inline-flex min-h-11 cursor-pointer items-center gap-2.5 text-[13.5px] text-ink-2", className)}>
-      <input type="checkbox" className="size-5 shrink-0 cursor-pointer rounded-md accent-brand-600" {...props} />
+      <input type="checkbox" className="size-5 shrink-0 cursor-pointer rounded-md accent-[#ac30fa]" {...props} />
       <span>{label}</span>
     </label>
   );

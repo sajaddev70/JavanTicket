@@ -102,6 +102,8 @@ class SubscribeNewsletterUseCase @Inject constructor(private val content: Conten
 class AppSettingsUseCase @Inject constructor(private val settings: SettingsRepository) {
     val themeMode = settings.themeMode
     val cityId = settings.cityId
+    val notificationPromptDismissed = settings.notificationPromptDismissed
     fun setTheme(mode: ThemeMode) = settings.setTheme(mode)
     fun setCity(id: Long?) = settings.setCity(id)
+    fun setNotificationPromptDismissed(dismissed: Boolean) = settings.setNotificationPromptDismissed(dismissed)
 }

@@ -1,0 +1,54 @@
+{
+  "colors": {
+    "navy": "#0B2B5B",
+    "primary": "#1268E8",
+    "background": "#F7F9FC",
+    "surface": "#FFFFFF",
+    "text": "#101828",
+    "textSecondary": "#667085",
+    "border": "#E4E7EC",
+    "success": "#16A34A",
+    "error": "#DC2626",
+    "warning": "#F59E0B",
+    "purple": "#7C3AED"
+  },
+  "radius": {
+    "button": 12,
+    "input": 12,
+    "card": 16,
+    "eventCard": 18,
+    "hero": 24,
+    "sheet": 24
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64
+  ],
+  "typography": {
+    "fontFamily": "Vazirmatn",
+    "body": "14-16px",
+    "cardTitle": "16-18px",
+    "sectionTitle": "22-28px",
+    "mobileH1": "26-30px"
+  },
+  "mobileBottomNav": [
+    "خانه",
+    "رویدادها",
+    "بلیت‌های من",
+    "پروفایل"
+  ],
+  "seatStates": [
+    "AVAILABLE",
+    "SELECTED",
+    "SOLD",
+    "VIP",
+    "LOCKED",
+    "DISABLED"
+  ]
+}

@@ -183,7 +183,7 @@ export default function AdminVerifyPage() {
             type="button"
             onClick={() => verify(otp.join(''))}
             disabled={!complete || verifying}
-            className="mt-7 flex h-16 w-full items-center justify-center gap-3 rounded-xl bg-brand-600 text-[19px] font-bold text-white shadow-cta transition hover:bg-brand-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-7 flex h-16 w-full items-center justify-center gap-3 rounded-full bg-grad-primary text-[19px] font-bold text-white glow-primary transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {verifying ? (
               <>

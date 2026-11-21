@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { CalendarDays, ChevronLeft, CreditCard, MapPin, Ticket, UserRound } from "lucide-react";
 import { useOrder } from "@/features/checkout/queries";
-import { OrderStatusBadge } from "./OrderStatusBadge";
+import { ORDER_STATUS } from "./OrderStatusBadge";
+import { Icon } from "@/components/ui/Icon";
+import { cn } from "@/lib/cn";
 import { AccountShell } from "@/features/account/AccountShell";
-import { OrderSummary, seatText } from "@/components/shared/OrderSummary";
+import { CheckoutSummary, OrderEventSummary, seatText } from "@/components/shared/OrderSummary";
 import { HoldTimer } from "@/components/shared/HoldTimer";
 import { ButtonLink } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -19,11 +21,37 @@ export function OrderDetailView({ number }: { number: string }) {
   const o = order.data;
 
   return (
-    <AccountShell title="جزئیات سفارش" actions={o && <OrderStatusBadge status={o.status} className="text-[14px]" />}>
+    <AccountShell
+      title="جزئیات سفارش"
+      header={
+        <div className="space-y-3 text-white">
+          <h1 className="text-[24px] font-black leading-[1.5] lg:text-[28px]">جزئیات سفارش</h1>
+          {/* Reference 11: glass card with the order number (copyable) and the status pill */}
+          {o && (
+            <div className="glass flex flex-wrap items-center justify-between gap-3 rounded-[22px] p-4">
+              <span className="flex items-center gap-1">
+                <span dir="ltr" className="font-code text-[18px] font-black">
+                  {o.order_number}
+                </span>
+                <CopyButton value={o.order_number} label="شماره سفارش" className="text-white hover:bg-white/15 hover:text-white" />
+              </span>
+              <span
+                className={cn(
+                  "inline-flex min-h-10 items-center rounded-full px-4 text-[14px] font-black",
+                  o.status === "PAID" ? "bg-grad-success glow-success text-white" : ORDER_STATUS[o.status]?.tone,
+                )}
+              >
+                وضعیت: {ORDER_STATUS[o.status]?.label ?? o.status}
+              </span>
+            </div>
+          )}
+        </div>
+      }
+    >
       {order.isError && !o ? (
         <ErrorState message={isStatus(order.error, 404) ? "سفارش موردنظر پیدا نشد." : errorMessage(order.error)} onRetry={() => order.refetch()} />
       ) : !o ? (
-        <Skeleton className="h-[480px] rounded-[18px]" />
+        <Skeleton className="h-[480px] rounded-[22px]" />
       ) : (
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-start">
           <div className="min-w-0 space-y-4">
@@ -94,7 +122,7 @@ export function OrderDetailView({ number }: { number: string }) {
                 <ul className="grid gap-2.5 sm:grid-cols-2">
                   {o.tickets.map((t) => (
                     <li key={t.id}>
-                      <Link href={`/tickets/${t.id}`} className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-dashed border-brand-500/40 bg-brand-50/40 px-4 py-2.5 hover:bg-brand-50">
+                      <Link href={`/tickets/${t.id}`} className="flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-dashed border-brand-500/40 bg-brand-50/40 px-4 py-2.5 hover:bg-brand-50">
                         <span>
                           <span className="block text-[14px] font-bold text-ink">{t.seat_label}</span>
                           <span className="font-code block text-[12px] text-muted" dir="ltr">
@@ -126,7 +154,15 @@ export function OrderDetailView({ number }: { number: string }) {
               )
             )}
           </div>
-          <OrderSummary order={o} variant="payment" />
+          <div className="space-y-3">
+            <CheckoutSummary order={o}><OrderEventSummary order={o} className="mb-4 border-b border-line pb-4" /></CheckoutSummary>
+            {o.tickets.length > 0 && (
+              <ButtonLink href={`/tickets/${o.tickets[0].id}`} size="xl" block>
+                <Icon name="common/download" className="size-[22px]" />
+                دانلود بلیت‌ها
+              </ButtonLink>
+            )}
+          </div>
         </div>
       )}
     </AccountShell>

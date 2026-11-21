@@ -114,8 +114,8 @@ private class TicketPrintAdapter(private val context: Context, private val t: Ti
     }
 
     private fun drawTicket(canvas: Canvas, w: Float, h: Float) {
-        val regular = ResourcesCompat.getFont(context, R.font.iransans_regular)
-        val bold = ResourcesCompat.getFont(context, R.font.iransans_bold)
+        val regular = ResourcesCompat.getFont(context, R.font.vazirmatn_regular)
+        val bold = ResourcesCompat.getFont(context, R.font.vazirmatn_bold)
         val navy = 0xFF0F1B33.toInt()
         val muted = 0xFF6B7890.toInt()
         val brand = 0xFF1463E6.toInt()

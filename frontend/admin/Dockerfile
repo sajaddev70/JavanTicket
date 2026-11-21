@@ -16,6 +16,11 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_USER_SITE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
+# Server-side data fetches during `next build` must not depend on the live API: it is not running yet on a first
+# deploy, and the public domain may still point at another server. A closed local port fails instantly, the pages
+# fall back to defaults, and ISR refreshes them from API_INTERNAL_URL (the backend container) at runtime.
+ARG BUILD_API_URL=http://127.0.0.1:9/api/v1
+ENV API_INTERNAL_URL=${BUILD_API_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
@@ -26,10 +31,10 @@ ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     TZ=Asia/Tehran \
     HOSTNAME=0.0.0.0 \
-    PORT=3002
+    PORT=3000
 COPY --from=build --chown=node:node /app/public ./public
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
 USER node
-EXPOSE 3002
+EXPOSE 3000
 CMD ["node", "server.js"]

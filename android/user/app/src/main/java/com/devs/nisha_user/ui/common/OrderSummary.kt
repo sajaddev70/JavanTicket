@@ -124,7 +124,7 @@ private fun LineItem(title: String, detail: String?, amount: String) {
             Text(title, style = text(14f, W.Bold), color = Jt.colors.ink)
             if (detail != null) Text(detail, style = text(12.5f), color = Jt.colors.muted, modifier = Modifier.padding(top = 2.dp))
         }
-        Text(amount, style = text(14f, W.Bold), color = Jt.colors.ink)
+        Text(amount, style = text(14f, W.Bold), color = Jt.colors.ink, maxLines = 1)
     }
 }
 
@@ -132,6 +132,6 @@ private fun LineItem(title: String, detail: String?, amount: String) {
 fun AmountRow(label: String, value: String, color: androidx.compose.ui.graphics.Color = Jt.colors.ink, labelColor: androidx.compose.ui.graphics.Color? = null) {
     Row(Modifier.fillMaxWidth()) {
         Text(label, style = text(14f), color = labelColor ?: if (color == Jt.colors.ink) Jt.colors.ink2 else color, modifier = Modifier.weight(1f))
-        Text(value, style = text(14f, W.Bold), color = color)
+        Text(value, style = text(14f, W.Bold), color = color, textAlign = androidx.compose.ui.text.style.TextAlign.Left, modifier = Modifier.padding(start = 8.dp).weight(1.2f, fill = false))
     }
 }

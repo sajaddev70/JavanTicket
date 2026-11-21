@@ -29,8 +29,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+enum class SeatDialog { TAKEN, EXPIRED }
+
 data class SeatsUiState(
     val data: SeatMapData? = null,
+    val dialog: SeatDialog? = null,
     val error: AppError? = null,
     /** elapsedRealtime of the last answer: anchors the hold countdown. */
     val receivedAt: Long = 0,
@@ -115,10 +118,15 @@ class SeatsViewModel @Inject constructor(
                 val (status, hold) = toggleSeat(sessionId, seat, s.selected.size, s.maxSeats)
                 patch(seat.id, status)
                 _state.update { it.copy(data = it.data?.copy(hold = hold), receivedAt = SystemClock.elapsedRealtime()) }
+                if (status == SeatStatus.SELECTED) toaster.success("ردیف ${seat.rowLabel}، صندلی ${Fa.number(seat.seatNumber)} به انتخاب شما اضافه شد.")
             } catch (e: Exception) {
                 val error = e.appError
-                toaster.error(error.message)
-                if (error.isConflict) patch(seat.id, SeatStatus.LOCKED)
+                if (error.isConflict) {
+                    patch(seat.id, SeatStatus.LOCKED)
+                    _state.update { it.copy(dialog = SeatDialog.TAKEN) }
+                } else {
+                    toaster.error(error.message)
+                }
                 if (error.status != null) fetch()
             } finally {
                 _state.update { it.copy(pending = it.pending - seat.id) }
@@ -138,9 +146,11 @@ class SeatsViewModel @Inject constructor(
     }
 
     fun onHoldExpired() {
-        toaster.error("زمان نگهداری صندلی‌ها به پایان رسید و آزاد شدند. لطفاً دوباره انتخاب کنید.")
+        _state.update { it.copy(dialog = SeatDialog.EXPIRED) }
         load()
     }
+
+    fun dismissDialog() = _state.update { it.copy(dialog = null) }
 
     private fun patch(seatId: Long, status: SeatStatus) = _state.update { s ->
         s.copy(data = s.data?.copy(seats = s.data.seats.map { if (it.id == seatId) it.copy(status = status) else it }))

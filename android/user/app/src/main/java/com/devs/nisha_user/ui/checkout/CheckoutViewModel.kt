@@ -26,7 +26,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+enum class CheckoutStep { BUYER, SUMMARY }
+
 data class CheckoutUiState(
+    val step: CheckoutStep = CheckoutStep.BUYER,
+    /** Message of the "اطلاعات را بررسی کنید" box. */
+    val validation: String? = null,
+    val discountApplied: Boolean = false,
     /** "در حال ثبت سفارش ..." while the order is being created from the held seats. */
     val creating: Boolean = false,
     val createError: AppError? = null,
@@ -123,15 +129,15 @@ class CheckoutViewModel @Inject constructor(
         val n = number ?: return
         val errors = SubmitBuyerUseCase.validate(_state.value.form)
         if (errors.isNotEmpty()) {
-            _state.update { it.copy(fieldErrors = errors) }
+            val required = listOf("first_name", "last_name", "mobile").any { it in errors }
+            _state.update { it.copy(fieldErrors = errors, validation = if (required) "نام، نام خانوادگی و شماره موبایل الزامی هستند." else errors.values.first()) }
             return
         }
         _state.update { it.copy(submitting = true) }
         viewModelScope.launch {
             try {
                 val order = submitBuyer(n, _state.value.form)
-                _state.update { it.copy(order = order, submitting = false) }
-                _events.send(CheckoutEvent.GoToPayment(n))
+                _state.update { it.copy(order = order, submitting = false, step = CheckoutStep.SUMMARY) }
             } catch (e: Exception) {
                 val error = e.appError
                 _state.update { it.copy(submitting = false, fieldErrors = error.fieldErrors) }
@@ -141,6 +147,16 @@ class CheckoutViewModel @Inject constructor(
         }
     }
 
+    fun backToBuyer() = _state.update { it.copy(step = CheckoutStep.BUYER) }
+
+    fun goToPayment() {
+        number?.let { _events.trySend(CheckoutEvent.GoToPayment(it)) }
+    }
+
+    fun dismissValidation() = _state.update { it.copy(validation = null) }
+
+    fun dismissDiscountApplied() = _state.update { it.copy(discountApplied = false) }
+
     fun setCode(code: String) = _state.update { it.copy(code = code, discountError = null) }
 
     fun apply() {
@@ -149,8 +165,7 @@ class CheckoutViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val order = applyDiscount(n, _state.value.code)
-                _state.update { it.copy(order = order, discountBusy = false, receivedAt = SystemClock.elapsedRealtime()) }
-                toaster.success("کد تخفیف اعمال شد.")
+                _state.update { it.copy(order = order, discountBusy = false, discountApplied = true, receivedAt = SystemClock.elapsedRealtime()) }
             } catch (e: Exception) {
                 _state.update { it.copy(discountBusy = false, discountError = e.appError.message) }
             }

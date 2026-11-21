@@ -32,6 +32,16 @@ const FIELDS: FieldDef[] = [
   { name: 'newsletter_text', label: 'متن خبرنامه فوتر', type: 'text' },
   { name: 'footer_text', label: 'متن فوتر', type: 'textarea', wide: true },
   { name: 'service_fee_percent', label: 'هزینه خدمات سامانه (درصد)', type: 'number', hint: 'درصدی از مبلغ بلیت‌ها (پس از تخفیف) که به هر سفارش اضافه می‌شود؛ ۰ یعنی بدون کارمزد.' },
+  {
+    name: 'maintenance_enabled',
+    label: 'صفحه «در حال به‌روزرسانی» فعال باشد',
+    type: 'switch',
+    wide: true,
+    defaultValue: true,
+    hint: 'وقتی فعال است، آدرس اصلی سایت صفحه انتظار را نشان می‌دهد و سایت کامل فقط از مسیر /preview قابل مشاهده است (خروج از پیش‌نمایش: /preview/exit).',
+  },
+  { name: 'maintenance_title', label: 'عنوان صفحه انتظار', type: 'text', wide: true },
+  { name: 'maintenance_text', label: 'متن صفحه انتظار', type: 'textarea', wide: true },
 ];
 
 export default function AdminSettingsPage() {

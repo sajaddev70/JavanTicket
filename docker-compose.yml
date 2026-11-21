@@ -1,18 +1,40 @@
-# Start order: db -> backend -> admin -> user. Each service waits until the previous one is healthy.
-# Images and packages come from the ParsPack mirrors (docker.abrha.net / mirror.abrha.net).
-# Before `docker compose up -d --build`: build the backend jar (./gradlew clean bootJar) and copy .env.example to .env.
+# Production stack for sakooticket.ir. Host nginx (deploy/nginx) terminates HTTPS and proxies to the ports below.
+#
+#   service   container          host port (loopback only)   serves
+#   db        sakooticket-db      none (Docker network only)  PostgreSQL 17
+#   backend   sakooticket-backend 127.0.0.1:8080              API, /uploads, /media
+#   admin     sakooticket-admin   127.0.0.1:3000              admin panel (/admin)  -> adm.sakooticket.ir
+#   user      sakooticket-user    127.0.0.1:3001              user site + account   -> sakooticket.ir
+#
+# Start order: db -> backend -> admin -> user; each waits until the previous one is healthy.
+# Images and npm packages come from the ParsPack mirrors (docker.abrha.net / mirror.abrha.net).
+# Before `docker compose up -d --build`: build the backend jar (./gradlew clean bootJar) and create .env from .env.example.
+# See DEPLOYMENT.md.
+
+name: sakooticket
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
 
 services:
   db:
     image: ${REGISTRY:-docker.abrha.net}/postgres:17-alpine
+    container_name: sakooticket-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME:-youth_event}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
       TZ: Asia/Tehran
     volumes:
       - db-data:/var/lib/postgresql/data
+    # No ports: the database is reachable only from the backend over the internal Docker network.
+    networks: [internal]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -24,92 +46,117 @@ services:
       context: .
       args:
         REGISTRY: ${REGISTRY:-docker.abrha.net}
-    image: javanticket-backend
+    image: sakooticket-backend
+    container_name: sakooticket-backend
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      # prod profile switches off DB auto-create (@Profile("!prod")); the demo seeder still fills an empty database
+      # prod profile switches off DB auto-create and the simulated payment gateway (@Profile("!prod")).
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-youth_event}
       DB_USERNAME: ${DB_USERNAME:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-1234}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       SMS_PROVIDER: ${SMS_PROVIDER:-kavenegar}
       KAVENEGAR_API_KEY: ${KAVENEGAR_API_KEY:-}
       KAVENEGAR_OTP_TEMPLATE: ${KAVENEGAR_OTP_TEMPLATE:-otp}
       KAVENEGAR_SENDER: ${KAVENEGAR_SENDER:-}
-      SERVER_PORT: 8081
+      SERVER_PORT: 8080
       PAYMENT_MODE: ${PAYMENT_MODE:-none}
       # Payment gateways send the buyer back to this site after paying.
-      USER_SITE_URL: ${PUBLIC_USER_SITE_URL:-http://localhost:3003}
-      # Demo data on a fresh database (never over real data); see README "داده نمایشی"
-      DEMO_SEED_ENABLED: ${DEMO_SEED_ENABLED:-true}
-      DEMO_SEED_RESEED: ${DEMO_SEED_RESEED:-true}
-      DEMO_SEED_FORCE: ${DEMO_SEED_FORCE:-false}
+      USER_SITE_URL: ${PUBLIC_USER_SITE_URL:?set PUBLIC_USER_SITE_URL in .env}
+      # Browser origins allowed to call the API (the user site and the admin panel live on different hosts).
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?set CORS_ALLOWED_ORIGINS in .env}
+      # Demo data is off in production unless explicitly enabled; it never overwrites real data.
+      DEMO_SEED_ENABLED: ${DEMO_SEED_ENABLED:-false}
+      DEMO_SEED_RESEED: ${DEMO_SEED_RESEED:-false}
+      DEMO_SEED_FORCE: "false"
       DB_CREATE_IF_MISSING: "false"
-      APP_LOG_LEVEL: INFO
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
+      # API docs stay off in production.
+      SPRINGDOC_API_DOCS_ENABLED: "false"
+      SPRINGDOC_SWAGGER_UI_ENABLED: "false"
+      SERVER_ERROR_INCLUDE_STACKTRACE: never
+      JAVA_OPTS: ${BACKEND_JAVA_OPTS:--XX:MaxRAMPercentage=75}
     volumes:
       - uploads:/app/uploads
     ports:
-      - "${BACKEND_PORT:-8081}:8081"
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
+    networks: [internal]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
     healthcheck:
       # Tomcat opens the port only after the Spring context (and Flyway migrations) are ready.
-      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/8081"]
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/8080"]
       interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 40s
+      start_period: 60s
 
   admin:
     build:
-      context: ./frontend/admin
+      context: frontend/admin
       args:
         REGISTRY: ${REGISTRY:-docker.abrha.net}
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:?set PUBLIC_API_URL in .env}
-        NEXT_PUBLIC_USER_SITE_URL: ${PUBLIC_USER_SITE_URL:-}
-    image: javanticket-admin
+        NEXT_PUBLIC_USER_SITE_URL: ${PUBLIC_USER_SITE_URL:?set PUBLIC_USER_SITE_URL in .env}
+    image: sakooticket-admin
+    container_name: sakooticket-admin
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
     environment:
       # Server-side rendering talks to the backend over the Docker network.
-      API_INTERNAL_URL: http://backend:8081/api/v1
+      API_INTERNAL_URL: http://backend:8080/api/v1
     ports:
-      - "${ADMIN_PORT:-3002}:3002"
+      - "127.0.0.1:${ADMIN_PORT:-3000}:3000"
+    networks: [internal]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/admin/login').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/admin/login').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 15s
+      start_period: 20s
 
   user:
     build:
-      context: ./frontend/user
+      context: frontend/user
       args:
         REGISTRY: ${REGISTRY:-docker.abrha.net}
         NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:?set PUBLIC_API_URL in .env}
-    image: javanticket-user
+    image: sakooticket-user
+    container_name: sakooticket-user
     restart: unless-stopped
     depends_on:
       admin:
         condition: service_healthy
     environment:
-      API_INTERNAL_URL: http://backend:8081/api/v1
+      API_INTERNAL_URL: http://backend:8080/api/v1
     ports:
-      - "${USER_PORT:-3003}:3003"
+      - "127.0.0.1:${USER_PORT:-3001}:3001"
+    networks: [internal]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logging
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3003/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 15s
+      start_period: 20s
+
+networks:
+  internal:
+    name: sakooticket-internal
 
 volumes:
   db-data:
+    name: sakooticket_db-data
   uploads:
+    name: sakooticket_uploads

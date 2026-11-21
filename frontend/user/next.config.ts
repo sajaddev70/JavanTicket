@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     // Browsers ask for /favicon.ico regardless of the declared icons.
-    return [{ source: "/favicon.ico", destination: "/icons/icon-192.png" }];
+    return [{ source: "/favicon.ico", destination: "/assets/pwa/icon-192x192.png" }];
   },
   async redirects() {
     // Seat selection used to live under the event; old links keep working.

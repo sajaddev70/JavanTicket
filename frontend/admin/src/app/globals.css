@@ -3,27 +3,27 @@
 /* `dark:` utilities follow the data-theme attribute set by the theme script / toggle. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* ---------- Design tokens: light ---------- */
+/* ---------- Design tokens: light (Javan Light Redesign, shared with the user site) ---------- */
 :root {
-  --page: #f1f4fb;
+  --page: #f6f4fe;
   --surface: #ffffff;
-  --surface-2: #f6f8fc;
-  --field: #f1f5fb;
-  --line: #e6ebf3;
-  --line-strong: #dce3ee;
-  --ink: #0f1b33;
-  --muted: #6b7a90;
-  --skeleton: #e3e8f0;
+  --surface-2: #f9f8ff;
+  --field: #f1effb;
+  --line: #e9e6f6;
+  --line-strong: #d7d2ee;
+  --ink: #11143a;
+  --muted: #6e7299;
+  --skeleton: #ece9f8;
 
-  --navy-800: #102b4e;
-  --navy-900: #0b2442;
-  --navy-950: #081a33;
+  --navy-800: #163c8c;
+  --navy-900: #102b67;
+  --navy-950: #0a1b4a;
 
-  --brand-50: #eaf3ff;
-  --brand-100: #d6e7ff;
-  --brand-500: #2f80f5;
-  --brand-600: #1a6ee8;
-  --brand-700: #145dcc;
+  --brand-50: #f1e9ff;
+  --brand-100: #e4d5ff;
+  --brand-500: #8e45ff;
+  --brand-600: #7b35f6;
+  --brand-700: #6324f9;
 
   --success: #22c55e;
   --success-fg: #16a34a;
@@ -32,8 +32,8 @@
   --danger: #ef4454;
   --danger-fg: #e11d48;
 
-  --shadow-card: 0 1px 2px rgb(16 42 84 / 0.04), 0 4px 16px rgb(16 42 84 / 0.05);
-  --shadow-float: 0 12px 40px rgb(16 42 84 / 0.1);
+  --shadow-card: 0 1px 2px rgb(40 30 110 / 0.04), 0 8px 24px rgb(60 40 160 / 0.07);
+  --shadow-float: 0 16px 40px rgb(60 40 160 / 0.14);
 
   /* Chart series (categorical slots, fixed order; validated for CVD separation) */
   --series-1: #2a78d6;
@@ -46,25 +46,25 @@
   --series-1: #3987e5;
   --series-2: #d95926;
   --series-3: #199e70;
-  --page: #0a1424;
-  --surface: #111d33;
-  --surface-2: #16243d;
-  --field: #172540;
-  --line: #22324f;
-  --line-strong: #2c3d5c;
-  --ink: #e7edf7;
-  --muted: #95a3ba;
-  --skeleton: #1f2e4a;
+  --page: #090f2a;
+  --surface: #121a3d;
+  --surface-2: #161f48;
+  --field: #1b2552;
+  --line: #252f66;
+  --line-strong: #323d7d;
+  --ink: #eef0ff;
+  --muted: #9096c4;
+  --skeleton: #1e2755;
 
-  --navy-800: #0f2240;
-  --navy-900: #0b1a33;
-  --navy-950: #060f20;
+  --navy-800: #1b3f8f;
+  --navy-900: #122e6e;
+  --navy-950: #0a1846;
 
-  --brand-50: #13284a;
-  --brand-100: #1a3561;
-  --brand-500: #4b93ff;
-  --brand-600: #3a86f7;
-  --brand-700: #2f74e0;
+  --brand-50: #261c5c;
+  --brand-100: #31237a;
+  --brand-500: #b28aff;
+  --brand-600: #a06bff;
+  --brand-700: #8a52ff;
 
   --success: #2ccf68;
   --success-fg: #4ade80;
@@ -109,7 +109,7 @@
 
   --shadow-card: var(--shadow-card);
   --shadow-float: var(--shadow-float);
-  --shadow-cta: 0 8px 20px rgb(26 110 232 / 0.28);
+  --shadow-cta: 0 10px 24px rgb(110 50 245 / 0.32);
 }
 
 @layer base {
@@ -135,6 +135,20 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+}
+
+/* Navy → indigo gradient of the brand (sidebar, login side panel). */
+@utility bg-band-solid {
+  background:
+    radial-gradient(90% 40% at 100% 0%, rgb(47 128 255 / 0.3), transparent 70%),
+    radial-gradient(90% 45% at 0% 100%, rgb(174 102 255 / 0.35), transparent 70%),
+    linear-gradient(180deg, #0f2a68 0%, #1a3a8c 55%, #2f3c9c 100%);
+}
+@utility bg-grad-primary {
+  background-image: linear-gradient(to left, #6324f9, #8e45ff);
+}
+@utility glow-primary {
+  box-shadow: 0 10px 24px rgb(110 50 245 / 0.34);
 }
 
 @layer utilities {

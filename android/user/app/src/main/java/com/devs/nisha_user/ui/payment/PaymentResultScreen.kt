@@ -87,7 +87,13 @@ private enum class Tone { SUCCESS, PENDING, FAILED }
 fun PaymentResultScreen(viewModel: PaymentResultViewModel = hiltViewModel()) {
     val s by viewModel.state.collectAsStateWithLifecycle()
     val actions = LocalAppActions.current
-    Column(Modifier.fillMaxSize()) {
+    // Reference 07: the whole screen in the result's color (green → navy on success).
+    val bg = when (s.result?.status) {
+        PaymentStatus.SUCCESS -> Jt.brushes.resultSuccess
+        PaymentStatus.FAILED -> Jt.brushes.resultFailed
+        else -> Jt.brushes.resultPending
+    }
+    Column(Modifier.fillMaxSize().background(bg)) {
         JtTopBar("نتیجه پرداخت", onBack = { actions.replace(HomeRoute) })
         val result = s.result
         when {
@@ -239,7 +245,7 @@ private fun ResultRow(label: String, value: String, isCode: Boolean = false) {
     Column {
         Row(Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(label, style = text(14f), color = Jt.colors.ink2, modifier = Modifier.weight(1f))
-            if (isCode) CodeText(value, size = 14f) else Text(value, style = text(14f, W.Bold), color = Jt.colors.ink, textAlign = TextAlign.Left)
+            if (isCode) CodeText(value, Modifier.weight(1.4f, fill = false), size = 14f) else Text(value, style = text(14f, W.Bold), color = Jt.colors.ink, textAlign = TextAlign.Left, modifier = Modifier.weight(1.4f, fill = false))
         }
         HDivider()
     }
@@ -256,7 +262,7 @@ private fun CopyRow(label: String, value: String) {
                 clipboard.setText(AnnotatedString(value))
                 toaster.success("$label کپی شد.")
             }, "کپی $label", size = 36.dp, iconSize = 16.dp, borderColor = null, tint = Jt.colors.muted)
-            CodeText(value, size = 14f)
+            CodeText(value, Modifier.weight(1.4f, fill = false), size = 14f)
         }
         HDivider()
     }

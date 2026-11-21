@@ -1,0 +1,10 @@
+Javan Brand Suggested Colors
+
+Primary Navy: #163C8C
+Deep Navy: #102B67
+Primary Blue: #2F80FF
+Light Cyan: #6EB8FF
+Accent Purple: #AE66FF
+Accent Magenta: #FF5EC8
+Accent Red: #FF5A75
+Dark UI Base: #0F172A
